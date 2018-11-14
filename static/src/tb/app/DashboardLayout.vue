@@ -11,7 +11,11 @@ Last update: 2018-08-16
 
     <div class="main-panel">
 
-      <navbar :links="navbarLinks" logo="static/img/optima-logo-tb.png"></navbar>
+      <navbar 
+        :links="navbarLinks" 
+        logo="static/img/cascade-logo-black.png"
+        homepage="http://ocds.co/"
+      ></navbar>
 
       <dashboard-content @click.native="toggleSidebar"></dashboard-content>
 

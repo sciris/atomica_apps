@@ -8,7 +8,13 @@ import ScirisUIKit from 'sciris-uikit';
 
 Vue.prototype.$toolName = 'cascade'
 
-Vue.use(sciris.ScirisVue);
+Vue.use(sciris.ScirisVue, {
+  progressbar: {
+    options: {
+      color: "#00267a"
+    }
+  }
+});
 
 Vue.use(ScirisUIKit, {
 	router: router

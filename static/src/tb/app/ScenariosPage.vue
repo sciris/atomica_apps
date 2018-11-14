@@ -493,8 +493,17 @@ export default {
       sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries]) // Make sure they're saved first
         .then(response => {
           // Go to the server to get the results from the package set.
-          sciris.rpc('run_scenarios', [this.projectID, this.serverDatastoreId, this.plotOptions],
-            {saveresults: false, tool: "tb", plotyear:this.endYear, pops:this.activePop})
+          sciris.rpc('run_scenarios', [
+            this.projectID, 
+            this.serverDatastoreId, 
+            this.plotOptions
+          ],
+          {
+            saveresults: false, 
+            tool: this.$toolName,
+            plotyear:this.endYear, 
+            pops:this.activePop
+          })
             .then(response => {
               this.table = response.data.table
               this.makeGraphs(response.data)

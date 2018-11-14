@@ -38,3 +38,19 @@ Last update: 2018sep23
     </div>
   </div>
 </template>
+
+<script>
+import sciris from 'sciris-js';
+
+export default {
+  computed: {
+    getVersionInfo() {
+      sciris.rpc('get_version_info')
+      .then(response => {
+        this.version = response.data['version'];
+        this.date = response.data['date'];
+      })
+    }
+  }
+}
+</script>

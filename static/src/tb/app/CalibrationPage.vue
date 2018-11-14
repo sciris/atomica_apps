@@ -399,45 +399,54 @@ Last update: 2018-10-05
         return new Promise((resolve, reject) => {
           console.log('loadParTable() called for ' + this.activeParset)
           // TODO: Get spinners working right for this leg of initialization.
-          sciris.rpc('get_y_factors', [this.projectID, this.activeParset, "tb"])
-            .then(response => {
-              this.parlist = response.data.parlist // Get the parameter values
-              var tmpParset = _.cloneDeep(this.activeParset)
-              this.activeParset = null
-              sciris.sleep(500).then(response => {
-                this.activeParset = tmpParset
-              })
-              this.parlist.push('Update Vue DOM')
-              this.parlist.pop()
-              this.poplabels = response.data.poplabels
-              console.log(response)
-              console.log(this.poplabels)
-              console.log(this.parlist)
-              resolve(response)
+          sciris.rpc('get_y_factors', [
+            this.projectID, 
+            this.activeParset, 
+            this.$toolName, 
+          ])
+          .then(response => {
+            this.parlist = response.data.parlist // Get the parameter values
+            var tmpParset = _.cloneDeep(this.activeParset)
+            this.activeParset = null
+            sciris.sleep(500).then(response => {
+              this.activeParset = tmpParset
             })
-            .catch(error => {
-              sciris.fail(this, 'Could not load parameters', error)
-              reject(error)
-            })
+            this.parlist.push('Update Vue DOM')
+            this.parlist.pop()
+            this.poplabels = response.data.poplabels
+            console.log(response)
+            console.log(this.poplabels)
+            console.log(this.parlist)
+            resolve(response)
+          })
+          .catch(error => {
+            sciris.fail(this, 'Could not load parameters', error)
+            reject(error)
+          })
         })
       },
 
       saveParTable() {
         return new Promise((resolve, reject) => {
-          sciris.rpc('set_y_factors', [this.projectID, this.activeParset, this.parlist, "tb"])
-            .then(response => {
-              this.loadParTable()
-                .then(response2 => {
-                  sciris.succeed(this, 'Parameters updated')
-                  this.manualCalibration(this.projectID)
-                  resolve(response2)
-                })
-              resolve(response)
-            })
-            .catch(error => {
-              sciris.fail(this, 'Could not save parameters', error)
-              reject(error)
-            })
+          sciris.rpc('set_y_factors', [
+            this.projectID, 
+            this.activeParset, 
+            this.parlist, 
+            this.$toolName, 
+          ])
+          .then(response => {
+            this.loadParTable()
+              .then(response2 => {
+                sciris.succeed(this, 'Parameters updated')
+                this.manualCalibration(this.projectID)
+                resolve(response2)
+              })
+            resolve(response)
+          })
+          .catch(error => {
+            sciris.fail(this, 'Could not save parameters', error)
+            reject(error)
+          })
         })
       },
 
@@ -531,17 +540,26 @@ Last update: 2018-10-05
         console.log('manualCalibration() called')
         this.validateYears()  // Make sure the start end years are in the right range.
         sciris.start(this)
-        sciris.rpc('manual_calibration', [project_id, this.serverDatastoreId], {'parsetname':this.activeParset, 'plot_options':this.plotOptions,
-          'plotyear':this.endYear, 'pops':this.activePop, 'tool': 'tb', 'cascade':null}) // Go to the server to get the results
-          .then(response => {
-            this.makeGraphs(response.data)
-            this.table = response.data.table
-            sciris.succeed(this, 'Simulation run, graphs now rendering...')
-          })
-          .catch(error => {
-            console.log(error.message)
-            sciris.fail(this, 'Could not run manual calibration', error)
-          })
+        sciris.rpc('manual_calibration', [
+          project_id, 
+          this.serverDatastoreId
+        ], {
+          'parsetname': this.activeParset, 
+          'plot_options': this.plotOptions,
+          'plotyear':this.endYear, 
+          'pops':this.activePop, 
+          'tool': this.$toolName, 
+          'cascade':null
+        }) // Go to the server to get the results
+        .then(response => {
+          this.makeGraphs(response.data)
+          this.table = response.data.table
+          sciris.succeed(this, 'Simulation run, graphs now rendering...')
+        })
+        .catch(error => {
+          console.log(error.message)
+          sciris.fail(this, 'Could not run manual calibration', error)
+        })
       },
 
       autoCalibrate(project_id) {
@@ -553,18 +571,27 @@ Last update: 2018-10-05
         } else {
           var maxtime = 9999
         }
-        sciris.rpc('automatic_calibration', [project_id, this.serverDatastoreId], {'parsetname':this.activeParset, 'max_time':maxtime, 'plot_options':this.plotOptions,
-          'plotyear':this.endYear, 'pops':this.activePop, 'tool': "tb", 'cascade':null}
-        ) // Go to the server to get the results from the package set.
-          .then(response => {
-            this.table = response.data.table
-            this.makeGraphs(response.data.graphs)
-            sciris.succeed(this, 'Simulation run, graphs now rendering...')
-          })
-          .catch(error => {
-            console.log(error.message)
-            sciris.fail(this, 'Could not run automatic calibration', error)
-          })
+        sciris.rpc('automatic_calibration', [
+          project_id, 
+          this.serverDatastoreId
+        ], {
+          'parsetname': this.activeParset, 
+          'max_time': maxtime, 
+          'plot_options': this.plotOptions,
+          'plotyear': this.endYear, 
+          'pops': this.activePop, 
+          'tool': this.$toolName, 
+          'cascade':null
+        }) // Go to the server to get the results from the package set.
+        .then(response => {
+          this.table = response.data.table
+          this.makeGraphs(response.data.graphs)
+          sciris.succeed(this, 'Simulation run, graphs now rendering...')
+        })
+        .catch(error => {
+          console.log(error.message)
+          sciris.fail(this, 'Could not run automatic calibration', error)
+        })
       },
 
       reconcile() {

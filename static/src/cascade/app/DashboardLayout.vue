@@ -11,7 +11,11 @@ Last update: 2018-08-16
 
     <div class="main-panel">
 
-      <navbar :links="navbarLinks" logo="static/img/cascade-logo-black.png"></navbar>
+      <navbar 
+        :links="navbarLinks" 
+        logo="static/img/cascade-logo-black.png"
+        homepage="http://cascade.tools/"
+      ></navbar>
 
       <dashboard-content @click.native="toggleSidebar"></dashboard-content>
 

@@ -483,16 +483,20 @@ Last update: 2018oct04
         sciris.start(this)
         var demoOption = 'default'
         // Have the server create a new project.
-        sciris.rpc('add_demo_project', [this.userName, demoOption, "tb"])
-          .then(response => {
-            // Update the project summaries so the new project shows up on the list.
-            this.updateProjectSummaries(response.data.projectID) 
-            // Already have notification from project
-            sciris.succeed(this, '') 
-          })
-          .catch(error => {
-            sciris.fail(this, 'Could not add demo project', error)
-          })
+        sciris.rpc('add_demo_project', [
+          this.userName, 
+          demoOption, 
+          this.$toolName,
+        ])
+        .then(response => {
+          // Update the project summaries so the new project shows up on the list.
+          this.updateProjectSummaries(response.data.projectID) 
+          // Already have notification from project
+          sciris.succeed(this, '') 
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not add demo project', error)
+        })
       },
 
       addDemoProjectModal() {
@@ -530,7 +534,7 @@ Last update: 2018oct04
             this.data_start, 
             this.data_end
           ], {
-            tool: "tb" 
+            tool: this.$toolName
           })
           .then(response => {
             // Update the project summaries so the new project shows up on the list. 

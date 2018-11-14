@@ -601,15 +601,19 @@ Last update: 2018-09-26
 
       addOptimModal(optim_type) { // Open a model dialog for creating a new project
         console.log('addOptimModal() called for ' + optim_type);
-        sciris.rpc('get_default_optim', [this.projectID, "tb", optim_type])
-          .then(response => {
-            this.defaultOptim = response.data // Set the optimization to what we received.
-            this.resetModal(response.data)
-            this.addEditDialogMode = 'add'
-            this.addEditDialogOldName = this.modalOptim.name
-            this.$modal.show('add-optim');
-            console.log(this.defaultOptim)
-          })
+        sciris.rpc('get_default_optim', [
+          this.projectID, 
+          this.$toolName, 
+          optim_type
+        ])
+        .then(response => {
+          this.defaultOptim = response.data // Set the optimization to what we received.
+          this.resetModal(response.data)
+          this.addEditDialogMode = 'add'
+          this.addEditDialogOldName = this.modalOptim.name
+          this.$modal.show('add-optim');
+          console.log(this.defaultOptim)
+        })
       },
 
       saveOptim() {
@@ -734,10 +738,23 @@ Last update: 2018-09-26
         var RPCname = 'run_tb_optimization';
         sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries]) // Make sure they're saved first
           .then(response => {
-            sciris.rpc('launch_task', [optimSummary.serverDatastoreId, RPCname,
-              [this.projectID, optimSummary.serverDatastoreId, optimSummary.name],
-              { 'plot_options': this.plotOptions, 'maxtime': maxtime, 'tool': "tb", 
-                'plotyear': this.endYear, 'pops': this.activePop, 'cascade': null}])  // should this last be null?
+            sciris.rpc('launch_task', [
+                optimSummary.serverDatastoreId, 
+                RPCname,
+                [
+                  this.projectID, 
+                  optimSummary.serverDatastoreId, 
+                  optimSummary.name
+                ],
+                {
+                  'plot_options': this.plotOptions, 
+                  'maxtime': maxtime, 
+                  'tool': this.$toolName, 
+                  'plotyear': this.endYear, 
+                  'pops': this.activePop, 
+                  'cascade': null
+                }
+              ])  // should this last be null?
               .then(response => {
                 this.getOptimTaskState(optimSummary) // Get the task state for the optimization.
                 if (!this.pollingTasks) {

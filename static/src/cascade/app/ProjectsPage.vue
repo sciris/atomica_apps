@@ -13,7 +13,7 @@ Last update: 2018oct04
 
       <div class="ControlsRow">
         <button class="btn __blue" @click="addDemoProjectModal">Add demo project</button>
-        <button class="btn __blue" @click="createNewProjectModal">Create new project</button>&nbsp; &nbsp;
+        <button class="btn __blue" @click="createNewProjectModal">Create new project</button>
         <button class="btn __blue" @click="uploadProjectFromFile">Upload project from file</button>
       </div>
     </div>
@@ -909,3 +909,11 @@ Last update: 2018oct04
     }
   }
 </script>
+<style scoped>
+.ControlsRow {
+  display: flex;
+}
+.ControlsRow > button {
+  margin-right: 5px;
+}
+</style>

@@ -6,10 +6,11 @@ Last update: 2018sep23
 
 <template>
   <div :class="{'nav-open': $sidebar.showSidebar}">
+    <simplert></simplert>
     <router-view></router-view>
     <vue-progress-bar></vue-progress-bar>
     <popup-spinner size="75px" padding="15px" title="Please wait..."></popup-spinner>
-    <sidebar type="navbar" :links="sidebarLinks" logo="/static/img/optima-inverted-logo-tb.png"> 
+    <sidebar class="main-sidebar" type="navbar" :links="sidebarLinks" logo="/static/img/optima-inverted-logo-tb.png"> 
     <!--
     This sidebar appears only for screens 
     smaller than 992px otherwise, it is rendered in TopNavbar.vue
@@ -24,21 +25,28 @@ Last update: 2018sep23
             </p>
           </a>
         </li>
-      <div>
-        <strong class="username"><i class="ti-user"></i> {{ activeUserName }}</strong>
+        <li>
+            <a 
+            class="username"
+            data-toggle="collapse" 
+            href="#userTools">
+              <i class="ti-user"></i> {{ activeUserName }}</strong>
+            </a>
 
-        <ul class="nav navbar-nav"> 
-          <router-link to="/changeinfo" tag="li">
-            <a><i class="ti-pencil"></i>&nbsp;Edit account</a>
-          </router-link>
-          <router-link to="/changepassword" tag="li">
-            <a><i class="ti-key"></i>&nbsp;Change password</a>
-          </router-link>
-          <li>
-            <a href="#/" v-on:click=logOut()><i class="ti-car"></i>&nbsp;Log out</a>
-          </li>
-        </ul>
-      </div>
+            <div class="collapse" id="userTools">
+              <ul class="nav navbar-nav"> 
+                <router-link to="/changeinfo" tag="li">
+                  <a><i class="ti-pencil"></i>&nbsp;Edit account</a>
+                </router-link>
+                <router-link to="/changepassword" tag="li">
+                  <a><i class="ti-key"></i>&nbsp;Change password</a>
+                </router-link>
+                <li>
+                  <a href="#/" v-on:click=logOut()><i class="ti-car"></i>&nbsp;Log out</a>
+                </li>
+              </ul>
+            </div>
+        </li>
         <li class="divider"></li>
       </ul>
     </sidebar>
@@ -108,8 +116,32 @@ export default {
   // Modal dialog styling.
 @import "~sciris-uikit/dist/scss/_dialogs.scss";
 .username {
-  color: #c1c8cf;
-  font-size: 16px;
-  font-weight: 600;
+color: #c1c8cf;
+font-size: 16px;
+font-weight: 600;
 }
+
+.divider {
+margin: 10px 0;
+padding: 1px;
+}
+
+.main-sidebar {
+font-size: 14px;
+}
+
+#userTools.collapsing {
+-webkit-transition: none;
+transition: none;
+display: none;
+}
+
+#userTools.collapsing .nav {
+width: 100%;
+}
+
+#userTools .nav {
+width: 100%;
+}
+
 </style>
