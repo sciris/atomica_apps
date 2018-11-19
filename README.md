@@ -43,16 +43,23 @@ docker-compose -f docker-compose.tb.local.yml up
 ```
 
 ## Developing the front end
-While running the 
 
 The front end code for `tb` and `cascade` is inside the `static/` folder in the `atomica_apps` repo.
 
-To install the dependencies required for front end development go to the the root of `atomica_apps` repo and then:
+To install the dependencies required for front end development:
+
+*Step 1*: Install Node.js on your local machine https://nodejs.org/en/download/
+
+*Step 2:* Install the npm dependencies
+
+Go to the the root of `atomica_apps` repo and then:
 
 ```
 cd static
 npm install 
 ```  
+
+*Step 3:* Build or Watch
 
 Once that’s done you can run `npm run watchtb` or `npm run watchcascade` in order to track changes  and rebuild the specific app in `static/debug/<app_name>`. 
 
