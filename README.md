@@ -1,4 +1,5 @@
-# `atomica_app`
+# atomica_apps
+
 ## Installation 
 To install this tool you need docker and access to [GitHub - atomicateam/atomica: Atomica](https://github.com/atomicateam/atomica).
 
