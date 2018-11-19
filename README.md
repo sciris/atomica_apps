@@ -1,5 +1,4 @@
-# atomica_apps
-
+# atomica_app
 ## Installation 
 To install this tool you need docker and access to [GitHub - atomicateam/atomica: Atomica](https://github.com/atomicateam/atomica).
 
@@ -32,8 +31,8 @@ cd atomica_apps
 To build and run `cascade`:
 
 ```
-docker-compose -f docker-compose.tb.cascade.yml build
-docker-compose -f docker-compose.tb.cascade.yml up
+docker-compose -f docker-compose.cascade.local.yml build
+docker-compose -f docker-compose.cascade.local.yml up
 ```
 
 To build and run `tb`:
@@ -44,4 +43,18 @@ docker-compose -f docker-compose.tb.local.yml up
 ```
 
 ## Developing the front end
-## Running for local development 
+While running the 
+
+The front end code for `tb` and `cascade` is inside the `static/` folder in the `atomica_apps` repo.
+
+To install the dependencies required for front end development go to the the root of `atomica_apps` repo and then:
+
+```
+cd static
+npm install 
+```  
+
+Once that’s done you can run `npm run watchtb` or `npm run watchcascade` in order to track changes  and rebuild the specific app in `static/debug/<app_name>`. 
+
+## Building the frontend for distribution
+In order to build a minified copy of `cascade` and `tb` you will need to go to the static folder and run `npm run build`. This will create minified copies of the apps and place them in `static/dist`
