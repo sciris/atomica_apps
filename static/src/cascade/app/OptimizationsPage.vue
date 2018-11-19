@@ -770,6 +770,7 @@ Last update: 2018-09-26
               }
             ])  // should this last be null?
             .then(response => {
+              console.log(response)
               this.getOptimTaskState(optimSummary) // Get the task state for the optimization.
               if (!this.pollingTasks) {
                 this.doTaskPolling(true)

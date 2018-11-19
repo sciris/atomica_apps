@@ -33,7 +33,6 @@ task_func_dict = {} # Dictionary to hold all of the registered task functions in
 async_task = sw.taskwrapper(task_func_dict) # Task function registration decorator created using call to taskwrapper().
 celery_instance = sw.make_celery(config=config) # Create the Celery instance for this module.
 
-
 @async_task
 def run_cascade_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
     print('Running optimization...')
@@ -44,7 +43,6 @@ def run_cascade_optimization(project_id, cache_id, optim_name=None, plot_options
     newproj = datastore.loadblob(uid=project_id, objtype='project', die=True)
     result_key = rpcs.cache_result(newproj, results, cache_id)
     return result_key
-
 
 # Add the asynchronous task functions in this module to the tasks.py module so run_task() can call them.
 sw.add_task_funcs(task_func_dict)

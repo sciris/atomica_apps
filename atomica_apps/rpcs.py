@@ -4,6 +4,9 @@ Atomica remote procedure calls (RPCs)
 Last update: 2018sep25
 '''
 
+import matplotlib
+matplotlib.use('Agg')
+
 ###############################################################
 ### Imports
 ##############################################################
@@ -47,13 +50,13 @@ def get_version_info():
 	''' Return the information about the running environment '''
 	gitinfo = sc.gitinfo(__file__)
 	version_info = sc.odict({
-	       'version':   au.version,
-	       'date':      au.versiondate,
-	       'gitbranch': gitinfo['branch'],
-	       'githash':   gitinfo['hash'],
-	       'gitdate':   gitinfo['date'],
-            'server':    socket.gethostname(),
-            'cpu':       '%0.1f%%' % psutil.cpu_percent(),
+	   'version':   au.version,
+	   'date':      au.versiondate,
+	   'gitbranch': gitinfo['branch'],
+	   'githash':   gitinfo['hash'],
+	   'gitdate':   gitinfo['date'],
+           'server':    socket.gethostname(),
+           'cpu':       '%0.1f%%' % psutil.cpu_percent(),
 	})
 	return version_info
       
