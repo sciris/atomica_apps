@@ -42,6 +42,8 @@ docker-compose -f docker-compose.tb.local.yml build
 docker-compose -f docker-compose.tb.local.yml up
 ```
 
+**Step 5:** follow the instructions on the next section ("Developing the front end") to build the front end.
+
 ## Developing the front end
 
 The front end code for `tb` and `cascade` is inside the `static/` folder in the `atomica_apps` repo.
