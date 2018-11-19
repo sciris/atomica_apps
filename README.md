@@ -29,14 +29,14 @@ Change to the root of the `atomica_apps` dir:
 cd atomica_apps
 ```
 
-To build and run `tb`:
-
-```
-docker-compose -f docker-compose.tb.local.yml build
-docker-compose -f docker-compose.tb.local.yml up
-```
-
 To build and run `cascade`:
+
+```
+docker-compose -f docker-compose.tb.cascade.yml build
+docker-compose -f docker-compose.tb.cascade.yml up
+```
+
+To build and run `tb`:
 
 ```
 docker-compose -f docker-compose.tb.local.yml build
