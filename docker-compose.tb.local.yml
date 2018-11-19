@@ -12,6 +12,7 @@ services:
       args:
         PORT: '80'
         REDIS_URL: 'redis://redis_db:6379' 
+        CLIENT_DIR: '../static/debug/tb'
       dockerfile: Dockerfile
     command: python3 runtb.py 
     stdin_open: true

@@ -2,9 +2,11 @@ FROM continuumio/anaconda:latest
 
 ARG PORT
 ARG REDIS_URL
+ARG CLIENT_DIR 
 
 ENV PORT $PORT
 ENV REDIS_URL $REDIS_URL
+ENV CLIENT_DIR $CLIENT_DIR
 
 RUN apt-get update \
   && apt-get install -y python3-pip python3-dev \
