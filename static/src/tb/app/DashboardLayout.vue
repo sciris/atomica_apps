@@ -13,7 +13,7 @@ Last update: 2018-08-16
 
       <navbar 
         :links="navbarLinks" 
-        logo="static/img/cascade-logo-black.png"
+        logo="static/img/optima-logo-tb.png"
         homepage="http://ocds.co/"
       ></navbar>
 
