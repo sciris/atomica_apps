@@ -34,7 +34,7 @@ module.exports = merge(base, {
     new CopyWebpackPlugin([
       {
         from: 'assets/',
-        to: 'static/'
+        to: resolve('debug/cascade/static/'),
       }
     ]),
     new CleanWebpackPlugin([

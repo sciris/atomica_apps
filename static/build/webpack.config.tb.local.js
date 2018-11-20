@@ -34,13 +34,16 @@ module.exports = merge(base, {
     new CopyWebpackPlugin([
       {
         from: 'assets/',
-        to: 'static/'
+        to: resolve('debug/tb/static/'),
       }
     ]),
     new CleanWebpackPlugin([
       resolve('debug/tb/')
     ], {
       watch: true,
+      exclude: [
+        resolve('debug/tb/static/')
+      ],
       allowExternal: true
     })
   ]
