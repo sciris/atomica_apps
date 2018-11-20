@@ -23,7 +23,7 @@ Last update: 2018sep23
           <tbody>
           <tr><td class="tlabel">Username    </td><td>{{ username }}</td></tr>
           <tr><td class="tlabel">Browser     </td><td>{{ useragent }}</td></tr>
-          <tr><td class="tlabel">App version </td><td>{{ toolName }} {{ version }} ({{ date }}) [{{ gitbranch }}/{{ githash }}]</td></tr>
+          <tr><td class="tlabel">App version </td><td>{{ verboseToolName }} {{ version }} ({{ date }}) [{{ gitbranch }}/{{ githash }}]</td></tr>
           <tr><td class="tlabel">Timestamp   </td><td>{{ timestamp }}</td></tr>
           <tr><td class="tlabel">Server name </td><td>{{ server }}</td></tr>
           <tr><td class="tlabel">Server load </td><td>{{ cpu }}</td></tr>
@@ -57,88 +57,15 @@ Last update: 2018sep23
 </template>
 
 <script>
-import sciris from 'sciris-js';
+import { mixins } from 'sciris-uikit';
 
 export default {
   name: 'About',
-
-  data () {
-    return {
-      username: '',
-      useragent: '',
-      version: '',
-      date: '',
-      gitbranch: '',
-      githash: '',
-      server: '',
-      cpu: '',
-      timestamp: '',
-      adv_showConsole: false,
-      adv_authentication: '',
-      adv_query: '',
-      adv_response: 'No response',
-    }
-  },
-
-  computed: {
-    getVersionInfo() {
-      sciris.rpc('get_version_info')
-        .then(response => {
-          this.username  = this.$store.state.currentUser.username
-          this.useragent = window.navigator.userAgent
-          this.timestamp = Date(Date.now()).toLocaleString()
-          this.version   = response.data['version'];
-          this.date      = response.data['date'];
-          this.gitbranch = response.data['gitbranch'];
-          this.githash   = response.data['githash'];
-          this.server    = response.data['server'];
-          this.cpu       = response.data['cpu'];
-        })
-    },
-
-    toolName() {
+  methods: {
+    verboseToolName() {
       return 'Optima TB'
     },
-
-  },
-
-  methods: {
-
-    adv_consoleModal() {
-      if (!this.adv_showConsole) {
-        var obj = { // Alert object data
-          message: 'WARNING: This option is for authorized developers only. Unless you have received prior written authorization to use this feature, exit now. If you click "Yes", your details will be logged, and any misuse will result in immediate account suspension.',
-          useConfirmBtn: true,
-          customConfirmBtnText: 'Yes, I will take the risk',
-          customCloseBtnText: 'Oops, get me out of here',
-          customConfirmBtnClass: 'btn __red',
-          customCloseBtnClass: 'btn',
-          onConfirm: this.adv_toggleConsole
-        }
-        this.$Simplert.open(obj)
-      } else {
-        this.adv_showConsole = false
-      }
-    },
-
-    adv_toggleConsole() {
-      this.adv_showConsole = !this.adv_showConsole
-    },
-
-    adv_submit() {
-      console.log('adv_submit() called')
-      sciris.rpc('run_query', [this.adv_authentication, this.adv_query]) // Have the server copy the project, giving it a new name.
-        .then(response => {
-          console.log(response.data)
-          this.adv_response = response.data.replace(/\n/g,'<br>')
-          sciris.succeed(this, 'Query run')    // Indicate success.
-        })
-        .catch(error => {
-          sciris.fail(this, 'Could not run query', error)
-        })
-    },
-
-  },
+  }
 }
 </script>
 
