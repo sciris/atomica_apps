@@ -22,6 +22,7 @@ Instructions for `docker-machine` installation can be found here: [Install Docke
 Instruction for docker-compose installation can be found here: [Install Docker Compose | Docker Documentation](https://docs.docker.com/compose/install/#master-builds) . For MacOS you can use homebrew if you have it installed using `brew install docker-compose`
 
 **Step 4:**  Build the images locally
+
 Change to the root of the `atomica_apps` dir:
 
 ```
