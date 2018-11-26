@@ -12,7 +12,7 @@ git clone git@github.com:sciris/atomica_apps.git
 **Step 2:** Move the `atomica/atomica` folder to `atomica_apps`
 
 ```bash
-move atomica/atomica atomica_apps/
+mv atomica/atomica atomica_apps/
 ```
 
 **Step 3:** Install `docker-machine` and `docker-compose`
