@@ -21,30 +21,28 @@ module.exports = merge(base, {
   output: {
 		filename: "[name].[hash].js",
     publicPath: "",
-		path: resolve('debug/tb/'),
+		path: resolve('debug/cascade/'),
   },
   entry: [
-    './src/tb/index.js'
+    './src/cascade/index.js'
   ],
   plugins: [
     new HtmlWebpackPlugin({
-      template: "src/tb/index.html" 
+      template: "src/cascade/index.html" 
     }),
     new VueLoaderPlugin(),
     new CopyWebpackPlugin([
       {
         from: 'assets/',
-        to: resolve('debug/tb/static/'),
+        to: resolve('debug/cascade/static/'),
       }
     ]),
     new CleanWebpackPlugin([
-      resolve('debug/tb/')
+      resolve('debug/cascade/')
     ], {
-      watch: true,
-      exclude: [
-        resolve('debug/tb/static/')
-      ],
+      watch: false,
       allowExternal: true
     })
   ]
 })
+

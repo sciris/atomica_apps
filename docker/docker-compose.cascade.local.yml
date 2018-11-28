@@ -6,29 +6,29 @@ services:
     volumes:
       - redis:/var/lib/redis/data
   web:
-    image: tb 
+    image: cascade 
     build: 
-      context: .
+      context: ..
       args:
         PORT: '80'
         REDIS_URL: 'redis://redis_db:6379' 
-        CLIENT_DIR: '../static/debug/tb'
-      dockerfile: Dockerfile
-    command: python3 runtb.py 
+        CLIENT_DIR: '../debug/cascade'
+      dockerfile: docker/Dockerfile
+    command: python3 runcascade.py 
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - ..:/app
     ports:
      - '8080:8080'
-     - '8093:8093'
+     - '8094:8094'
      - '80:80'
   workers:
-    image: tb 
-    command: python3 runtbworker.py
+    image: cascade 
+    command: python3 runcascadeworker.py
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - ..:/app
 volumes:
   redis: {}

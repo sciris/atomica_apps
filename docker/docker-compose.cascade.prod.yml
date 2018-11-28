@@ -4,18 +4,18 @@ services:
   web:
     image: cascade 
     build: 
-      context: .
+      context: ..
       args:
         PORT: '80'
         # REDIS_URL: 'redis://10.0.0.19:6379/8' # asia-southeast1-a
         REDIS_URL: 'redis://10.0.0.3:6379/8' # europe-west1-b
-        CLIENT_DIR: '../static/dist/cascade'
-      dockerfile: Dockerfile
+        CLIENT_DIR: '../dist/cascade'
+      dockerfile: docker/Dockerfile
     command: python3 runcascade.py 
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - ..:/app
     ports:
      - '8080:8080'
      - '8094:8094'
@@ -26,4 +26,4 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - ..:/app
