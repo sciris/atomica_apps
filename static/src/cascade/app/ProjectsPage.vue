@@ -347,7 +347,33 @@ export default {
     getAppRouter: function(){
       return router;
     },
-  }
+  },
+
+  created() {
+    let projectID = null
+    // If we have no user logged in, automatically redirect to the login page.
+    if (this.$store.state.currentUser.displayname === undefined) { 
+      this.getAppRouter().push('/login')
+    } else {
+      // Get the active project ID if there is an active project.
+      if (this.$store.state.activeProject.project !== undefined) { 
+        projectID = this.$store.state.activeProject.project.id
+      }
+      this.getDefaultPrograms()
+      this.getDemoOptions()
+      // Load the frameworks so the new project dialog is populated
+      this.updateFrameworkSummaries() 
+      // Load the project summaries of the current user.
+      this.updateProjectSummaries(projectID) 
+      // This can take a surprisingly long time...
+      sciris.sleep(2000) 
+        .then(response => {
+          // This isn't ideal, but this ensures that the drop-down boxes are actually populated
+          this.progStartYear = this.simYears[0] 
+          this.progEndYear = this.simYears[this.simYears.length -1]
+        })
+    }
+  },
 }
 </script>
 
