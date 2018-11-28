@@ -75,3 +75,5 @@ __pycache__/
 *.pyc
 
 static/debug/
+package-lock.json
+debug/
