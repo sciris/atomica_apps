@@ -8,6 +8,7 @@ import ScirisUIKit from 'sciris-uikit';
 
 Vue.prototype.$toolName = 'tb'
 
+
 Vue.use(sciris.ScirisVue, {
   progressbar: {
     options: {
