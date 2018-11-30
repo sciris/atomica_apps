@@ -323,6 +323,7 @@ export default {
     }
   },
   created() {
+    console.log(sciris, "askdjfhasdkjfhaksjdhfalkjsdhfkljashfalkhjsdf")
     let projectID = null
     if (this.$store.state.currentUser.displayname === undefined) { // If we have no user logged in, automatically redirect to the login page.
       router.push('/login')
@@ -334,7 +335,7 @@ export default {
       this.getDemoOptions()
       this.updateFrameworkSummaries()        // Load the frameworks so the new project dialog is populated
       this.updateProjectSummaries(projectID) // Load the project summaries of the current user.
-      utils.sleep(2000) // This can take a surprisingly long time...
+      sciris.sleep(2000) // This can take a surprisingly long time...
         .then(response => {
           this.progStartYear = this.simYears[0] // This isn't ideal, but this ensures that the drop-down boxes are actually populated
           this.progEndYear = this.simYears[this.simYears.length -1]
