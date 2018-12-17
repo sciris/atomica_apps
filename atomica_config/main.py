@@ -6,7 +6,7 @@ Last update: 2018sep23
 
 import sciris as sc
 import scirisweb as sw
-from . import rpcs
+from atomica_apps import rpcs
 
 def make_app(which=None, **kwargs):
     T = sc.tic()

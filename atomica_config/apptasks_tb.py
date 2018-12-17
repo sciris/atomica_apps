@@ -1,5 +1,5 @@
 """
-apptasks_cascade.py -- The Celery tasks module for this webapp
+apptasks_tb.py -- The Celery tasks module for this webapp
     
 Last update: 2018sep23
 """
@@ -7,8 +7,8 @@ Last update: 2018sep23
 import sys
 import sciris as sc
 import scirisweb as sw
-from . import rpcs
-from . import config_cascade as config
+from atomica_apps import rpcs
+from . import config_tb as config
 import matplotlib.pyplot as ppl
 ppl.switch_backend(config.MATPLOTLIB_BACKEND)
 
@@ -33,8 +33,9 @@ task_func_dict = {} # Dictionary to hold all of the registered task functions in
 async_task = sw.taskwrapper(task_func_dict) # Task function registration decorator created using call to taskwrapper().
 celery_instance = sw.make_celery(config=config) # Create the Celery instance for this module.
 
+
 @async_task
-def run_cascade_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
+def run_tb_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
     print('Running optimization...')
     sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'cascade', 'dosave'], color='blue')
     datastore = rpcs.find_datastore(config=config)
@@ -43,6 +44,7 @@ def run_cascade_optimization(project_id, cache_id, optim_name=None, plot_options
     newproj = datastore.loadblob(uid=project_id, objtype='project', die=True)
     result_key = rpcs.cache_result(newproj, results, cache_id)
     return result_key
+
 
 # Add the asynchronous task functions in this module to the tasks.py module so run_task() can call them.
 sw.add_task_funcs(task_func_dict)
