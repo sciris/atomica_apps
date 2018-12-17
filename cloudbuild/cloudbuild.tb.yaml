@@ -1,9 +1,0 @@
-#cloudbuild.yaml
-steps:
-  - name: 'docker/compose:1.22.0'
-    args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['tag', 'workspace_app:latest', 'gcr.io/${PROJECT_ID}/atomica_apps_tb:${COMMIT_SHA}']
-images:
-  - 'gcr.io/${PROJECT_ID}/atomica_apps_tb_tb__app:${COMMIT_SHA}'
-timeout: 1200s
