@@ -2,7 +2,7 @@
 steps:
   - name: 'docker/compose:1.22.0'
     args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d']
-tags: ['gcr.io/${PROJECT_ID}/atomica_apps_tb:latest']
+tags: ['gcr.io/${PROJECT_ID}/atomica_apps_tb']
 images:
-  - 'gcr.io/${PROJECT_ID}/atomica_apps_tb__app:latest'
+  - 'gcr.io/${PROJECT_ID}/atomica_apps_tb__app'
 timeout: 1200s
