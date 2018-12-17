@@ -2,7 +2,7 @@
 steps:
   - name: 'docker/compose:1.22.0'
     args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d']
-tags`: ['gcr.io/${PROJECT_ID}/atomica_apps_tb__app:${COMMIT_SHA}']
+tags: ['gcr.io/${PROJECT_ID}/atomica_apps_tb__app:${COMMIT_SHA}']
 images:
   - 'gcr.io/${PROJECT_ID}/atomica_apps_tb__app:${COMMIT_SHA}'
 timeout: 1200s
