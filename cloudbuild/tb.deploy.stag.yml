@@ -1,6 +1,6 @@
 #cloudbuild.yaml
 steps:
-  - name: 'docker/compose:1.22.0'
+  - name: 'docker/compose:1.23.2'
     args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['tag', 'tb:latest', 'gcr.io/$PROJECT_ID/sciris_atomica_apps__tb:$COMMIT_SHA']
