@@ -3,6 +3,6 @@ steps:
   - name: 'docker/compose:1.22.0'
     args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d']
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['tag', 'workspace_app:latest', 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']
-images: ['gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']
+    args: ['tag', 'workspace_app:latest', 'gcr.io/$PROJECT_ID/github_sciris_atomica_apps:$COMMIT_SHA']
+images: ['gcr.io/$PROJECT_ID/github_sciris_atomica_apps:$COMMIT_SHA']
 timeout: 1200s
