@@ -5,6 +5,8 @@ To install this tool you need nodejs, docker and access to [GitHub - atomicateam
 
 **Step 1:**  Clone the repo
 
+Note
+
 ``` bash
 git clone git@github.com:sciris/atomica_apps.git
 ```
