@@ -28,4 +28,4 @@ services:
     volumes:
       - shared:/app
 volumes:
-  shared:/shared
+  shared: {}
