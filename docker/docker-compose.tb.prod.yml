@@ -15,7 +15,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ..:/app
+      - shared:/app
     ports:
      - '8080:8080'
      - '8093:8093'
@@ -26,4 +26,6 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ..:/app
+      - shared:/app
+volumes:
+  shared: {}
