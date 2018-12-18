@@ -1,7 +1,7 @@
 #cloudbuild.yaml
 steps:
   - name: 'docker/compose:1.23.2'
-    args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d' '--build']
+    args: ['-f', 'docker/docker-compose.tb.prod.yml', 'up', '-d', '--build']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['tag', 'tb:latest', 'gcr.io/$PROJECT_ID/sciris_atomica_apps__tb:$COMMIT_SHA']
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -14,7 +14,8 @@ steps:
       '--tags=http-server,https-server', '--image=cos-stable-71-11151-60-0', '--image-project=cos-cloud', '--boot-disk-size=20GB', '--boot-disk-type=pd-standard',
       '--container-restart-policy=always', '--labels=container-vm=cos-stable-71-11151-60-0',
       '--boot-disk-device-name=tb-app-staging-${COMMIT_SHA}',
-      '--container-image=gcr.io/$PROJECT_ID/sciris_atomica_apps__tb:$COMMIT_SHA'
+      '--container-image=gcr.io/$PROJECT_ID/sciris_atomica_apps__tb:$COMMIT_SHA',
+      '--container-mount-host-path mount-path=~/shared,host-path=/shared,mode=rw'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [
