@@ -11,7 +11,7 @@ steps:
       '--machine-type=n1-standard-2', '--network=projects/sharp-imprint-213320/global/networks/default', '--network-tier=PREMIUM', '--metadata=google-logging-enabled=true',
       '--maintenance-policy=MIGRATE', '--service-account=702663043266-compute@developer.gserviceaccount.com',
       '--scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append',
-      '--tags=http-server,https-server', '--image=ubuntu-1810-cosmic-v20181203', '--image-project=cos-cloud', '--boot-disk-size=20GB', '--boot-disk-type=pd-standard',
+      '--tags=http-server,https-server', '--image=ubuntu-1810-cosmic-v20181203', '--boot-disk-size=20GB', '--boot-disk-type=pd-standard',
       '--container-restart-policy=always', '--labels=container-vm=ubuntu-1810-cosmic-v20181203',
       '--boot-disk-device-name=tb-app-staging-${COMMIT_SHA}',
       '--container-image=gcr.io/$PROJECT_ID/sciris_atomica_apps__tb:$COMMIT_SHA',
