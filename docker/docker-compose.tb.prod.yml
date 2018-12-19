@@ -20,8 +20,8 @@ services:
      - '8080:8080'
      - '8093:8093'
      - '80:80'
-     depends_on:
-     - workers 
+    depends_on:
+      - workers 
   workers:
     image: tb 
     command: python3 runtbworker.py
