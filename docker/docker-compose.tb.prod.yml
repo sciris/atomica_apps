@@ -29,5 +29,4 @@ services:
       - shared:/app
 volumes:
   shared: 
-    name: /opt/app
     external: true
