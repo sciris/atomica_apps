@@ -15,18 +15,17 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - shared:/app
+      - ..:/app
     ports:
      - '8080:8080'
      - '8093:8093'
      - '80:80'
+     depends_on:
+     - workers 
   workers:
     image: tb 
     command: python3 runtbworker.py
     stdin_open: true
     tty: true
     volumes:
-      - shared:/app
-volumes:
-  shared: 
-    external: false 
+      - ..:/app
