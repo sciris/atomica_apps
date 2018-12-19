@@ -14,8 +14,6 @@ services:
     command: python3 runtb.py 
     stdin_open: true
     tty: true
-    volumes:
-      - ..:/app
     ports:
      - '8080:8080'
      - '8093:8093'
@@ -35,5 +33,3 @@ services:
     command: python3 runtbworker.py
     stdin_open: true
     tty: true
-    volumes:
-      - ..:/app
