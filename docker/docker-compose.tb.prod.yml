@@ -1,20 +1,20 @@
-version: '3'
+version: '2'
 
 services:
   web:
     image: tb 
     build: 
-      context: .
+      context: ..
       args:
         PORT: '80'
         # REDIS_URL: 'redis://10.0.0.19:6379/7' # asia-southeast1-a
         REDIS_URL: 'redis://10.0.0.3:6379/7' # europe-west1-b
         CLIENT_DIR: '../dist/tb'
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     command: python3 runtb.py 
-    stdin_open: true
-    tty: true
+    volumes:
+      - ..:/app
     ports:
      - '8080:8080'
-     - '8093:8093'
+     - '8094:8094'
      - '80:80'
