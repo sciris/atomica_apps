@@ -12,8 +12,6 @@ services:
         CLIENT_DIR: '../dist/tb'
       dockerfile: docker/Dockerfile
     command: python3 runtb.py 
-    volumes:
-      - ..:/app
     ports:
      - '8080:8080'
      - '8094:8094'
