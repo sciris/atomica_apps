@@ -3,6 +3,8 @@
 ## Installation 
 To install this tool you need nodejs, docker and access to [GitHub - atomicateam/atomica: Atomica](https://github.com/atomicateam/atomica).
 
+
+
 **Step 1:**  Clone the repo
 
 ``` bash
