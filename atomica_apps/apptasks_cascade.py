@@ -1,5 +1,5 @@
 """
-apptasks_tb.py -- The Celery tasks module for this webapp
+apptasks_cascade.py -- The Celery tasks module for this webapp
     
 Last update: 2018sep23
 """
@@ -7,8 +7,8 @@ Last update: 2018sep23
 import sys
 import sciris as sc
 import scirisweb as sw
-from atomica_apps import rpcs
-from . import config_tb as config
+from . import rpcs
+from . import config_cascade as config
 import matplotlib.pyplot as ppl
 ppl.switch_backend(config.MATPLOTLIB_BACKEND)
 
@@ -35,7 +35,7 @@ celery_instance = sw.make_celery(config=config) # Create the Celery instance for
 
 
 @async_task
-def run_tb_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
+def run_cascade_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
     print('Running optimization...')
     sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'cascade', 'dosave'], color='blue')
     datastore = rpcs.find_datastore(config=config)

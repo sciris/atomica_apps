@@ -21,10 +21,10 @@ Last update: 2018sep25
 import os
 
 # A secret key value used by Python Flask.
-SECRET_KEY = 'deadcafebeefbabe'
+SECRET_KEY = 'deadbeefcafebabe'
 
 # Directory containing the client code.
-CLIENT_DIR = os.getenv('CLIENT_DIR')
+CLIENT_DIR = os.getenv('CLIENT_DIR', '../clients/cascade/dist')
 
 # Flag for setting whether we use the datastore functionality provided by
 # Sciris in the webapp.
@@ -33,7 +33,7 @@ USE_DATASTORE = True
 # URL for the Redis database that the web app will use to manage
 # persistence.  Note that the /N/ number at the end should match the
 # database number you want to use.  (N=0 is the default Redis database.)
-REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/7')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/8')
 
 # Flag for setting whether we use the users functionality provided by
 # Sciris in the webapp.
@@ -45,7 +45,7 @@ USE_USERS = True
 REGISTER_AUTOACTIVATE = True
 
 # Default server port
-SERVER_PORT = 80 
+SERVER_PORT = int(os.getenv('PORT', 8094))
 
 # Matplotlib backend
 MATPLOTLIB_BACKEND = 'Agg'
@@ -65,4 +65,4 @@ BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 
 # Slack logging configuration
-SLACK = {'webhook':'https://hooks.slack.com/services/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'}
+SLACK = {'webhook':'https://hooks.slack.com/services/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'}

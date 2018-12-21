@@ -20,5 +20,5 @@ for i,arg in enumerate(sys.argv[1:]):
         raise Exception(errormsg)
 
 # Run the server
-import atomica_config 
-atomica_config.main.run(which='tb', **kwargs)
+import atomica_apps
+atomica_apps.main.run(which='tb', **kwargs)

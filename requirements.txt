@@ -1,6 +1,6 @@
 scipy
 redis
 gitpython
-https://github.com/atomicateam/atomica/archive/develop.zip
+https://github.com/atomicateam/atomica/archive/feature/atomica_apps_prep.zip
 https://github.com/sciris/sciris/archive/master.zip
 https://github.com/sciris/scirisweb/archive/master.zip
