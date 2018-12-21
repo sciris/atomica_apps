@@ -24,8 +24,7 @@ RUN python3 -m pip install --upgrade https://github.com/celery/celery/tarball/ma
 ARG PORT
 ARG REDIS_URL
 ARG CLIENT_DIR 
-ARG CMD_SERVER
-ARG CMD_WORKER
+ARG CMD
 
 ENV PORT $PORT
 ENV REDIS_URL $REDIS_URL
@@ -36,5 +35,5 @@ ADD . /app
 RUN git clone https://github.com/sciris/mpld3.git
 RUN cd mpld3 && python3 setup.py submodule && python3 setup.py install
 
-RUN $CMD_WORKER &
-RUN $CMD_SERVER &
+ENTRYPOINT [$CMD]
+
