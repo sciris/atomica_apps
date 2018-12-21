@@ -16,8 +16,7 @@ steps:
       '--boot-disk-device-name=tb-app-staging-${COMMIT_SHA}',
       '--container-image=gcr.io/$PROJECT_ID/sciris_atomica_apps__tb:$COMMIT_SHA',
       '--container-stdin',
-      '--container-tty',
-      '--container-privileged'
+      '--container-tty'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [
