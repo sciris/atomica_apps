@@ -6,7 +6,7 @@ services:
     build: 
       context: ..
       args:
-        PORT: '80'
+        PORT: '8094'
         # REDIS_URL: 'redis://10.0.0.19:6379/7' # asia-southeast1-a
         REDIS_URL: 'redis://10.0.0.3:6379/7' # europe-west1-b
         CLIENT_DIR: '../dist/tb'
