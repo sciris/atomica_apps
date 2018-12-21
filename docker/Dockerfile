@@ -37,4 +37,4 @@ RUN git clone https://github.com/sciris/mpld3.git
 RUN cd mpld3 && python3 setup.py submodule && python3 setup.py install
 
 RUN $CMD_WORKER &
-RUN $CMD_SERVER
+RUN $CMD_SERVER &
