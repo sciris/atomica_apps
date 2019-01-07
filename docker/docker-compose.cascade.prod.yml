@@ -2,7 +2,7 @@ version: '3'
 
 services:
   web:
-    image: tb 
+    image: cascade
     build: 
       context: ..
       args:
