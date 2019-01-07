@@ -1,0 +1,8 @@
+#cloudbuild.yaml
+steps:
+  - name: 'docker/compose:1.22.0'
+    args: ['-f', 'docker/docker-compose.cascade.prod.yml', 'up', '-d']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['tag', 'cascade:latest', 'gcr.io/$PROJECT_ID/sciris_atomica_apps__cascade:$COMMIT_SHA']
+images: ['gcr.io/$PROJECT_ID/sciris_atomica_apps__cascade:$COMMIT_SHA']
+timeout: 1200s
