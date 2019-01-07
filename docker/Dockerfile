@@ -5,7 +5,7 @@ RUN apt-get update -y
 RUN python3 -m ensurepip
 
 # Set up apt-get
-RUN apt-get install -y apt-utils gnupg curl libgl1-mesa-glx gcc redis-server 
+RUN apt-get install -y apt-utils gnupg curl libgl1-mesa-glx gcc redis-server supervisord 
 
 RUN apt-get install -y python3-matplotlib
 
@@ -24,11 +24,9 @@ RUN python3 -m pip install --upgrade https://github.com/celery/celery/tarball/ma
 ARG PORT
 ARG REDIS_URL
 ARG CLIENT_DIR 
-ARG WORKER 
-ARG SERVER 
+ARG SUPERVISOR_CONF 
 
-ENV SERVER $SERVER 
-ENV WORKER $WORKER 
+ENV SUPERVISOR_CONF $SUPERVISOR_CONF
 ENV PORT $PORT
 ENV REDIS_URL $REDIS_URL
 ENV CLIENT_DIR $CLIENT_DIR
@@ -38,4 +36,4 @@ ADD . /app
 RUN git clone https://github.com/sciris/mpld3.git
 RUN cd mpld3 && python3 setup.py submodule && python3 setup.py install
 
-ENTRYPOINT ["sh", "-c", "python3 $SERVER"]
+CMD supervisord -c $SUPERVISOR_CONF
