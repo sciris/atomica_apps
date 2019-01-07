@@ -26,6 +26,7 @@ ARG REDIS_URL
 ARG CLIENT_DIR 
 ARG CMD
 
+ENV CMD $CMD
 ENV PORT $PORT
 ENV REDIS_URL $REDIS_URL
 ENV CLIENT_DIR $CLIENT_DIR
@@ -36,4 +37,3 @@ RUN git clone https://github.com/sciris/mpld3.git
 RUN cd mpld3 && python3 setup.py submodule && python3 setup.py install
 
 ENTRYPOINT [$CMD]
-
