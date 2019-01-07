@@ -10,7 +10,7 @@ services:
         # REDIS_URL: 'redis://10.0.0.19:6379/7' # asia-southeast1-a
         REDIS_URL: 'redis://10.0.0.3:6379/7' # europe-west1-b
         CLIENT_DIR: '../dist/tb'
-        SUPERVISOR_CONF: "/app/etc/supervisor.tb.conf"
+        SUPERVISOR_CONF: "/app/etc/supervisord.tb.conf"
       dockerfile: docker/Dockerfile
     command: python3 runtb.py 
     stdin_open: true
