@@ -77,3 +77,4 @@ __pycache__/
 static/debug/
 package-lock.json
 debug/
+.idea
