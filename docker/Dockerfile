@@ -7,7 +7,7 @@ RUN python3 -m ensurepip
 # Set up apt-get
 RUN apt-get install -y apt-utils gnupg curl libgl1-mesa-glx gcc redis-server supervisor 
 
-RUN apt-get install -y python3-matplotlib
+#RUN apt-get install -y python3-matplotlib # Shouldn't be necessary?
 
 RUN apt-get install -y freetype*
 

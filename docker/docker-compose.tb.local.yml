@@ -14,7 +14,7 @@ services:
         REDIS_URL: 'redis://redis_db:6379' 
         CLIENT_DIR: '../debug/tb'
       dockerfile: docker/Dockerfile
-    command: python3 server_tb.py
+    command: python3 bin/server_tb.py
     stdin_open: true
     tty: true
     volumes:
@@ -25,7 +25,7 @@ services:
      - '80:80'
   workers:
     image: tb 
-    command: python3 worker_tb.py
+    command: python3 bin/worker_tb.py
     stdin_open: true
     tty: true
     volumes:

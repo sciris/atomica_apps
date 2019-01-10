@@ -3,10 +3,17 @@
 
 from setuptools import setup, find_packages
 
-with open("./atomica_apps/version.py", "r") as f:
-    version_file = {}
-    exec(f.read(), version_file)
-    version = version_file["__version__"]
+def readversion(filename, varname):
+    ''' Get the version without the need to execute the file '''
+    version = None
+    with open(filename, "r") as f:
+        for line in f:
+            if line.startswith(varname):
+                version = line.split('=')[1].replace('"','').replace("'",'').strip()
+    if version is None:
+        raise Exception('Could not read version from file %s' % filename)
+    return version
+
 
 CLASSIFIERS = [
     'Environment :: Console',
@@ -21,7 +28,7 @@ CLASSIFIERS = [
 
 setup(
     name='atomica_apps',
-    version=version,
+    version=readversion(filename="./atomica_apps/version.py", varname='__version__'),
     author='Cliff Kerr, George Chadderdon, Parham Saidi, Vlad-Stefan Harbuz, James Jansson, Romesh Abeysuriya, Robyn Stuart',
     author_email='info@sciris.org',
     description='Frontend for Atomica',
