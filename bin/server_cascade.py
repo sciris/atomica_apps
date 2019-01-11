@@ -7,8 +7,6 @@ print('#########################################')
 print('Starting the Cascade server...')
 print('#########################################')
 
-sys.path.insert(0, ".") 
-
 # Process arguments
 kwargs = {}
 for i,arg in enumerate(sys.argv[1:]):

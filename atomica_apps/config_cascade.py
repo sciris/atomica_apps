@@ -25,7 +25,7 @@ SECRET_KEY = 'deadbeefcafebabe'
 
 # Directory containing the client code.
 
-CLIENT_DIR = os.getenv('CLIENT_DIR', '../debug/cascade')
+CLIENT_DIR = os.getenv('CLIENT_DIR', '../dist/cascade')
 
 # Flag for setting whether we use the datastore functionality provided by
 # Sciris in the webapp.

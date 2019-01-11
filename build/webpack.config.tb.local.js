@@ -21,7 +21,7 @@ module.exports = merge(base, {
   output: {
 		filename: "[name].[hash].js",
     publicPath: "",
-		path: resolve('debug/tb/'),
+		path: resolve('dist/tb/'),
   },
   entry: [
     './src/tb/index.js'
@@ -34,15 +34,15 @@ module.exports = merge(base, {
     new CopyWebpackPlugin([
       {
         from: 'assets/',
-        to: resolve('debug/tb/static/'),
+        to: resolve('dist/tb/static/'),
       }
     ]),
     new CleanWebpackPlugin([
-      resolve('debug/tb/')
+      resolve('dist/tb/')
     ], {
       watch: false,
       exclude: [
-        resolve('debug/tb/static/')
+        resolve('dist/tb/static/')
       ],
       allowExternal: true
     })
