@@ -42,7 +42,7 @@ module.exports = merge(base, {
     ], {
       watch: false,
       exclude: [
-        resolve('debug/tb/static/')
+        resolve('dist/tb/static/')
       ],
       allowExternal: true
     })
