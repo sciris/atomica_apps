@@ -2,6 +2,9 @@
 
 # Imports
 import sys
+
+sys.path.insert(0, ".") 
+
 import atomica_apps.apptasks_tb as at
 
 # If running on Windows, use eventlets

@@ -19,7 +19,6 @@ import sciris as sc
 import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
-from . import version as appv
 pl.rc('font', size=14)
 
 # Globals
@@ -46,12 +45,13 @@ def get_path(filename=None, username=None):
 @RPC()
 def get_version_info():
 	''' Return the information about the running environment '''
+	gitinfo = sc.gitinfo(__file__)
 	version_info = sc.odict({
-	       'version':   appv.__version__,
-	       'date':      appv.__versiondate__,
-	       'gitbranch': appv.__gitinfo__['branch'],
-	       'githash':   appv.__gitinfo__['hash'],
-	       'gitdate':   appv.__gitinfo__['date'],
+	       'version':   at.__version__,
+	       'date':      at.__versiondate__,
+	       'gitbranch': gitinfo['branch'],
+	       'githash':   gitinfo['hash'],
+	       'gitdate':   gitinfo['date'],
             'server':    socket.gethostname(),
             'cpu':       '%0.1f%%' % psutil.cpu_percent(),
 	})

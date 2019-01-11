@@ -36,4 +36,10 @@ ADD . /app
 RUN git clone https://github.com/sciris/mpld3.git
 RUN cd mpld3 && python3 setup.py submodule && python3 setup.py install
 
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get install -y nodejs
+RUN npm i
+RUN npm rebuild node-sass
+RUN npm run build
+
 CMD supervisord -c $SUPERVISOR_CONF
