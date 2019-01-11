@@ -33,6 +33,8 @@ ENV CLIENT_DIR $CLIENT_DIR
 
 ADD . /app
 
+RUN python3 setup.py develop 
+
 RUN git clone https://github.com/sciris/mpld3.git
 RUN cd mpld3 && python3 setup.py submodule && python3 setup.py install
 

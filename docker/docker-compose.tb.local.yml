@@ -14,7 +14,7 @@ services:
         REDIS_URL: 'redis://redis_db:6379' 
         CLIENT_DIR: '../dist/tb'
       dockerfile: docker/Dockerfile
-    command: python3.5 bin/server_tb.py
+    command: python3 bin/server_tb.py
     stdin_open: true
     tty: true
     volumes:
