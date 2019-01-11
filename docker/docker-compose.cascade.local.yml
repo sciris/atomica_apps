@@ -12,7 +12,7 @@ services:
       args:
         PORT: '80'
         REDIS_URL: 'redis://redis_db:6379' 
-        CLIENT_DIR: '../debug/cascade'
+        CLIENT_DIR: '../dist/cascade'
       dockerfile: docker/Dockerfile
     command: python3.5 bin/server_cascade.py 
     stdin_open: true
