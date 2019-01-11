@@ -10,9 +10,9 @@ services:
         # REDIS_URL: 'redis://10.0.0.19:6379/8' # asia-southeast1-a
         REDIS_URL: 'redis://10.0.0.3:6379/8' # europe-west1-b
         CLIENT_DIR: '../dist/cascade'
-        SUPERVISOR_CONF: "/app/etc/supervisord.cascade.conf"
+        SUPERVISOR_CONF: "docker/supervisord.cascade.conf"
       dockerfile: docker/Dockerfile
-    command: python3 runcascade.py 
+    command: python3 bin/server_cascade.py 
     stdin_open: true
     tty: true
     volumes:

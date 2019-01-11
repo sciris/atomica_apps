@@ -321,6 +321,7 @@ Last update: 2018oct04
 
 <script>
 import { mixins } from 'sciris-uikit';
+import sciris from 'sciris-js';
 import router from '../router.js'
 
 export default {

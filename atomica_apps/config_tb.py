@@ -24,7 +24,7 @@ import os
 SECRET_KEY = 'deadcafebeefbabe'
 
 # Directory containing the client code.
-CLIENT_DIR = os.getenv('CLIENT_DIR', '../clients/tb/dist')
+CLIENT_DIR = os.getenv('CLIENT_DIR', '../dist/tb')
 
 # Flag for setting whether we use the datastore functionality provided by
 # Sciris in the webapp.
