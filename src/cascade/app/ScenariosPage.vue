@@ -288,23 +288,108 @@ Last update: 2018-09-09
 </template>
 
 <script>
-  import MultibarView from './Vis/Multibar/MultibarView.vue'
-  import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
+import { mixins } from 'sciris-uikit';
+import MultibarView from './Vis/Multibar/MultibarView.vue'
+import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
+import sciris from 'sciris-js';
 
-  export default {
-    name: 'ScenariosPage',
-    components: {
-      MultibarView,
-      StackedBarView,
-    },
-    mixins: [
-      mixins.ScenarioMixin
-    ],
-    methods: {
-      toolName: function(){
-        return this.$toolName; 
-      }
+export default {
+  
+  name: 'ScenariosPage',
+
+  components: {
+    MultibarView,
+    StackedBarView,
+  },
+
+  mixins: [
+    mixins.ScenarioMixin
+  ],
+
+  data() {
+    return {
+      // Parameter and program set information
+      activeParset:  -1,
+      activeProgset: -1,
+      parsetOptions: [],
+      progsetOptions: [],
+
+      // Plotting data
+      showPlotControls: false,
+      hasGraphs: false,
+      table: null,
+      startYear: 0,
+      endYear: 2018, // TEMP FOR DEMO
+      activePop: "All",
+      popOptions: [],
+      plotOptions: [],
+      yearOptions: [],
+      serverDatastoreId: '',
+      openDialogs: [],
+      showGraphDivs: [], // These don't actually do anything, but they're here for future use
+      showLegendDivs: [],
+      mousex:-1,
+      mousey:-1,
+      figscale: 1.0,
+
+      // Page-specific data
+      scenSummaries: [],
+      defaultBudgetScen: {},
+      scenariosLoaded: false,
+      addEditModal: {
+        scenSummary: {},
+        origName: '',
+        mode: 'add'
+      },
+
+      // Cascade plot data
+      jsonData: null,
+      jsonColors: [],
+
+      // Budget data
+      jsonBudgetData: null,
+      jsonBudgetColors: [],
+      
     }
+  },
+  methods: {
+    toolName: function(){
+      return this.$toolName; 
+    },
 
+
+    makeGraphs(graphdata){
+      this.jsonBudgetData = graphdata.jsonbudgetdata
+      this.jsonBudgetColors = graphdata.jsonbudgetcolors
+      this.jsonData = graphdata.jsondata
+      this.jsonColors = graphdata.jsoncolors
+      return sciris.makeGraphs(this, graphdata, '/scenarios')
+    },
+       
+    runScens() {
+      console.log('runScens() called')
+      this.validateYears()  // Make sure the start end years are in the right range.
+      status.start(this)
+      rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries]) // Make sure they're saved first
+        .then(response => {
+          // Go to the server to get the results from the package set.
+          rpcs.rpc('run_scenarios', [this.projectID, this.serverDatastoreId, this.plotOptions],
+            {saveresults: false, tool:this.$globaltool, plotyear:this.endYear, pops:this.activePop})
+            .then(response => {
+              this.table = response.data.table
+              this.makeGraphs(response.data)
+              this.jsonData = response.data.jsondata
+              this.jsonColors = response.data.jsoncolors
+              status.succeed(this, '') // Success message in graphs function
+            })
+            .catch(error => {
+              status.fail(this, 'Could not run scenarios', error)
+            })
+        })
+        .catch(error => {
+          status.fail(this, 'Could not set scenarios', error)
+        })
+    },
   }
+}
 </script>
