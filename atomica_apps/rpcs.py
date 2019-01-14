@@ -17,7 +17,7 @@ import mpld3
 import re
 import sciris as sc
 import scirisweb as sw
-import atomica as at
+import atomica.ui as au
 from matplotlib.legend import Legend
 pl.rc('font', size=14)
 
@@ -47,8 +47,8 @@ def get_version_info():
 	''' Return the information about the running environment '''
 	gitinfo = sc.gitinfo(__file__)
 	version_info = sc.odict({
-	       'version':   at.__version__,
-	       'date':      at.__versiondate__,
+	       'version':   au.version,
+	       'date':      au.versiondate,
 	       'gitbranch': gitinfo['branch'],
 	       'githash':   gitinfo['hash'],
 	       'gitdate':   gitinfo['date'],
@@ -163,6 +163,7 @@ def admin_reset_projects(username):
     output = datastore.saveuser(user)
     return output
     
+
 
 ##################################################################################
 ### Datastore functions
@@ -411,7 +412,7 @@ def get_demo_project_options():
     '''
     Return the available demo frameworks
     '''
-    options = at.default_project(show_options=True).values()
+    options = au.default_project(show_options=True).values()
     return options
 
 
@@ -422,10 +423,10 @@ def add_demo_project(username, project_name=None, tool=None):
     '''
     if tool == 'tb':
         project_name = 'Demo project'
-        proj = at.demo(which='tb', do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
+        proj = au.demo(which='tb', do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
     else:
         if project_name is None: project_name = 'default'
-        proj = at.demo(which=project_name, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
+        proj = au.demo(which=project_name, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
     proj.name = project_name
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
     print('Added demo project %s/%s' % (username, proj.name))
@@ -446,11 +447,11 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
     if tool is None or tool == 'cascade': # Optionally select by tool rather than frame
         frame = load_framework(framework_id, die=True) # Get the Framework object for the framework to be copied.
     elif tool == 'tb': # Or get a pre-existing one by the tool name
-        frame = at.demo(kind='framework', which='tb')
+        frame = au.demo(kind='framework', which='tb')
 
     if tool == 'tb': args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end), "num_transfers":1}
     else:            args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end)}
-    proj = at.Project(framework=frame, name=proj_name, sim_dt=sim_dt) # Create the project, loading in the desired spreadsheets.
+    proj = au.Project(framework=frame, name=proj_name, sim_dt=sim_dt) # Create the project, loading in the desired spreadsheets.
     print(">> create_new_project %s" % (proj.name))
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     full_file_name = get_path(file_name, username=username) # Generate the full file name with path.
@@ -488,7 +489,7 @@ def upload_project(prj_filename, username):
     '''
     print(">> create_project_from_prj_file '%s'" % prj_filename) # Display the call information.
     try: # Try to open the .prj file, and return an error message if this fails.
-        proj = at.Project.load(prj_filename) # NB. load via Project() method which automatically calls migration
+        proj = au.Project.load(prj_filename) # NB. load via Project() method which automatically calls migration
     except Exception:
         return { 'error': 'BadFileFormatError' }
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
@@ -642,14 +643,14 @@ def jsonify_frameworks(username, verbose=False):
 @RPC()
 def get_framework_options():
     ''' Return the available demo frameworks '''
-    options = at.default_framework(show_options=True).values()
+    options = au.default_framework(show_options=True).values()
     return options
 
 
 @RPC()
 def add_demo_framework(username, framework_name):
     ''' Add a demo framework '''
-    frame = at.demo(kind='framework', which=framework_name)  # Create the framework, loading in the desired spreadsheets.
+    frame = au.demo(kind='framework', which=framework_name)  # Create the framework, loading in the desired spreadsheets.
     save_new_framework(frame, username) # Save the new framework in the DataStore.
     print(">> add_demo_framework %s" % (frame.name))  
     return {'frameworkID': str(frame.uid) } # Return the new framework UID in the return message.
@@ -710,7 +711,7 @@ def download_new_framework(advanced=False):
     ''' Create a new framework. '''
     if advanced: filename = 'framework_template_advanced.xlsx'
     else:        filename = 'framework_template.xlsx'
-    filepath = at.LIBRARY_PATH+filename
+    filepath = au.atomica_path('atomica')+filename
     print(">> download_framework %s" % (filepath))
     return filepath # Return the filename
 
@@ -730,12 +731,12 @@ def upload_new_frameworkbook(filename, username):
     '''
     Given an .xlsx file name and a user UID, create a new framework from the file.
     '''
-    frame = at.ProjectFramework(filename)
+    frame = au.ProjectFramework(filename)
     if not frame.cascades:
-        at.validate_cascade(frame, None)
+        au.validate_cascade(frame, None)
     else:
         for cascade in frame.cascades:
-            at.validate_cascade(frame, cascade)
+            au.validate_cascade(frame, cascade)
     if frame.name is None: 
         frame.name = os.path.basename(filename) # Ensure that it's not None
         if frame.name.endswith('.xlsx'):
@@ -761,7 +762,7 @@ def get_y_factors(project_id, parsetname=-1, tool=None, verbose=False):
     count = -1
     for par in parset.pars.values():
         parname = par.name
-        this_par = parset.pars[parname]
+        this_par = parset.get_par(parname)
         this_spec = proj.framework.get_variable(parname)[0]
         if 'calibrate' in this_spec and this_spec['calibrate'] is not None:
             count += 1
@@ -805,7 +806,7 @@ def set_y_factors(project_id, parsetname=-1, parlist=None, tool=None, verbose=Fa
     parset = proj.parsets[parsetname]
     for newpar in parlist:
         parname = newpar['parname']
-        this_par = parset.pars[parname]
+        this_par = parset.get_par(parname)
         this_par.meta_y_factor = to_float(newpar['meta_y_factor'])
         if verbose: print('Metaparameter %10s: %s' % (parname, this_par.meta_y_factor))
         for newpoppar in newpar['pop_y_factors']:
@@ -857,7 +858,7 @@ def set_y_factors(project_id, parsetname=-1, parlist=None, tool=None, verbose=Fa
 def reconcile(project_id, parsetname=None, progsetname=-1, year=2018, unit_cost_bounds=0.2, outcome_bounds=0.2):
     ''' Reconcile parameter set and program set '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
-    reconciled_progset, progset_comparison, parameter_comparison = at.reconcile(project=proj, parset=parsetname, progset=progsetname, reconciliation_year=year,unit_cost_bounds=unit_cost_bounds, outcome_bounds=outcome_bounds)
+    reconciled_progset, progset_comparison, parameter_comparison = au.reconcile(project=proj, parset=parsetname, progset=progsetname, reconciliation_year=year,unit_cost_bounds=unit_cost_bounds, outcome_bounds=outcome_bounds)
     file_name = '%s_reconciled_program_book.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
     reconciled_progset.save(full_file_name)
@@ -1004,17 +1005,16 @@ def get_default_programs(fulloutput=False, verbose=True):
     
     # Get programs
     if verbose: print('get_default_programs(): Creating framework...')
-    F = at.demo(kind='framework', which='tb')
+    F = au.demo(kind='framework', which='tb')
     if verbose: print('get_default_programs(): Creating dict...')
     default_pops = sc.odict() # TODO - read in the pops from the defaults file instead of hard-coding them here
     for key in ['^0.*', '.*HIV.*', '.*[pP]rison.*', '^[^0](?!HIV)(?![pP]rison).*']:
         default_pops[key] = key
     if verbose: print('get_default_programs(): Creating project data...')
-    D = at.ProjectData.new(F, tvec=np.array([0]), pops=default_pops, transfers=0)
+    D = au.ProjectData.new(F, tvec=np.array([0]), pops=default_pops, transfers=0)
     if verbose: print('get_default_programs(): Loading spreadsheet...')
-    spreadsheetpath = at.LIBRARY_PATH + "tb_progbook_defaults.xlsx"
-    default_progset = at.ProgramSet.from_spreadsheet(spreadsheetpath, framework=F, data=D, _allow_missing_data=True)
-
+    spreadsheetpath = au.LIBRARY_PATH + "tb_progbook_defaults.xlsx"
+    default_progset = au.ProgramSet.from_spreadsheet(spreadsheetpath, framework=F, data=D)
 
     # Assemble dictionary
     if verbose: print('get_default_programs(): Assembling output...')
@@ -1072,7 +1072,7 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
         if active_progs_dict[prog.label]:
             progs[prog.name] = prog.label
 
-    user_progset = at.ProgramSet.new(framework=proj.framework,data=proj.data,progs=progs,tvec=np.arange(program_years[0],program_years[1]+1))
+    user_progset = au.ProgramSet.new(framework=proj.framework,data=proj.data,progs=progs,tvec=np.arange(program_years[0],program_years[1]+1))
 
     # Assign a template pop to each user pop
     # It stops after the first match, so the regex should be ordered in
@@ -1139,7 +1139,7 @@ def supported_plots_func(framework):
         df = framework.sheets['plots'][0]
         plots = sc.odict()
         for name,output in zip(df['name'], df['quantities']):
-            plots[name] = at.evaluate_plot_string(output)
+            plots[name] = au.evaluate_plot_string(output)
         return plots
 
 
@@ -1198,7 +1198,7 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
     data = proj.data if do_plot_data is True else None # Plot data unless asked not to
     for output in outputs:
         try:
-            plotdata = at.PlotData(results, outputs=list(output.values())[0], project=proj, pops=pops)
+            plotdata = au.PlotData(results, outputs=list(output.values())[0], project=proj, pops=pops)
             nans_replaced = 0
             for series in plotdata.series:
                 if replace_nans and any(np.isnan(series.vals)):
@@ -1210,11 +1210,11 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
             if nans_replaced: print('Warning: %s nans were replaced' % nans_replaced)
     
             if calibration:
-               if stacked: figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
-               else:       figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate') # Only plot data if not stacked
+               if stacked: figs = au.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
+               else:       figs = au.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate') # Only plot data if not stacked
             else:
-               if stacked: figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
-               else:       figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
+               if stacked: figs = au.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
+               else:       figs = au.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
             for fig in figs[0:-1]:
                 allfigjsons.append(customize_fig(fig=fig, output=output, plotdata=plotdata, xlims=xlims, figsize=figsize))
                 alllegendjsons.append(customize_fig(fig=figs[-1], output=output, plotdata=plotdata, xlims=xlims, figsize=figsize, is_legend=True))
@@ -1320,9 +1320,9 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
 #
 #    figs = []
 #    if budget:
-#        d = at.PlotData.programs(results, quantity='spending')
+#        d = au.PlotData.programs(results, quantity='spending')
 #        d.interpolate(year)
-#        budget_figs = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='horizontal')
+#        budget_figs = au.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='horizontal')
 #
 #        ax = budget_figs[0].axes[0]
 #        ax.set_xlabel('Spending ($/year)')
@@ -1335,8 +1335,8 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
 #        print('Budget plot succeeded')
 #
 #    if coverage:
-#        d = at.PlotData.programs(results,quantity='coverage_fraction')
-#        coverage_figs = at.plot_series(d, axis='results')
+#        d = au.PlotData.programs(results,quantity='coverage_fraction')
+#        coverage_figs = au.plot_series(d, axis='results')
 #        for fig,(output_name,output_label) in zip(coverage_figs,d.outputs.items()):
 #            fig.axes[0].set_title(output_label)
 #            series = d[d.results.keys()[0],d.pops.keys()[0],output_name]
@@ -1366,15 +1366,15 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     for y in range(len(years)):
         years[y] = float(years[y]) # Ensure it's a float
 
-    fig,table = at.plot_cascade(results, cascade=cascade, pops=pops, year=years, data=proj.data, show_table=False)
+    fig,table = au.plot_cascade(results, cascade=cascade, pops=pops, year=years, data=proj.data, show_table=False)
     figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
     figs.append(fig)
     legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
     
     if plot_budget:
-        d = at.PlotData.programs(results, quantity='spending')
+        d = au.PlotData.programs(results, quantity='spending')
         d.interpolate(year)
-        budgetfig = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='vertical')[0]
+        budgetfig = au.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='vertical')[0]
         budgetfig.set_size_inches(10, 4)
         budgetfig.get_axes()[0].set_position([0.15, 0.2, 0.35, 0.7])
 
@@ -1399,39 +1399,37 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
         pl.close(fig)
     
     jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
-    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors}
+    jsonbudgetdata,jsonbudgetcolors = get_json_budget(results=results)
+    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'jsonbudgetdata':jsonbudgetdata, 'jsonbudgetcolors':jsonbudgetcolors}
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
 
 def get_json_cascade(results,data):
-    '''
+    """
     Return all data to render cascade in FE, for multiple results
-   
-    INPUTS
-    - results - A Result, or list of Results
-    - data - A ProjectData instance (e.g. proj.data)
-   
-    OUTPUTS
-    - dict/json containing the data required to make the cascade plot on the FE
-      The dict has the following structure. Suppose we have
-   
-      cascade_data = get_json_cascade(results,data)
-   
-      Then the output of this function is (JSON equivalent of?):
-   
-      cascade_data['results'] - List of names of all results included (could render as checkboxes)
-      cascade_data['pops'] - List of names of all pops included (could render as checkboxes)
-      cascade_data['cascades'] - List of names of all cascades included (could render as dropdown)
-      cascade_data['stages'][cascade_name] - List of the names of the stages in a given cascade
-      cascade_data['t'][result_name] - Array of time values for the given result
-      cascade_data['model'][result_name][cascade_name][pop_name][stage_name] - Array of values, same size as cascade_data['t'][result_name] (this contains the values that end up in the bar)
-      cascade_data['data_t'] - Array of time values for the data
-      cascade_data['data'][cascade_name][pop_name][stage_name] - Array of values, same size as cascade_data['data_t'] (this contains the values to be plotted as scatter points)
-   
-      Note - the data values entered in the databook are sparse (typically there isn't a data point at every time). The arrays all have
-      the same size as cascade_data['data_t'], but contain `NaN` if the data was missing
-    '''
+
+    :param results: A Result, or list of Results
+    :param data: A ProjectData instance (e.g. proj.data)
+    :return: Tuple with
+        - A dict/json containing the data required to make the cascade plot on the FE (``jsondata``)
+        - A dict/json of colors to use (``jsoncolors``)
+
+    The structure of the output data dictionary is:
+
+    - jsondata['results'] - List of names of all results included (could render as checkboxes)
+    - jsondata['pops'] - List of names of all pops included (could render as checkboxes)
+    - jsondata['cascades'] - List of names of all cascades included (could render as dropdown)
+    - jsondata['stages'][cascade_name] - List of the names of the stages in a given cascade
+    - jsondata['t'][result_name] - Array of time values for the given result
+    - jsondata['model'][result_name][cascade_name][pop_name][stage_name] - Array of values, same size as jsondata['t'][result_name] (this contains the values that end up in the bar)
+    - jsondata['data_t'] - Array of time values for the data
+    - jsondata['data'][cascade_name][pop_name][stage_name] - Array of values, same size as jsondata['data_t'] (this contains the values to be plotted as scatter points)
+
+    Note that the data values entered in the databook are sparse (typically there isn't a data point at every time). The arrays all have
+    the same size as jsondata['data_t'], but contain `NaN` if the data was missing
+
+    """
 
     results = sc.promotetolist(results)
 
@@ -1456,7 +1454,7 @@ def get_json_cascade(results,data):
         for name, cascade in zip(cascade_data['cascades'],cascades):
             cascade_data['model'][result.name][name] = sc.odict()
             for pop_name, pop_label in zip(result.pop_names,result.pop_labels):
-                cascade_data['model'][result.name][name][pop_label],t = at.get_cascade_vals(result,cascade=cascade,pops=pop_name)
+                cascade_data['model'][result.name][name][pop_label],t = au.get_cascade_vals(result,cascade=cascade,pops=pop_name)
             cascade_data['stages'][name] = list(cascade_data['model'][result.name][name][pop_label].keys())
         cascade_data['t'][result.name] = t
 
@@ -1465,13 +1463,54 @@ def get_json_cascade(results,data):
     for name, cascade in zip(cascade_data['cascades'], cascades):
         cascade_data['data'][name] = sc.odict()
         for pop_name, pop_label in zip(results[0].pop_names, results[0].pop_labels):
-            cascade_data['data'][name][pop_label],t = at.get_cascade_data(data,results[0].framework, cascade=cascade,pops=pop_name)
+            cascade_data['data'][name][pop_label],t = au.get_cascade_data(data,results[0].framework, cascade=cascade,pops=pop_name)
     cascade_data['data_t'] = t
     
     jsondata = sc.sanitizejson(cascade_data)
     ncolors = len(result.pop_names)
     jsoncolors = sc.gridcolors(ncolors, ashex=True)
-    return jsondata,jsoncolors
+    return jsondata, jsoncolors
+
+def get_json_budget(results):
+    """
+    Return all data to render budget plots in FE, for multiple results
+
+    :param results: A Result, or list of Results
+    :return: Tuple with
+        - A dict/json containing the data required to make the budget plot on the FE (``jsondata``)
+        - A dict/json of colors to use (``jsoncolors``)
+
+    The structure of the output data dictionary is:
+
+    - budget_data['results'] - List of names of all results included (could render as checkboxes)
+    - budget_data['programs'] - List of all of the programs that are present across all results
+    - budget_data['t'][result_name] - List of all time values that are present for the given result
+    - budget_data['spending'][result_name][program_name] - Array of values, same size as budget_data[t][result_name], with the values to plot
+
+    """
+
+    results = sc.promotetolist(results)
+    budget_data = dict()
+    budget_data['results'] = [x.name for x in results]
+    budget_data['programs'] = []
+    budget_data['t'] = dict()
+    budget_data['spending'] = dict()
+
+    for result in results:
+
+        budget_data['programs'] += list(result.model.progset.programs.keys())
+        budget_data['t'][result.name] = np.arange(np.ceil(result.model.t[0]),np.floor(result.model.t[-1]))
+        budget_data['spending'][result.name] = dict()
+
+        d = au.PlotData.programs(result, quantity='spending')
+        d.interpolate(budget_data['t'][result.name])
+        for s in d.series:
+            budget_data['spending'][result.name][s.output] = s.vals
+
+    budget_data['programs'] = list(dict.fromkeys(budget_data['programs'])) # De-duplicate, preserving order
+    jsondata = sc.sanitizejson(budget_data)
+    jsoncolors = sc.gridcolors(len(budget_data['programs']), ashex=True)
+    return jsondata, jsoncolors
 
 
 @RPC()  
@@ -1504,91 +1543,51 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 def py_to_js_scen(py_scen, project=None):
     ''' Convert a Python to JSON representation of a scenario. The Python scenario might be a dictionary or an object. '''
     js_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname', 'start_year']
+    attrs = ['name', 'active', 'parsetname', 'progsetname', 'alloc_year']
     for attr in attrs:
         if isinstance(py_scen, dict):
             js_scen[attr] = py_scen[attr] # Copy the attributes directly
-            js_scen['which'] = py_scen['which']
         else:
             js_scen[attr] = getattr(py_scen, attr) # Copy the attributes into a dictionary
-            if isinstance(py_scen, at.BudgetScenario):
-                js_scen['which'] = 'budget'
-            else:
-                js_scen['which'] = 'coverage'
             
-    if js_scen['which'] == 'budget':
-        js_scen['alloc'] = []
-        if isinstance(py_scen, dict):
-            js_scen['alloc_year'] = py_scen['alloc_year']
-            alloc = py_scen['alloc']
-        else:
-            alloc = py_scen.alloc
-            js_scen['alloc_year'] = py_scen.alloc_year
-        for prog_name,budget in alloc.items():
-            prog_label = project.progset().programs[prog_name].label
-            if sc.isiterable(budget):
-                if len(budget)>1:
-                    raise Exception('Budget should only have a single element in it, not %s' % len(budget))
-                else:
-                    budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-            budgetstr = format(int(round(float(budget))), ',')
-            js_scen['alloc'].append([prog_name,budgetstr, prog_label])
-    else:
-        js_scen['coverage'] = []
-        if isinstance(py_scen, dict):
-            coverage = py_scen['coverage']
-            end_year = py_scen['end_year']
-        else:
-            coverage = py_scen.coverage
-            end_year = py_scen.end_year
-        for prog_name,cov in coverage.items():
-            prog_label = project.progset().programs[prog_name].label
-            cov1 = cov[0]
-            cov2 = cov[1]
-            covstr1 = '%0.2f' % cov1 if sc.isnumber(cov1) else ''
-            covstr2 = '%0.2f' % cov2 if sc.isnumber(cov2) else ''
-            js_scen['coverage'].append([prog_name, prog_label, covstr1, covstr2])
-            js_scen['end_year'] = end_year
+    js_scen['alloc'] = []
+    if isinstance(py_scen, dict): alloc = py_scen['alloc']
+    else:                         alloc = py_scen.alloc
+    for prog_name,budget in alloc.items():
+        prog_label = project.progset().programs[prog_name].label
+        if sc.isiterable(budget):
+            if len(budget)>1:
+                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
+            else:
+                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
+        budgetstr = format(int(round(float(budget))), ',')
+        js_scen['alloc'].append([prog_name,budgetstr, prog_label])
     return js_scen
 
 
 def js_to_py_scen(js_scen):
     ''' Convert a Python to JSON representation of a scenario '''
     py_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname', 'which']
+    attrs = ['name', 'active', 'parsetname', 'progsetname']
     for attr in attrs:
         py_scen[attr] = js_scen[attr] # Copy the attributes into a dictionary
-    if py_scen['which'] == 'budget':
-        py_scen['alloc_year'] = float(js_scen['alloc_year']) # Convert to number
-        py_scen['start_year'] = py_scen['alloc_year'] # Normally, the start year will be set by the set_scen_info() RPC but this is a fallback to ensure the scenario is still usable even if that step is omitted
-        py_scen['alloc'] = sc.odict()
-        for item in js_scen['alloc']:
-            prog_name = item[0]
-            budget = item[1]
-            if sc.isstring(budget):
-                try:
-                    budget = to_float(budget)
-                except Exception as E:
-                    raise Exception('Could not convert budget to number: %s' % repr(E))
-            if sc.isiterable(budget):
-                if len(budget)>1:
-                    raise Exception('Budget should only have a single element in it, not %s' % len(budget))
-                else:
-                    budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-            py_scen['alloc'][prog_name] = to_float(budget)
-    else: # Coverage
-        py_scen['start_year'] = float(js_scen['start_year']) # Convert to number
-        py_scen['end_year'] = float(js_scen['end_year']) # Convert to number
-        py_scen['coverage'] = sc.odict()
-        for item in js_scen['coverage']:
-            prog_name = item[0]
-            coverage1 = item[2]
-            coverage2 = item[3]
-            try:    cov1float = to_float(coverage1)
-            except: cov1float = None
-            try:    cov2float = to_float(coverage2)
-            except: cov2float = None
-            py_scen['coverage'][prog_name] = [cov1float, cov2float]
+    py_scen['alloc_year'] = float(js_scen['alloc_year']) # Convert to number
+    py_scen['start_year'] = py_scen['alloc_year'] # Normally, the start year will be set by the set_scen_info() RPC but this is a fallback to ensure the scenario is still usable even if that step is omitted
+    py_scen['alloc'] = sc.odict()
+    for item in js_scen['alloc']:
+        prog_name = item[0]
+        budget = item[1]
+        if sc.isstring(budget):
+            try:
+                budget = to_float(budget)
+            except Exception as E:
+                raise Exception('Could not convert budget to number: %s' % repr(E))
+        if sc.isiterable(budget):
+            if len(budget)>1:
+                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
+            else:
+                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
+        py_scen['alloc'][prog_name] = to_float(budget)
     return py_scen
     
 
@@ -1619,7 +1618,7 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
         if verbose: 
             print('Python scenario info for scenario %s:' % (j+1))
             sc.pp(py_scen)
-        proj.make_scenario(which=py_scen['which'], json=py_scen)
+        proj.make_scenario(which='budget', json=py_scen)
     print('Saving project...')
     save_project(proj)
     return None
@@ -1630,16 +1629,6 @@ def get_default_budget_scen(project_id):
     print('Creating default scenario...')
     proj = load_project(project_id, die=True)
     py_scen = proj.demo_scenarios(doadd=False)
-    js_scen = py_to_js_scen(py_scen, project=proj)
-    print('Created default JavaScript scenario:')
-    sc.pp(js_scen)
-    return js_scen
-
-@RPC()    
-def get_default_coverage_scen(project_id):
-    print('Creating default coverage scenario...')
-    proj = load_project(project_id, die=True)
-    py_scen = proj.demo_scenarios(doadd=False, which='coverage')
     js_scen = py_to_js_scen(py_scen, project=proj)
     print('Created default JavaScript scenario:')
     sc.pp(js_scen)
@@ -1800,8 +1789,8 @@ def export_results(cache_id, username):
     results = load_result(cache_id) # Load the result from the cache and check if we got a result.
     if results is None:
         return { 'error': 'Failed to load plot results from cache' }
-    file_name = 'results.xlsx'
+    file_name = 'results.zip'
     full_file_name = get_path(file_name, username=username)
-    at.export_results(results, full_file_name)
+    au.export_results(results, full_file_name)
     print(">> export_results %s" % (full_file_name))
     return full_file_name # Return the filename
