@@ -4,7 +4,7 @@
 </template>
 
 <script>
-import * as d3 from '../../../static/d3.v5.min.js'
+import * as d3 from 'd3'
 import { sliderHorizontal } from './d3-time-slider.js'
 
 export default {

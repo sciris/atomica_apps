@@ -122,9 +122,8 @@ Last update: 2018-09-09
                   </div>
                 </div>
                 <!-- ### End: Cascade plot ### -->
-
                 <!-- ### Start: cascade table ### -->
-                <div v-if="$globaltool=='cascade' && table" class="calib-tables">
+                <div v-if="table" class="calib-tables">
                   <h4>Cascade stage losses</h4>
                   <table class="table table-striped" style="text-align:right;">
                     <thead>
@@ -192,9 +191,6 @@ Last update: 2018-09-09
 
           </div>  <!-- ### End: card body ### -->
         </div> <!-- ### End: results card ### -->
-
-        
-
       </div> <!-- ### End: PageSection/hasGraphs ### -->
 
       <!-- ### Start: JS Cascade plot ### -->
@@ -223,9 +219,7 @@ Last update: 2018-09-09
            :width="500"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
-           :adaptive="true"
-           :clickToClose="clickToClose"
-           :transition="transition">
+           :adaptive="true">
 
       <div class="dialog-content">
         <div class="dialog-c-title" v-if="addEditModal.mode=='add'">
@@ -293,299 +287,24 @@ Last update: 2018-09-09
   </div>
 </template>
 
-
 <script>
-  var filesaver = require('file-saver')
-  import axios  from 'axios'
-  import router from '@/router'
-  import utils  from '@/js/utils'
-  import graphs from '@/js/graphs'
-  import shared from '@/js/shared'
-  import rpcs   from '@/js/rpc-service'
-  import status from '@/js/status-service'
   import MultibarView from './Vis/Multibar/MultibarView.vue'
   import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
 
   export default {
     name: 'ScenariosPage',
-
     components: {
       MultibarView,
       StackedBarView,
     },
-
-    data() {
-      return {
-        // Parameter and program set information
-        activeParset:  -1,
-        activeProgset: -1,
-        parsetOptions: [],
-        progsetOptions: [],
-
-        // Plotting data
-        showPlotControls: false,
-        hasGraphs: false,
-        table: null,
-        startYear: 0,
-        endYear: 2018, // TEMP FOR DEMO
-        activePop: "All",
-        popOptions: [],
-        plotOptions: [],
-        yearOptions: [],
-        serverDatastoreId: '',
-        openDialogs: [],
-        showGraphDivs: [], // These don't actually do anything, but they're here for future use
-        showLegendDivs: [],
-        mousex:-1,
-        mousey:-1,
-        figscale: 1.0,
-
-        // Page-specific data
-        scenSummaries: [],
-        defaultBudgetScen: {},
-        scenariosLoaded: false,
-        addEditModal: {
-          scenSummary: {},
-          origName: '',
-          mode: 'add'
-        },
-
-        // Cascade plot data
-        jsonData: null,
-        jsonColors: [],
-
-        // Budget data
-        jsonBudgetData: null,
-        jsonBudgetColors: [],
-      }
-    },
-
-    computed: {
-      projectID()    { return utils.projectID(this) },
-      hasData()      { return utils.hasData(this) },
-      hasPrograms()  { return utils.hasPrograms(this) },
-      simStart()     { return utils.dataEnd(this) },
-      simEnd()       { return utils.simEnd(this) },
-      projectionYears()     { return utils.projectionYears(this) },
-      activePops()   { return utils.activePops(this) },
-      placeholders() { return graphs.placeholders(this, 1) },
-    },
-
-    created() {
-      graphs.addListener(this)
-      graphs.createDialogs(this)
-      if ((this.$store.state.activeProject.project !== undefined) &&
-        (this.$store.state.activeProject.project.hasData) &&
-        (this.$store.state.activeProject.project.hasPrograms)) {
-        console.log('created() called')
-        this.startYear = this.simStart
-        this.endYear = this.simEnd
-        this.popOptions = this.activePops
-        this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
-        this.getPlotOptions(this.$store.state.activeProject.project.id)
-          .then(response => {
-            this.updateSets()
-              .then(response2 => {
-                // The order of execution / completion of these doesn't matter.
-                this.getScenSummaries()
-                this.getDefaultBudgetScen()
-                this.reloadGraphs(false)
-              })
-          })
-      }
-    },
-
+    mixins: [
+      mixins.ScenarioMixin
+    ],
     methods: {
-
-      validateYears()                   { return utils.validateYears(this) },
-      updateSets()                      { return shared.updateSets(this) },
-      exportGraphs()                    { return shared.exportGraphs(this) },
-      exportResults(datastoreID)        { return shared.exportResults(this, datastoreID) },
-      scaleFigs(frac)                   { return graphs.scaleFigs(this, frac)},
-      clearGraphs()                     { return graphs.clearGraphs(this) },
-      togglePlotControls()              { return graphs.togglePlotControls(this) },
-      getPlotOptions(project_id)        { return graphs.getPlotOptions(this, project_id) },
-      makeGraphs(graphdata)             {
-        this.jsonBudgetData = graphdata.jsonbudgetdata
-        this.jsonBudgetColors = graphdata.jsonbudgetcolors
-        this.jsonData = graphdata.jsondata
-        this.jsonColors = graphdata.jsoncolors
-        return graphs.makeGraphs(this, graphdata, '/scenarios')
-      },
-      reloadGraphs(showErr)             { return graphs.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) }, // Set to calibration=false, plotbudget=true
-      maximize(legend_id)               { return graphs.maximize(this, legend_id) },
-      minimize(legend_id)               { return graphs.minimize(this, legend_id) },
-
-      getDefaultBudgetScen() {
-        console.log('getDefaultBudgetScen() called')
-        rpcs.rpc('get_default_budget_scen', [this.projectID])
-          .then(response => {
-            this.defaultBudgetScen = response.data // Set the scenario to what we received.
-            console.log('This is the default:')
-            console.log(this.defaultBudgetScen);
-          })
-          .catch(error => {
-            status.fail(this, 'Could not get default budget scenario', error)
-          })
-      },
-
-      getScenSummaries() {
-        console.log('getScenSummaries() called')
-        status.start(this)
-        rpcs.rpc('get_scen_info', [this.projectID])
-          .then(response => {
-            this.scenSummaries = response.data // Set the scenarios to what we received.
-            console.log('Scenario summaries:')
-            console.log(this.scenSummaries)
-            this.scenariosLoaded = true
-            status.succeed(this, 'Scenarios loaded')
-          })
-          .catch(error => {
-            status.fail(this, 'Could not get scenarios', error)
-          })
-      },
-
-      setScenSummaries() {
-        console.log('setScenSummaries() called')
-        status.start(this)
-        rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries])
-          .then( response => {
-            status.succeed(this, 'Scenarios saved')
-          })
-          .catch(error => {
-            status.fail(this, 'Could not save scenarios', error)
-          })
-      },
-
-      addBudgetScenModal() {
-        // Open a model dialog for creating a new project
-        console.log('addBudgetScenModal() called');
-        rpcs.rpc('get_default_budget_scen', [this.projectID])
-          .then(response => {
-            this.defaultBudgetScen = response.data // Set the scenario to what we received.
-            this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
-            this.addEditModal.origName = this.addEditModal.scenSummary.name
-            this.addEditModal.mode = 'add'
-            this.$modal.show('add-budget-scen');
-            console.log(this.defaultBudgetScen)
-          })
-          .catch(error => {
-            status.fail(this, 'Could not open add scenario modal', error)
-          })
-      },
-
-      addBudgetScen() {
-        console.log('addBudgetScen() called')
-        this.$modal.hide('add-budget-scen')
-        status.start(this)
-        let newScen = _.cloneDeep(this.addEditModal.scenSummary) // Get the new scenario summary from the modal.
-        let scenNames = [] // Get the list of all of the current scenario names.
-        this.scenSummaries.forEach(scenSum => {
-          scenNames.push(scenSum.name)
-        })
-        if (this.addEditModal.mode == 'edit') { // If we are editing an existing scenario...
-          let index = scenNames.indexOf(this.addEditModal.origName) // Get the index of the original (pre-edited) name
-          if (index > -1) {
-            this.scenSummaries[index].name = newScen.name  // hack to make sure Vue table updated
-            this.scenSummaries[index] = newScen
-          }
-          else {
-            console.log('Error: a mismatch in editing keys')
-          }
-        }
-        else { // Else (we are adding a new scenario)...
-          newScen.name = utils.getUniqueName(newScen.name, scenNames)
-          this.scenSummaries.push(newScen)
-        }
-        console.log(newScen)
-        console.log(this.scenSummaries)
-        rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries])
-          .then( response => {
-            status.succeed(this, 'Scenario added')
-          })
-          .catch(error => {
-            status.fail(this, 'Could not add scenario', error)
-          })
-      },
-
-      editScen(scenSummary) {
-        // Open a model dialog for creating a new project
-        console.log('editScen() called');
-        this.defaultBudgetScen = scenSummary
-        console.log('defaultBudgetScen')
-        console.log(this.defaultBudgetScen)
-        this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
-        this.addEditModal.origName = this.addEditModal.scenSummary.name
-        this.addEditModal.mode = 'edit'
-        this.$modal.show('add-budget-scen');
-      },
-
-      copyScen(scenSummary) {
-        console.log('copyScen() called')
-        status.start(this)
-        var newScen = _.cloneDeep(scenSummary);
-        var otherNames = []
-        this.scenSummaries.forEach(scenSum => {
-          otherNames.push(scenSum.name)
-        })
-        newScen.name = utils.getUniqueName(newScen.name, otherNames)
-        this.scenSummaries.push(newScen)
-        rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries])
-          .then( response => {
-            status.succeed(this, 'Scenario copied')
-          })
-          .catch(error => {
-            status.fail(this, 'Could not copy scenario', error)
-          })
-      },
-
-      deleteScen(scenSummary) {
-        console.log('deleteScen() called')
-        status.start(this)
-        for(var i = 0; i< this.scenSummaries.length; i++) {
-          if(this.scenSummaries[i].name === scenSummary.name) {
-            this.scenSummaries.splice(i, 1);
-          }
-        }
-        rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries])
-          .then( response => {
-            status.succeed(this, 'Scenario deleted')
-          })
-          .catch(error => {
-            status.fail(this, 'Could not delete scenario', error)
-          })
-      },
-
-      runScens() {
-        console.log('runScens() called')
-        this.validateYears()  // Make sure the start end years are in the right range.
-        status.start(this)
-        rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries]) // Make sure they're saved first
-          .then(response => {
-            // Go to the server to get the results from the package set.
-            rpcs.rpc('run_scenarios', [this.projectID, this.serverDatastoreId, this.plotOptions],
-              {saveresults: false, tool:this.$globaltool, plotyear:this.endYear, pops:this.activePop})
-              .then(response => {
-                this.table = response.data.table
-                this.makeGraphs(response.data)
-                this.jsonData = response.data.jsondata
-                this.jsonColors = response.data.jsoncolors
-                status.succeed(this, '') // Success message in graphs function
-              })
-              .catch(error => {
-                status.fail(this, 'Could not run scenarios', error)
-              })
-          })
-          .catch(error => {
-            status.fail(this, 'Could not set scenarios', error)
-          })
-      },
-
+      toolName: function(){
+        return this.$toolName; 
+      }
     }
+
   }
 </script>
-
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-</style>

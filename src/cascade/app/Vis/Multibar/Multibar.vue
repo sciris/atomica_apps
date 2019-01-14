@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import * as d3 from '../../../../static/d3.v5.min.js'
+import * as d3 from 'd3'
 import cascadeStep from '../cascade-step'
 import { transformMultiData } from '../data-transform'
 

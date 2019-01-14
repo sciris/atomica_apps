@@ -5,7 +5,7 @@
  * Modified by Steven Tan
  */
 
-import * as d3 from '../../../static/d3.v5.min.js'
+import * as d3 from 'd3'
 
 var UPDATE_DURATION = 200;
 var SLIDER_END_PADDING = 8;
