@@ -19,7 +19,6 @@ import sciris as sc
 import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
-from . import version as appv
 pl.rc('font', size=14)
 
 # Globals
@@ -46,12 +45,13 @@ def get_path(filename=None, username=None):
 @RPC()
 def get_version_info():
 	''' Return the information about the running environment '''
+	gitinfo = sc.gitinfo(__file__)
 	version_info = sc.odict({
-	       'version':   appv.__version__,
-	       'date':      appv.__versiondate__,
-	       'gitbranch': appv.__gitinfo__['branch'],
-	       'githash':   appv.__gitinfo__['hash'],
-	       'gitdate':   appv.__gitinfo__['date'],
+	       'version':   at.__version__,
+	       'date':      at.__versiondate__,
+	       'gitbranch': gitinfo['branch'],
+	       'githash':   gitinfo['hash'],
+	       'gitdate':   gitinfo['date'],
             'server':    socket.gethostname(),
             'cpu':       '%0.1f%%' % psutil.cpu_percent(),
 	})
@@ -163,14 +163,6 @@ def admin_reset_projects(username):
     output = datastore.saveuser(user)
     return output
     
-
-def admin_grab_projects(username1, username2):
-    ''' For use with run_query '''
-    user1 = datastore.loaduser(username1)
-    for projectkey in user1.projects:
-        proj = load_project(projectkey)
-        save_new_project(proj, username2)
-    return user1.projects
 
 ##################################################################################
 ### Datastore functions
@@ -1110,7 +1102,7 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
 
         # Copy assumptions from spending data
         u_prog.baseline_spend.assumption = d_prog.baseline_spend.assumption
-        u_prog.capacity_constraint.assumption = d_prog.capacity_constraint.assumption
+        u_prog.capacity.assumption = d_prog.capacity.assumption
         u_prog.coverage.assumption = d_prog.coverage.assumption
         u_prog.unit_cost.assumption = d_prog.unit_cost.assumption
         u_prog.spend_data.assumption = d_prog.spend_data.assumption
@@ -1512,51 +1504,91 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 def py_to_js_scen(py_scen, project=None):
     ''' Convert a Python to JSON representation of a scenario. The Python scenario might be a dictionary or an object. '''
     js_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname', 'alloc_year']
+    attrs = ['name', 'active', 'parsetname', 'progsetname', 'start_year']
     for attr in attrs:
         if isinstance(py_scen, dict):
             js_scen[attr] = py_scen[attr] # Copy the attributes directly
+            js_scen['which'] = py_scen['which']
         else:
             js_scen[attr] = getattr(py_scen, attr) # Copy the attributes into a dictionary
-            
-    js_scen['alloc'] = []
-    if isinstance(py_scen, dict): alloc = py_scen['alloc']
-    else:                         alloc = py_scen.alloc
-    for prog_name,budget in alloc.items():
-        prog_label = project.progset().programs[prog_name].label
-        if sc.isiterable(budget):
-            if len(budget)>1:
-                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
+            if isinstance(py_scen, at.BudgetScenario):
+                js_scen['which'] = 'budget'
             else:
-                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-        budgetstr = format(int(round(float(budget))), ',')
-        js_scen['alloc'].append([prog_name,budgetstr, prog_label])
+                js_scen['which'] = 'coverage'
+            
+    if js_scen['which'] == 'budget':
+        js_scen['alloc'] = []
+        if isinstance(py_scen, dict):
+            js_scen['alloc_year'] = py_scen['alloc_year']
+            alloc = py_scen['alloc']
+        else:
+            alloc = py_scen.alloc
+            js_scen['alloc_year'] = py_scen.alloc_year
+        for prog_name,budget in alloc.items():
+            prog_label = project.progset().programs[prog_name].label
+            if sc.isiterable(budget):
+                if len(budget)>1:
+                    raise Exception('Budget should only have a single element in it, not %s' % len(budget))
+                else:
+                    budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
+            budgetstr = format(int(round(float(budget))), ',')
+            js_scen['alloc'].append([prog_name,budgetstr, prog_label])
+    else:
+        js_scen['coverage'] = []
+        if isinstance(py_scen, dict):
+            coverage = py_scen['coverage']
+            end_year = py_scen['end_year']
+        else:
+            coverage = py_scen.coverage
+            end_year = py_scen.end_year
+        for prog_name,cov in coverage.items():
+            prog_label = project.progset().programs[prog_name].label
+            cov1 = cov[0]
+            cov2 = cov[1]
+            covstr1 = '%0.2f' % cov1 if sc.isnumber(cov1) else ''
+            covstr2 = '%0.2f' % cov2 if sc.isnumber(cov2) else ''
+            js_scen['coverage'].append([prog_name, prog_label, covstr1, covstr2])
+            js_scen['end_year'] = end_year
     return js_scen
 
 
 def js_to_py_scen(js_scen):
     ''' Convert a Python to JSON representation of a scenario '''
     py_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname']
+    attrs = ['name', 'active', 'parsetname', 'progsetname', 'which']
     for attr in attrs:
         py_scen[attr] = js_scen[attr] # Copy the attributes into a dictionary
-    py_scen['alloc_year'] = float(js_scen['alloc_year']) # Convert to number
-    py_scen['start_year'] = py_scen['alloc_year'] # Normally, the start year will be set by the set_scen_info() RPC but this is a fallback to ensure the scenario is still usable even if that step is omitted
-    py_scen['alloc'] = sc.odict()
-    for item in js_scen['alloc']:
-        prog_name = item[0]
-        budget = item[1]
-        if sc.isstring(budget):
-            try:
-                budget = to_float(budget)
-            except Exception as E:
-                raise Exception('Could not convert budget to number: %s' % repr(E))
-        if sc.isiterable(budget):
-            if len(budget)>1:
-                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
-            else:
-                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-        py_scen['alloc'][prog_name] = to_float(budget)
+    if py_scen['which'] == 'budget':
+        py_scen['alloc_year'] = float(js_scen['alloc_year']) # Convert to number
+        py_scen['start_year'] = py_scen['alloc_year'] # Normally, the start year will be set by the set_scen_info() RPC but this is a fallback to ensure the scenario is still usable even if that step is omitted
+        py_scen['alloc'] = sc.odict()
+        for item in js_scen['alloc']:
+            prog_name = item[0]
+            budget = item[1]
+            if sc.isstring(budget):
+                try:
+                    budget = to_float(budget)
+                except Exception as E:
+                    raise Exception('Could not convert budget to number: %s' % repr(E))
+            if sc.isiterable(budget):
+                if len(budget)>1:
+                    raise Exception('Budget should only have a single element in it, not %s' % len(budget))
+                else:
+                    budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
+            py_scen['alloc'][prog_name] = to_float(budget)
+    else: # Coverage
+        py_scen['start_year'] = float(js_scen['start_year']) # Convert to number
+        py_scen['end_year'] = float(js_scen['end_year']) # Convert to number
+        py_scen['coverage'] = sc.odict()
+        for item in js_scen['coverage']:
+            prog_name = item[0]
+            coverage1 = item[2]
+            coverage2 = item[3]
+            try:    cov1float = to_float(coverage1)
+            except: cov1float = None
+            try:    cov2float = to_float(coverage2)
+            except: cov2float = None
+            py_scen['coverage'][prog_name] = [cov1float, cov2float]
     return py_scen
     
 
@@ -1587,7 +1619,7 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
         if verbose: 
             print('Python scenario info for scenario %s:' % (j+1))
             sc.pp(py_scen)
-        proj.make_scenario(which='budget', json=py_scen)
+        proj.make_scenario(which=py_scen['which'], json=py_scen)
     print('Saving project...')
     save_project(proj)
     return None
@@ -1598,6 +1630,16 @@ def get_default_budget_scen(project_id):
     print('Creating default scenario...')
     proj = load_project(project_id, die=True)
     py_scen = proj.demo_scenarios(doadd=False)
+    js_scen = py_to_js_scen(py_scen, project=proj)
+    print('Created default JavaScript scenario:')
+    sc.pp(js_scen)
+    return js_scen
+
+@RPC()    
+def get_default_coverage_scen(project_id):
+    print('Creating default coverage scenario...')
+    proj = load_project(project_id, die=True)
+    py_scen = proj.demo_scenarios(doadd=False, which='coverage')
     js_scen = py_to_js_scen(py_scen, project=proj)
     print('Created default JavaScript scenario:')
     sc.pp(js_scen)
