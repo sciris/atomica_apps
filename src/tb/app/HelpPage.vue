@@ -61,6 +61,9 @@ import { mixins } from 'sciris-uikit';
 
 export default {
   name: 'About',
+  mixins: [
+    mixins.HelpMixin
+  ],
   methods: {
     verboseToolName() {
       return 'Optima TB'
