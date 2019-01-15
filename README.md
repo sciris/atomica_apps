@@ -1,6 +1,6 @@
 # atomica_app
 
-## Installation 
+## Installation
 To install this tool you need nodejs, docker and access to [GitHub - atomicateam/atomica: Atomica](https://github.com/atomicateam/atomica).
 
 **Step 1:**  Clone the repo
@@ -11,9 +11,9 @@ git clone git@github.com:sciris/atomica_apps.git
 
 **Step 2:** Install `docker-machine` and `docker-compose`
 
-Instructions for `docker-machine` installation can be found here: [Install Docker Machine | Docker Documentation](https://docs.docker.com/machine/install-machine/). For MacOS you can use homebrew if you have it installed using `brew install docker-machine`
+Instructions for `docker-machine` installation can be found here: [Install Docker Machine | Docker Documentation](https://docs.docker.com/machine/install-machine/). For MacOS you can use homebrew if you have it installed using `brew install docker-machine`.
 
-Instruction for docker-compose installation can be found here: [Install Docker Compose | Docker Documentation](https://docs.docker.com/compose/install/#master-builds) . For MacOS you can use homebrew if you have it installed using `brew install docker-compose`
+Instruction for docker-compose installation can be found here: [Install Docker Compose | Docker Documentation](https://docs.docker.com/compose/install/#master-builds) . For MacOS you can use homebrew if you have it installed using `brew install docker-compose`; on Linux, `sudo apt install docker-compose`.
 
 **Step 3:**  Build the images locally
 
@@ -23,7 +23,7 @@ Change to the root of the `atomica_apps` dir:
 cd atomica_apps
 ```
 
-To build and run `cascade`:
+To build and run `cascade` (NB, on Linux may need to be run as `sudo`):
 
 ```
 docker-compose -f docker/docker-compose.cascade.local.yml build
@@ -53,12 +53,12 @@ Go to the the root of `atomica_apps` repo and then:
 
 ```
 cd static
-npm install 
+npm install
 ```  
 
 **Step 3:** Build or Watch
 
-Once that’s done you can run `npm run watchtb` or `npm run watchcascade` in order to track changes  and rebuild the specific app in `debug/<app_name>/`. 
+Once that’s done you can run `npm run watchtb` or `npm run watchcascade` in order to track changes  and rebuild the specific app in `debug/<app_name>/`.
 
 ## Building the frontend for distribution
 
