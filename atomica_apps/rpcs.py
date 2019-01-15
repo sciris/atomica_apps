@@ -424,17 +424,26 @@ def get_demo_project_options():
 
 
 @RPC()
-def add_demo_project(username, project_name=None, tool=None):
-    '''
+def add_demo_project(username, model, tool):
+    """
     Add a demo project
-    '''
+
+    The demo project will automatically be given the name "Demo project"
+
+    :param username:
+    :param model: A string matching a model e.g. ``'tb'``, ``'udt'``
+    :param tool: The FE tool e.g. ``'cascades'``
+    :return: Dict with new project ID
+
+    """
+
+    print(model)
+    print(tool)
     if tool == 'tb':
-        project_name = 'Demo project'
-        proj = at.demo(which='tb', do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
+        proj = at.demo(which=model, do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
     else:
-        if project_name is None: project_name = 'default'
-        proj = at.demo(which=project_name, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
-    proj.name = project_name
+        proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
+    proj.name = 'Demo project'
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
     print('Added demo project %s/%s' % (username, proj.name))
     return {'projectID': str(proj.uid)} # Return the new project UID in the return message.
