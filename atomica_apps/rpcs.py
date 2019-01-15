@@ -1408,6 +1408,8 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     
     jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
     jsonbudgetdata,jsonbudgetcolors = get_json_budget(results=results)
+    print(jsonbudgetdata)
+    print(jsonbudgetcolors)
     output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'jsonbudgetdata':jsonbudgetdata, 'jsonbudgetcolors':jsonbudgetcolors}
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
@@ -1505,6 +1507,11 @@ def get_json_budget(results):
     budget_data['spending'] = dict()
 
     for result in results:
+
+        if not result.used_programs:
+            budget_data['t'][result.name] = []
+            budget_data['spending'][result.name] = dict()
+            continue
 
         budget_data['programs'] += list(result.model.progset.programs.keys())
         budget_data['t'][result.name] = np.arange(np.ceil(result.model.t[0]),np.floor(result.model.t[-1]))

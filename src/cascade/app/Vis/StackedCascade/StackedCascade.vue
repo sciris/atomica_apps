@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import * as d3 from '../d3.v5.min.js'
+import * as d3 from 'd3'
 import { transformDataForChartRender } from '../data-transform'
 import cascadeStep from '../cascade-step'
 
@@ -118,11 +118,11 @@ export default {
     scenario() {
       this.update()
     },
-    colourScheme(newData) {
-      this.colours = newData
-      this.setupLegend(this.keys)
-      this.update()
-    }
+    // colourScheme(newData) {
+    //   this.colours = newData
+    //   this.setupLegend(this.keys)
+    //   this.update()
+    // }
   },
 
   created() {

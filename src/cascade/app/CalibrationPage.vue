@@ -212,6 +212,16 @@ Last update: 2018-10-05
           </div>  <!-- ### End: card body ### -->
         </div> <!-- ### End: results card ### -->
       </div> <!-- ### End: PageSection/hasGraphs ### -->
+
+      <!-- ### Start: JS Cascade plot ### -->
+       <div style="margin: 0 auto;">
+         <stacked-cascade-view class="cascade"
+           :cascadeData="jsonData"
+           :colourScheme="jsonColors"
+         />
+       </div>
+       <!-- ### End: Cascade plot ### -->
+       
     </div> <!-- ### End: v-else project (results) ### -->
 
 
@@ -251,16 +261,103 @@ Last update: 2018-10-05
 
 <script>
 import { mixins } from 'sciris-uikit';
+import sciris from 'sciris-js';
+import StackedCascadeView from './Vis/StackedCascade/StackedCascadeView.vue' 
 
 export default {
   name: 'CalibrationPage',
   mixins: [
     mixins.CalibrationMixin 
   ],
+
+  // These get merged into the mixin
+  data() {
+    return {
+      jsonData: null,
+      jsonColors: [],
+    }
+  },
+
+  // Subcomponents are defined in this instance too
+  components: {
+    StackedCascadeView,
+  },
+
+  // Methods are merged with the ones here taking priority
   methods: {
     toolName: function(){
       return this.$toolName; 
-    }
+    },
+
+    makeGraphs(graphdata){
+      this.jsonData = graphdata.jsondata
+      this.jsonColors = graphdata.jsoncolors
+      return sciris.makeGraphs(this, graphdata, '/calibration') // Todo: remove this after changeover is complete
+    },
+
+    // TODO: There must be a better way than duplicating these here
+    manualCalibration(project_id) {
+      console.log('manualCalibration() called')
+      this.validateYears()  // Make sure the start end years are in the right range.
+      sciris.start(this)
+      sciris.rpc('manual_calibration', [
+        project_id, 
+        this.serverDatastoreId
+      ], {
+        'parsetname': this.activeParset, 
+        'plot_options': this.plotOptions,
+        'plotyear':this.endYear, 
+        'pops':this.activePop, 
+        'tool': this.toolName(), 
+        'cascade':null
+      }) // Go to the server to get the results
+      .then(response => {
+        this.makeGraphs(response.data)
+        this.table = response.data.table
+        this.jsonData = response.data.jsondata // TODO: This line and the one below are the only difference compared to calibration.js
+        this.jsonColors = response.data.jsoncolors
+        sciris.succeed(this, 'Simulation run, graphs now rendering...')
+      })
+      .catch(error => {
+        console.log(error.message)
+        sciris.fail(this, 'Could not run manual calibration', error)
+      })
+    },
+
+    autoCalibrate(project_id) {
+      console.log('autoCalibrate() called')
+      this.validateYears()  // Make sure the start end years are in the right range.
+      sciris.start(this)
+      if (this.calibTime === '30 seconds') {
+        var maxtime = 30
+      } else {
+        var maxtime = 9999
+      }
+      sciris.rpc('automatic_calibration', [
+        project_id, 
+        this.serverDatastoreId
+      ], {
+        'parsetname': this.activeParset, 
+        'max_time': maxtime, 
+        'plot_options': this.plotOptions,
+        'plotyear': this.endYear, 
+        'pops': this.activePop, 
+        'tool': this.toolName(), 
+        'cascade':null
+      }) // Go to the server to get the results from the package set.
+      .then(response => {
+        this.table = response.data.table
+        this.jsonData = response.data.jsondata
+        this.jsonColors = response.data.jsoncolors
+        this.makeGraphs(response.data.graphs)
+        sciris.succeed(this, 'Simulation run, graphs now rendering...')
+      })
+      .catch(error => {
+        console.log(error.message)
+        sciris.fail(this, 'Could not run automatic calibration', error)
+      })
+    },
+
   }
 }
 </script>
