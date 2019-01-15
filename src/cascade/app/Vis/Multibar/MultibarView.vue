@@ -56,7 +56,7 @@ export default {
       year: null,
       yearOptions: [],
       cascadeData: {},
-      colorScheme: this.colourScheme || null,
+      colours: this.colourScheme || null, 
       chartSvg: null,
       chartWidth: 300,
       chartHeight: 400,

@@ -194,12 +194,12 @@ Last update: 2018-09-09
       </div> <!-- ### End: PageSection/hasGraphs ### -->
 
       <!-- ### Start: JS Cascade plot ### -->
-      <div style="margin: 0 auto 50px;">
+<!--       <div style="margin: 0 auto 50px;">
         <stacked-bar-view class="cascade"
           :budgetData="jsonBudgetData"
           :colourScheme="jsonBudgetColors"
         />
-      </div>
+      </div> -->
 
       <div style="margin: 0 auto;">
         <multibar-view class="cascade"
@@ -290,21 +290,17 @@ Last update: 2018-09-09
 <script>
 import { mixins } from 'sciris-uikit';
 import MultibarView from './Vis/Multibar/MultibarView.vue'
-import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
+// import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
 import sciris from 'sciris-js';
 
 export default {
-  
+
   name: 'ScenariosPage',
 
   components: {
     MultibarView,
-    StackedBarView,
+    // StackedBarView,
   },
-
-  mixins: [
-    mixins.ScenarioMixin
-  ],
 
   data() {
     return {
@@ -352,42 +348,235 @@ export default {
       
     }
   },
+
+  computed: {
+    projectID()    { return sciris.projectID(this) },
+    hasData()      { return sciris.hasData(this) },
+    hasPrograms()  { return sciris.hasPrograms(this) },
+    simStart()     { return sciris.dataEnd(this) },
+    simEnd()       { return sciris.simEnd(this) },
+    projectionYears()     { return sciris.projectionYears(this) },
+    activePops()   { return sciris.activePops(this) },
+    placeholders() { return sciris.placeholders(this, 1) },
+  },
+
+  created() {
+    sciris.addListener(this)
+    sciris.createDialogs(this)
+    if ((this.$store.state.activeProject.project !== undefined) &&
+      (this.$store.state.activeProject.project.hasData) &&
+      (this.$store.state.activeProject.project.hasPrograms)) {
+      console.log('created() called')
+      this.startYear = this.simStart
+      this.endYear = this.simEnd
+      this.popOptions = this.activePops
+      this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
+      this.getPlotOptions(this.$store.state.activeProject.project.id)
+        .then(response => {
+          this.updateSets()
+            .then(response2 => {
+              // The order of execution / completion of these doesn't matter.
+              this.getScenSummaries()
+              this.getDefaultBudgetScen()
+              this.reloadGraphs(false)
+            })
+        })
+    }
+  },
+
   methods: {
     toolName: function(){
       return this.$toolName; 
     },
 
-
-    makeGraphs(graphdata){
+    validateYears()                   { return sciris.validateYears(this) },
+    updateSets()                      { return sciris.updateSets(this) },
+    exportGraphs()                    { return sciris.exportGraphs(this) },
+    exportResults(datastoreID)        { return sciris.exportResults(this, datastoreID) },
+    scaleFigs(frac)                   { return sciris.scaleFigs(this, frac)},
+    clearGraphs()                     { return sciris.clearGraphs(this) },
+    togglePlotControls()              { return sciris.togglePlotControls(this) },
+    getPlotOptions(project_id)        { return sciris.getPlotOptions(this, project_id) },
+    makeGraphs(graphdata)             { 
       this.jsonBudgetData = graphdata.jsonbudgetdata
       this.jsonBudgetColors = graphdata.jsonbudgetcolors
       this.jsonData = graphdata.jsondata
       this.jsonColors = graphdata.jsoncolors
-      return sciris.makeGraphs(this, graphdata, '/scenarios')
+      // return sciris.makeGraphs(this, graphdata, '/scenarios') 
     },
-       
+    reloadGraphs(showErr)             { return sciris.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) }, // Set to calibration=false, plotbudget=true
+    maximize(legend_id)               { return sciris.maximize(this, legend_id) },
+    minimize(legend_id)               { return sciris.minimize(this, legend_id) },
+
+    getDefaultBudgetScen() {
+      console.log('getDefaultBudgetScen() called')
+      sciris.rpc('get_default_budget_scen', [this.projectID])
+        .then(response => {
+          this.defaultBudgetScen = response.data // Set the scenario to what we received.
+          console.log('This is the default:')
+          console.log(this.defaultBudgetScen);
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not get default budget scenario', error)
+        })
+    },
+
+    getScenSummaries() {
+      console.log('getScenSummaries() called')
+      sciris.start(this)
+      sciris.rpc('get_scen_info', [this.projectID])
+        .then(response => {
+          this.scenSummaries = response.data // Set the scenarios to what we received.
+          console.log('Scenario summaries:')
+          console.log(this.scenSummaries)
+          this.scenariosLoaded = true
+          sciris.succeed(this, 'Scenarios loaded')
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not get scenarios', error)
+        })
+    },
+
+    setScenSummaries() {
+      console.log('setScenSummaries() called')
+      sciris.start(this)
+      sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
+        .then( response => {
+          sciris.succeed(this, 'Scenarios saved')
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not save scenarios', error)
+        })
+    },
+
+    addBudgetScenModal() {
+      // Open a model dialog for creating a new project
+      console.log('addBudgetScenModal() called');
+      sciris.rpc('get_default_budget_scen', [this.projectID])
+        .then(response => {
+          this.defaultBudgetScen = response.data // Set the scenario to what we received.
+          this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
+          this.addEditModal.origName = this.addEditModal.scenSummary.name
+          this.addEditModal.mode = 'add'
+          this.$modal.show('add-budget-scen');
+          console.log(this.defaultBudgetScen)
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not open add scenario modal', error)
+        })
+    },
+
+    addBudgetScen() {
+      console.log('addBudgetScen() called')
+      this.$modal.hide('add-budget-scen')
+      sciris.start(this)
+      let newScen = _.cloneDeep(this.addEditModal.scenSummary) // Get the new scenario summary from the modal.
+      let scenNames = [] // Get the list of all of the current scenario names.
+      this.scenSummaries.forEach(scenSum => {
+        scenNames.push(scenSum.name)
+      })
+      if (this.addEditModal.mode == 'edit') { // If we are editing an existing scenario...
+        let index = scenNames.indexOf(this.addEditModal.origName) // Get the index of the original (pre-edited) name
+        if (index > -1) {
+          this.scenSummaries[index].name = newScen.name  // hack to make sure Vue table updated
+          this.scenSummaries[index] = newScen
+        }
+        else {
+          console.log('Error: a mismatch in editing keys')
+        }
+      }
+      else { // Else (we are adding a new scenario)...
+        newScen.name = sciris.getUniqueName(newScen.name, scenNames)
+        this.scenSummaries.push(newScen)
+      }
+      console.log(newScen)
+      console.log(this.scenSummaries)
+      sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
+        .then( response => {
+          sciris.succeed(this, 'Scenario added')
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not add scenario', error)
+        })
+    },
+
+    editScen(scenSummary) {
+      // Open a model dialog for creating a new project
+      console.log('editScen() called');
+      this.defaultBudgetScen = scenSummary
+      console.log('defaultBudgetScen')
+      console.log(this.defaultBudgetScen)
+      this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
+      this.addEditModal.origName = this.addEditModal.scenSummary.name
+      this.addEditModal.mode = 'edit'
+      this.$modal.show('add-budget-scen');
+    },
+
+    copyScen(scenSummary) {
+      console.log('copyScen() called')
+      sciris.start(this)
+      var newScen = _.cloneDeep(scenSummary);
+      var otherNames = []
+      this.scenSummaries.forEach(scenSum => {
+        otherNames.push(scenSum.name)
+      })
+      newScen.name = sciris.getUniqueName(newScen.name, otherNames)
+      this.scenSummaries.push(newScen)
+      sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
+        .then( response => {
+          sciris.succeed(this, 'Scenario copied')
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not copy scenario', error)
+        })
+    },
+
+    deleteScen(scenSummary) {
+      console.log('deleteScen() called')
+      sciris.start(this)
+      for(var i = 0; i< this.scenSummaries.length; i++) {
+        if(this.scenSummaries[i].name === scenSummary.name) {
+          this.scenSummaries.splice(i, 1);
+        }
+      }
+      sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
+        .then( response => {
+          sciris.succeed(this, 'Scenario deleted')
+        })
+        .catch(error => {
+          sciris.fail(this, 'Could not delete scenario', error)
+        })
+    },
+
     runScens() {
       console.log('runScens() called')
       this.validateYears()  // Make sure the start end years are in the right range.
-      status.start(this)
-      rpcs.rpc('set_scen_info', [this.projectID, this.scenSummaries]) // Make sure they're saved first
+      sciris.start(this)
+      sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries]) // Make sure they're saved first
         .then(response => {
           // Go to the server to get the results from the package set.
-          rpcs.rpc('run_scenarios', [this.projectID, this.serverDatastoreId, this.plotOptions],
-            {saveresults: false, tool:this.$globaltool, plotyear:this.endYear, pops:this.activePop})
+          sciris.rpc('run_scenarios', [
+            this.projectID, 
+            this.serverDatastoreId, 
+            this.plotOptions
+          ],
+          {
+            saveresults: false, 
+            tool: this.toolName(),
+            plotyear:this.endYear, 
+            pops:this.activePop
+          })
             .then(response => {
               this.table = response.data.table
               this.makeGraphs(response.data)
-              this.jsonData = response.data.jsondata
-              this.jsonColors = response.data.jsoncolors
-              status.succeed(this, '') // Success message in graphs function
+              sciris.succeed(this, '') // Success message in graphs function
             })
             .catch(error => {
-              status.fail(this, 'Could not run scenarios', error)
+              sciris.fail(this, 'Could not run scenarios', error)
             })
         })
         .catch(error => {
-          status.fail(this, 'Could not set scenarios', error)
+          sciris.fail(this, 'Could not set scenarios', error)
         })
     },
   }
