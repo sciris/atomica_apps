@@ -52,8 +52,11 @@ def get_version_info():
            'gitbranch': appv.__gitinfo__['branch'],
            'githash':   appv.__gitinfo__['hash'],
            'gitdate':   appv.__gitinfo__['date'],
-            'server':    socket.gethostname(),
-            'cpu':       '%0.1f%%' % psutil.cpu_percent(),
+           'scversion': sc.__version__,
+           'swversion': sw.__version__,
+           'atversion': at.__version__,
+           'server':    socket.gethostname(),
+           'cpu':       '%0.1f%%' % psutil.cpu_percent(),
     })
     return version_info
       

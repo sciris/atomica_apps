@@ -22,6 +22,7 @@
           <tr><td class="tlabel">Username    </td><td>{{ username }}</td></tr>
           <tr><td class="tlabel">Browser     </td><td>{{ useragent }}</td></tr>
           <tr><td class="tlabel">App version </td><td>Cascade Analysis Tools {{ version }} ({{ date }}) [{{ gitbranch }}/{{ githash }}]</td></tr>
+          <tr><td class="tlabel">Backends </td><td>Sciris {{ scversion }}, ScirisWeb {{ swversion }}, Atomica {{ atversion }}</td></tr>
           <tr><td class="tlabel">Timestamp   </td><td>{{ timestamp }}</td></tr>
           <tr><td class="tlabel">Server name </td><td>{{ server }}</td></tr>
           <tr><td class="tlabel">Server load </td><td>{{ cpu }}</td></tr>
@@ -58,7 +59,7 @@
 import { mixins } from 'sciris-uikit';
 
 export default {
-  name: 'About',
+  name: 'Help',
   mixins: [
     mixins.HelpMixin
   ]
