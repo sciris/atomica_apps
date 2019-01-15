@@ -437,8 +437,6 @@ def add_demo_project(username, model, tool):
 
     """
 
-    print(model)
-    print(tool)
     if tool == 'tb':
         proj = at.demo(which=model, do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
     else:
