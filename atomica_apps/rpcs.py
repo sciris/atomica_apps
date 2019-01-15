@@ -45,17 +45,17 @@ def get_path(filename=None, username=None):
 
 @RPC()
 def get_version_info():
-	''' Return the information about the running environment '''
-	version_info = sc.odict({
-	       'version':   appv.__version__,
-	       'date':      appv.__versiondate__,
-	       'gitbranch': appv.__gitinfo__['branch'],
-	       'githash':   appv.__gitinfo__['hash'],
-	       'gitdate':   appv.__gitinfo__['date'],
+    ''' Return the information about the running environment '''
+    version_info = sc.odict({
+           'version':   appv.__version__,
+           'date':      appv.__versiondate__,
+           'gitbranch': appv.__gitinfo__['branch'],
+           'githash':   appv.__gitinfo__['hash'],
+           'gitdate':   appv.__gitinfo__['date'],
             'server':    socket.gethostname(),
             'cpu':       '%0.1f%%' % psutil.cpu_percent(),
-	})
-	return version_info
+    })
+    return version_info
       
 
 def get_user(username=None):
