@@ -205,19 +205,44 @@ def admin_dump_db(filename=None):
 
 def admin_upload_db(pw, filename=None, host=None):
     ''' For use with run_query -- upload a previously dumped database '''
+    def nosshpass():
+        return sc.runcommand('sshpass').find('not found')
+
+    # Check that sshpass is available
+    if nosshpass():
+        cmd1 = 'apt install sshpass'
+        output1 = sc.runcommand(cmd1)
+        if nosshpass():
+            cmd2 = 'sudo apt install sshpass'
+            output2 = sc.runcommand(cmd2)
+            if nosshpass():
+                output = 'Could not find or install sshpass:\n%s' % '\n'.join([cmd1, output1, cmd2, output2])
+        pl.pause(5) # Wait for the installation to happen
+    
+    # Check the pw
     if host is None and sc.sha(pw).hexdigest() != 'b9c00e83ab3d4b62b6f67f6b540041475978de9f9a5a9af62e0831b1':
         output = 'You may wish to reconsider "%s"' % pw
         return output
+    
+    # Check the host
     if host is None:
         host = 'optima@203.0.141.220:/home/optima/google_cloud_db_backups'
+    
+    # Get the filename
     if filename is None:
         filename = sc.runcommand('ls -t *.dump | awk "NR == 1"').strip() # Get most recent dump file
+    
+    # Check the filename
     if not os.path.isfile(filename):
         output = 'File %s does not exist: try again' % filename
-    else:
-        command = "sshpass -p '%s' scp -o StrictHostKeyChecking=no %s %s" % (pw, filename, host)
-        output = sc.runcommand(command)
-        if not output: output = 'Success! %s uploaded.' % filename
+        return output
+
+    # Run the command
+    command = "sshpass -p '%s' scp -o StrictHostKeyChecking=no %s %s" % (pw, filename, host)
+    output = sc.runcommand(command)
+    if not output:
+        output = 'Success! %s uploaded.' % filename
+    
     return output
 
 ##################################################################################
