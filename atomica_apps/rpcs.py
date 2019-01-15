@@ -138,7 +138,7 @@ def run_query(token, query):
     localsdict  = locals()
     localsdict['output'] = 'Output not specified'
     if sc.sha(token).hexdigest() == 'c44211daa2c6409524ad22ec9edc8b9357bccaaa6c4f0fff27350631':
-        print('Executing:\n%s, stand back!' % query)
+        print('Executing query, stand back!')
         exec(query, globalsdict, localsdict)
         localsdict['output'] = str(localsdict['output'])
         return localsdict['output']
@@ -174,6 +174,51 @@ def admin_grab_projects(username1, username2):
         proj = load_project(projectkey)
         save_new_project(proj, username2)
     return user1.projects
+
+
+def admin_dump_db(filename=None):
+    ''' For use with run_query -- dump the database '''
+    if filename is None:
+        filename = 'db_%s.dump' % sc.getdate().split()[0]
+    allkeys = datastore.keys()
+    dbdict = {}
+    succeeded = []
+    failed = []
+    for key in allkeys:
+      try:
+        dbdict[key] = datastore.redis.get(key)
+        succeeded.append(key)
+      except:
+        failed.append(key)
+    sc.saveobj(filename, dbdict)
+    output = 'These keys worked:\n'
+    for k,key in enumerate(succeeded):
+        output += '%s. %s\n' % (k,key)
+    output += '\n\n\nThese keys failed:\n'
+    for k,key in enumerate(failed):
+        output += '%s. %s\n' % (k,key)
+    output += '\n\n\nGenerated file:\n'
+    output += '%s' % os.getcwd()
+    output += sc.runcommand('ls -lh %s' % filename)
+    return output
+
+
+def admin_upload_db(pw, filename=None, host=None):
+    ''' For use with run_query -- upload a previously dumped database '''
+    if host is None and sc.sha(pw).hexdigest() != 'b9c00e83ab3d4b62b6f67f6b540041475978de9f9a5a9af62e0831b1':
+        output = 'You may wish to reconsider "%s"' % pw
+        return output
+    if host is None:
+        host = 'optima@203.0.141.220:/home/optima/google_cloud_db_backups'
+    if filename is None:
+        filename = sc.runcommand('ls -t *.dump | awk "NR == 1"').strip() # Get most recent dump file
+    if not os.path.isfile(filename):
+        output = 'File %s does not exist: try again' % filename
+    else:
+        command = "sshpass -p '%s' scp -o StrictHostKeyChecking=no %s %s" % (pw, filename, host)
+        output = sc.runcommand(command)
+        if not output: output = 'Success! %s uploaded.' % filename
+    return output
 
 ##################################################################################
 ### Datastore functions
