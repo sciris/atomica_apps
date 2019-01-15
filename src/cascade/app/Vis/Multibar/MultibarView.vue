@@ -1,5 +1,6 @@
 <template>
   <div class="multi-bar-view">
+    
     <div class="chart-options">
       <div class="year-slider">
         <year-slider

@@ -194,12 +194,12 @@ Last update: 2018-09-09
       </div> <!-- ### End: PageSection/hasGraphs ### -->
 
       <!-- ### Start: JS Cascade plot ### -->
-<!--       <div style="margin: 0 auto 50px;">
+      <div style="margin: 0 auto 50px;">
         <stacked-bar-view class="cascade"
           :budgetData="jsonBudgetData"
           :colourScheme="jsonBudgetColors"
         />
-      </div> -->
+      </div>
 
       <div style="margin: 0 auto;">
         <multibar-view class="cascade"
@@ -290,7 +290,7 @@ Last update: 2018-09-09
 <script>
 import { mixins } from 'sciris-uikit';
 import MultibarView from './Vis/Multibar/MultibarView.vue'
-// import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
+import StackedBarView from './Vis/StackedBar/StackedBarView.vue'
 import sciris from 'sciris-js';
 
 export default {
@@ -299,7 +299,7 @@ export default {
 
   components: {
     MultibarView,
-    // StackedBarView,
+    StackedBarView,
   },
 
   data() {
@@ -402,7 +402,7 @@ export default {
       this.jsonBudgetColors = graphdata.jsonbudgetcolors
       this.jsonData = graphdata.jsondata
       this.jsonColors = graphdata.jsoncolors
-      // return sciris.makeGraphs(this, graphdata, '/scenarios') 
+      return sciris.makeGraphs(this, graphdata, '/scenarios') 
     },
     reloadGraphs(showErr)             { return sciris.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) }, // Set to calibration=false, plotbudget=true
     maximize(legend_id)               { return sciris.maximize(this, legend_id) },
