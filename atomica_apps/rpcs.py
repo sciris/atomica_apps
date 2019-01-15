@@ -19,6 +19,7 @@ import sciris as sc
 import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
+from . import version as appv
 pl.rc('font', size=14)
 
 # Globals
@@ -45,13 +46,12 @@ def get_path(filename=None, username=None):
 @RPC()
 def get_version_info():
 	''' Return the information about the running environment '''
-	gitinfo = sc.gitinfo(__file__)
 	version_info = sc.odict({
-	       'version':   at.__version__,
-	       'date':      at.__versiondate__,
-	       'gitbranch': gitinfo['branch'],
-	       'githash':   gitinfo['hash'],
-	       'gitdate':   gitinfo['date'],
+	       'version':   appv.__version__,
+	       'date':      appv.__versiondate__,
+	       'gitbranch': appv.__gitinfo__['branch'],
+	       'githash':   appv.__gitinfo__['hash'],
+	       'gitdate':   appv.__gitinfo__['date'],
             'server':    socket.gethostname(),
             'cpu':       '%0.1f%%' % psutil.cpu_percent(),
 	})
@@ -424,17 +424,24 @@ def get_demo_project_options():
 
 
 @RPC()
-def add_demo_project(username, project_name=None, tool=None):
-    '''
+def add_demo_project(username, model, tool):
+    """
     Add a demo project
-    '''
+
+    The demo project will automatically be given the name "Demo project"
+
+    :param username:
+    :param model: A string matching a model e.g. ``'tb'``, ``'udt'``
+    :param tool: The FE tool e.g. ``'cascades'``
+    :return: Dict with new project ID
+
+    """
+
     if tool == 'tb':
-        project_name = 'Demo project'
-        proj = at.demo(which='tb', do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
+        proj = at.demo(which=model, do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
     else:
-        if project_name is None: project_name = 'default'
-        proj = at.demo(which=project_name, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
-    proj.name = project_name
+        proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
+    proj.name = 'Demo project'
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
     print('Added demo project %s/%s' % (username, proj.name))
     return {'projectID': str(proj.uid)} # Return the new project UID in the return message.
@@ -1110,7 +1117,7 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
 
         # Copy assumptions from spending data
         u_prog.baseline_spend.assumption = d_prog.baseline_spend.assumption
-        u_prog.capacity.assumption = d_prog.capacity.assumption
+        u_prog.capacity_constraint.assumption = d_prog.capacity_constraint.assumption
         u_prog.coverage.assumption = d_prog.coverage.assumption
         u_prog.unit_cost.assumption = d_prog.unit_cost.assumption
         u_prog.spend_data.assumption = d_prog.spend_data.assumption

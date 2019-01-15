@@ -21,7 +21,7 @@ module.exports = merge(base, {
   output: {
 		filename: "[name].[hash].js",
     publicPath: "",
-		path: resolve('debug/cascade/'),
+		path: resolve('dist/cascade/'),
   },
   entry: [
     './src/cascade/index.js'
@@ -34,11 +34,11 @@ module.exports = merge(base, {
     new CopyWebpackPlugin([
       {
         from: 'assets/',
-        to: resolve('debug/cascade/static/'),
+        to: resolve('dist/cascade/static/'),
       }
     ]),
     new CleanWebpackPlugin([
-      resolve('debug/cascade/')
+      resolve('dist/cascade/')
     ], {
       watch: false,
       allowExternal: true

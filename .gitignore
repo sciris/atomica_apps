@@ -1,3 +1,6 @@
+# Custom
+dist/
+
 # Logs
 logs
 *.log
@@ -77,3 +80,4 @@ __pycache__/
 static/debug/
 package-lock.json
 debug/
+.idea

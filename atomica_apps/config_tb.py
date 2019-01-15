@@ -16,7 +16,7 @@ you use a relative path, it is interpreted as being with respect to the
 "webapp directory," that is, the directory containing this config file and the
 main webapp script that imports it.
 
-Last update: 2018sep25
+Last update: 2019jan11
 """
 import os
 
@@ -24,7 +24,7 @@ import os
 SECRET_KEY = 'deadcafebeefbabe'
 
 # Directory containing the client code.
-CLIENT_DIR = os.getenv('CLIENT_DIR', '../clients/tb/dist')
+CLIENT_DIR = os.getenv('CLIENT_DIR', '../dist/tb')
 
 # Flag for setting whether we use the datastore functionality provided by
 # Sciris in the webapp.
