@@ -1,7 +1,8 @@
 {
-  "name": "atomica",
-  "version": "0.1.0",
+  "name": "atomica_apps",
+  "version": "0.1.1",
   "description": "",
+  "author": "Sciris <info@sciris.org>",
   "scripts": {
     "buildtb": "webpack --config build/webpack.config.tb.prod.js",
     "buildcascade": "webpack --config build/webpack.config.cascade.prod.js",
