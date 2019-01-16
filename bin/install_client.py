@@ -5,5 +5,5 @@
 import os
 parentfolder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(parentfolder)
-os.system('rm -rf node_modules')
+os.system('rm -rf package-lock.json ./dist ./node_modules/')
 os.system('npm install')
