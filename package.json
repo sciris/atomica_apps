@@ -1,8 +1,8 @@
 {
   "name": "atomica_apps",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
-  "author": "Sciris <info@sciris.org>",
+  "author": "",
   "scripts": {
     "buildtb": "webpack --config build/webpack.config.tb.prod.js",
     "buildcascade": "webpack --config build/webpack.config.cascade.prod.js",
@@ -11,8 +11,8 @@
     "watchtb": "webpack --watch --config build/webpack.config.tb.local.js",
     "watchcascade": "webpack --watch --config build/webpack.config.cascade.local.js"
   },
-  "author": "",
   "license": "MIT",
+  "bundleDependencies": false,
   "dependencies": {
     "bootstrap": "^4.1.3",
     "jquery": "^3.3.1",
