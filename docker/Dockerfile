@@ -17,7 +17,7 @@ WORKDIR /app
 
 # Install dep 
 RUN python3 -m pip install -r requirements.txt
-RUN python3 -m pip install --upgrade https://github.com/celery/celery/tarball/master
+RUN python3 -m pip install --upgrade https://github.com/celery/celery/tarball/master # Because Celery isn't compatible with python3!!
 
 ARG PORT
 ARG REDIS_URL
