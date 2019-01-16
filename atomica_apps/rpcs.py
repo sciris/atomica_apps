@@ -58,6 +58,7 @@ def get_version_info():
            'server':    socket.gethostname(),
            'cpu':       '%0.1f%%' % psutil.cpu_percent(),
     })
+    print('Version info:\n%s' % version_info)
     return version_info
       
 
