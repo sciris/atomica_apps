@@ -1,7 +1,7 @@
 <!--
 Help page
 
-Last update: 2018sep23
+Last update: 2019jan15
 -->
 
 <template>
@@ -23,7 +23,8 @@ Last update: 2018sep23
           <tbody>
           <tr><td class="tlabel">Username    </td><td>{{ username }}</td></tr>
           <tr><td class="tlabel">Browser     </td><td>{{ useragent }}</td></tr>
-          <tr><td class="tlabel">App version </td><td>{{ verboseToolName }} {{ version }} ({{ date }}) [{{ gitbranch }}/{{ githash }}]</td></tr>
+          <tr><td class="tlabel">App version </td><td>Optima TB {{ version }} ({{ date }}) [{{ gitbranch }}/{{ githash }}]</td></tr>
+          <tr><td class="tlabel">Backends </td><td>Sciris {{ scversion }}, ScirisWeb {{ swversion }}, Atomica {{ atversion }}</td></tr>
           <tr><td class="tlabel">Timestamp   </td><td>{{ timestamp }}</td></tr>
           <tr><td class="tlabel">Server name </td><td>{{ server }}</td></tr>
           <tr><td class="tlabel">Server load </td><td>{{ cpu }}</td></tr>
@@ -60,12 +61,10 @@ Last update: 2018sep23
 import { mixins } from 'sciris-uikit';
 
 export default {
-  name: 'About',
-  methods: {
-    verboseToolName() {
-      return 'Optima TB'
-    },
-  }
+  name: 'Help',
+  mixins: [
+    mixins.HelpMixin
+  ]
 }
 </script>
 

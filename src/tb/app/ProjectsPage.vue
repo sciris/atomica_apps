@@ -323,7 +323,6 @@ export default {
     }
   },
   created() {
-    console.log(sciris, "askdjfhasdkjfhaksjdhfalkjsdhfkljashfalkhjsdf")
     let projectID = null
     if (this.$store.state.currentUser.displayname === undefined) { // If we have no user logged in, automatically redirect to the login page.
       router.push('/login')
