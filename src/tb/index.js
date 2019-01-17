@@ -8,17 +8,17 @@ import ScirisUIKit from 'sciris-uikit';
 
 Vue.prototype.$toolName = 'tb'
 
-
 Vue.use(sciris.ScirisVue, {
   progressbar: {
     options: {
-      color: "#00267a"
+      color: "#00267a",
     }
   }
 });
 
 Vue.use(ScirisUIKit, {
-	router: router
+	router: router,
+  sciris: sciris
 });
 
 new Vue({

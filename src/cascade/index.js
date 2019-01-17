@@ -17,7 +17,8 @@ Vue.use(sciris.ScirisVue, {
 });
 
 Vue.use(ScirisUIKit, {
-	router: router
+	router: router,
+  sciris: sciris
 });
 
 new Vue({
