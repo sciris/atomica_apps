@@ -292,7 +292,7 @@ Last update: 2018-09-26
 
 
 <script>
-import { mixins } from 'sciris-uikit';
+import { mixins } from '../../common';
 
 export default {
   name: 'OptimizationsPage',
