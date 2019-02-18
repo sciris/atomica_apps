@@ -114,7 +114,7 @@ export default {
 } */
 
   // Modal dialog styling.
-@import "~sciris-uikit/dist/scss/_dialogs.scss";
+@import "../../common/styles/_dialogs.scss";
 .username {
 color: #c1c8cf;
 font-size: 16px;

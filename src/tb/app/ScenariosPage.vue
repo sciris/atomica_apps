@@ -252,7 +252,7 @@ Last update: 2018-09-09
 </template>
 
 <script>
-import { mixins } from 'sciris-uikit';
+import { mixins } from '../../common';
 
 export default {
   name: 'ScenariosPage',

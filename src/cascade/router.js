@@ -10,7 +10,7 @@ import HelpPage from './app/HelpPage.vue';
 import ContactPage from './app/ContactPage.vue';
 import FrameworksPage from './app/FrameworksPage.vue';
 import NotFoundPage from './app/NotFoundPage.vue';
-import { views } from 'sciris-uikit';
+import { views } from '../common';
 
 Vue.use(Router);
 

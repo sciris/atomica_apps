@@ -4,7 +4,7 @@ import router from './router.js'
 import store from './store.js'
 import sciris from 'sciris-js';
 import App from './app/App.vue';
-import ScirisUIKit from 'sciris-uikit';
+import common from '../common';
 
 Vue.prototype.$toolName = 'cascade'
 
@@ -16,7 +16,7 @@ Vue.use(sciris.ScirisVue, {
   }
 });
 
-Vue.use(ScirisUIKit, {
+Vue.use(common, {
 	router: router,
   sciris: sciris
 });

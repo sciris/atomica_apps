@@ -1,0 +1,68 @@
+.card {
+  padding: 15px 15px 10px 15px;
+  display: inline-block;
+  //resize: both;
+  //overflow: auto;
+
+  .image {
+    width: 100%;
+    overflow: hidden;
+    height: 260px;
+    border-radius: $border-radius-extreme $border-radius-extreme 0 0;
+    position: relative;
+    -webkit-transform-style: preserve-3d;
+    -moz-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+
+    img {
+      width: 100%;
+    }
+  }
+  .content {
+    padding: 15px 15px 10px 15px;
+    min-height: 200px;
+  }
+
+  .header {
+    padding: 20px 20px 0;
+  }
+
+  .category,
+  label {
+    font-size: $font-size-base;
+    font-weight: $font-weight-normal;
+    color: $dark-gray;
+    margin-bottom: 0px;
+    i {
+      font-size: $font-paragraph;
+    }
+  }
+
+  .title {
+    margin: $none;
+    color: $card-black-color;
+    font-weight: $font-weight-light;
+    font-weight: 600;
+    line-height: 24px;
+  }
+
+  .table {
+    tbody td:first-child,
+    thead th:first-child {
+      padding-left: 15px;
+    }
+
+    tbody td:last-child,
+    thead th:last-child {
+      padding-right: 15px;
+    }
+  }
+
+}
+
+.card-user,
+.card-price {
+  .footer {
+    padding: 5px 15px 10px;
+  }
+}

@@ -58,7 +58,7 @@ Last update: 2019jan15
 </template>
 
 <script>
-import { mixins } from 'sciris-uikit';
+import { mixins } from '../../common';
 
 export default {
   name: 'Help',
