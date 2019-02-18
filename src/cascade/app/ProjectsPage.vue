@@ -320,7 +320,7 @@ Last update: 2018oct04
 </template>
 
 <script>
-import { mixins } from 'sciris-uikit';
+import { mixins } from '../../common';
 import sciris from 'sciris-js';
 import router from '../router.js'
 

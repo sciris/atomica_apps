@@ -4,21 +4,21 @@ import router from './router.js'
 import store from './store.js'
 import sciris from 'sciris-js';
 import App from './app/App.vue';
-import ScirisUIKit from 'sciris-uikit';
+import common from '../common';
 
 Vue.prototype.$toolName = 'tb'
-
 
 Vue.use(sciris.ScirisVue, {
   progressbar: {
     options: {
-      color: "#00267a"
+      color: "#00267a",
     }
   }
 });
 
-Vue.use(ScirisUIKit, {
-	router: router
+Vue.use(common, {
+	router: router,
+  sciris: sciris
 });
 
 new Vue({

@@ -250,7 +250,7 @@ Last update: 2018-10-05
 </template>
 
 <script>
-import { mixins } from 'sciris-uikit';
+import { mixins } from '../../common';
 
 export default {
   name: 'CalibrationPage',
