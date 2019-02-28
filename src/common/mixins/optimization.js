@@ -1,3 +1,5 @@
+import utils from "../utils"
+
 var OptimizationMixin = {
   data() {
     return {
@@ -40,13 +42,13 @@ var OptimizationMixin = {
   },
 
   computed: {
-    projectID()    { return this.$sciris.projectID(this) },
-    hasData()      { return this.$sciris.hasData(this) },
-    hasPrograms()  { return this.$sciris.hasPrograms(this) },
-    simStart()     { return this.$sciris.simStart(this) },
-    simEnd()       { return this.$sciris.simEnd(this) },
-    projectionYears()     { return this.$sciris.projectionYears(this) },
-    activePops()   { return this.$sciris.activePops(this) },
+    projectID()    { return utils.projectID(this) },
+    hasData()      { return utils.hasData(this) },
+    hasPrograms()  { return utils.hasPrograms(this) },
+    simStart()     { return utils.simStart(this) },
+    simEnd()       { return utils.simEnd(this) },
+    projectionYears()     { return utils.projectionYears(this) },
+    activePops()   { return utils.activePops(this) },
     placeholders() { return this.$sciris.placeholders(this, 1) },
   },
 
@@ -72,16 +74,21 @@ var OptimizationMixin = {
 
   methods: {
 
-    validateYears()                   { return this.$sciris.validateYears(this) },
-    updateSets()                      { return this.$sciris.updateSets(this) },
-    exportGraphs()                    { return this.$sciris.exportGraphs(this) },
-    exportResults(datastoreID)        { return this.$sciris.exportResults(this, datastoreID) },
+    validateYears()                   { return utils.validateYears(this) },
+    updateSets()                      { return utils.updateSets(this) },
+    exportGraphs()                    { return utils.exportGraphs(this) },
+    exportResults(datastoreID)        { return utils.exportResults(this, datastoreID) },
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return this.$sciris.togglePlotControls(this) },
     getPlotOptions(project_id)        { return this.$sciris.getPlotOptions(this, project_id) },
     makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') },
-    reloadGraphs(cache_id, showErr)   { return this.$sciris.reloadGraphs(this, this.projectID, cache_id, showErr, false, true) }, // Set to calibration=false, plotbudget=True
+    reloadGraphs(cache_id, showErr)   { 
+      // Make sure the start end years are in the right range.
+      utils.validateYears(this);
+      // Set to calibration=false, plotbudget=True
+      return this.$sciris.reloadGraphs(this, this.projectID, cache_id, showErr, false, true); 
+    }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
 
@@ -349,7 +356,7 @@ var OptimizationMixin = {
         }
       }
       else { // Else (we are adding a new optimization)...
-        newOptim.name = this.$sciris.getUniqueName(newOptim.name, optimNames)
+        newOptim.name = utils.getUniqueName(newOptim.name, optimNames)
         newOptim.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + newOptim.name
         this.optimSummaries.push(newOptim)
         this.getOptimTaskState(newOptim)
@@ -399,7 +406,7 @@ var OptimizationMixin = {
       this.optimSummaries.forEach(optimSum => {
         otherNames.push(optimSum.name)
       })
-      newOptim.name = this.$sciris.getUniqueName(newOptim.name, otherNames)
+      newOptim.name = utils.getUniqueName(newOptim.name, otherNames)
       newOptim.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + newOptim.name
       this.optimSummaries.push(newOptim)
       this.getOptimTaskState(newOptim)

@@ -14,6 +14,8 @@ import Simplert from 'vue2-simplert-plugin';
 import { directive as vClickOutside } from 'vue-clickaway';
 import _ from 'lodash';
 
+import utils from './utils.js';
+
 require('vue2-simplert-plugin/dist/vue2-simplert-plugin.css')
 
 require("bootstrap");
@@ -82,6 +84,7 @@ const views = {
 export {
   EventBus,
   events,
+  utils,
   views, 
   mixins
 }

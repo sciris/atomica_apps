@@ -1,3 +1,5 @@
+import utils from "../utils"
+
 var ProjectMixin = {
   data() {
     return {
@@ -23,9 +25,9 @@ var ProjectMixin = {
   },
 
   computed: {
-    projectID()    { return this.$sciris.projectID(this) },
+    projectID()    { return utils.projectID(this) },
     userName()     { return this.$store.state.currentUser.username },
-    simYears()     { return this.$sciris.simYears(this) },
+    simYears()     { return utils.simYears(this) },
     sortedFilteredProjectSummaries() {
       return this.applyNameFilter(this.applySorting(this.projectSummaries))
     },
@@ -33,7 +35,7 @@ var ProjectMixin = {
 
   methods: {
 
-    updateSorting() { return this.$sciris.updateSorting(this) },
+    updateSorting() { return utils.updateSorting(this) },
 
     projectLoaded(uid) {
       console.log('projectLoaded called')
