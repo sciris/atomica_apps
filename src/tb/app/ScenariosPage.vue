@@ -218,7 +218,16 @@ Last update: 2019-03-01
                  class="txbox"
                  v-model="addEditModal.scenSummary.alloc_year"/><br>
                  
-          [Parameters, Programs budget, Programs coverage buttons...]<br><br>
+          <div style="display:inline-block; padding-right:10px">
+            <button class="btn __blue" @click="addEditModal.scenEditMode='parameters'" data-tooltip="Edit parameter dynamics">Parameters</button>
+          </div>
+          <div style="display:inline-block; padding-right:10px">
+            <button class="btn __blue" @click="addEditModal.scenEditMode='progbudget'" data-tooltip="Edit programs budget">Programs budget</button>
+          </div>
+          <div style="display:inline-block; padding-right:10px">
+            <button class="btn __blue" @click="addEditModal.scenEditMode='progcoverage'" data-tooltip="Edit programs coverage">Programs coverage</button>
+          </div>
+          <br><br>
           
           <div v-if="addEditModal.scenEditMode == 'parameters'">
             Crazy parametric foofah!...<br>
