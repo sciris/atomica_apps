@@ -33,7 +33,8 @@ var ScenarioMixin = {
       addEditModal: {
         scenSummary: {},
         origName: '',
-        mode: 'add'
+        mode: 'add',
+        scenEditMode: 'progbudget'
       },
     }
   },
