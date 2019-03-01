@@ -4,16 +4,6 @@ import sciris from 'sciris-js'
  * Small utilities that are shared across pages
  */
 
-function getUniqueName(fileName, otherNames) {
-  let tryName = fileName
-  let numAdded = 0
-  while (otherNames.indexOf(tryName) > -1) {
-    numAdded = numAdded + 1
-    tryName = fileName + ' (' + numAdded + ')'
-  }
-  return tryName
-}
-
 function validateYears(vm) {
   if      (vm.startYear > vm.simEnd)   { vm.startYear = vm.simEnd }
   else if (vm.startYear < vm.simStart) { vm.startYear = vm.simStart }
@@ -257,7 +247,6 @@ export default {
   exportGraphs,
   exportResults,
 
-  getUniqueName,
   validateYears,
   projectID,
   hasData,

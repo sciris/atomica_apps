@@ -206,7 +206,7 @@ var ScenarioMixin = {
       this.scenSummaries.forEach(scenSum => {
         otherNames.push(scenSum.name)
       })
-      newScen.name = utils.getUniqueName(newScen.name, otherNames)
+      newScen.name = this.$sciris.getUniqueName(newScen.name, otherNames)
       this.scenSummaries.push(newScen)
       this.$sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
         .then( response => {

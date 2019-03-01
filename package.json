@@ -20,7 +20,7 @@
     "lodash": "^4.17.11",
     "normalize-scss": "^7.0.1",
     "popper.js": "^1.14.4",
-    "sciris-js": "git+https://github.com/sciris/sciris-js.git",
+    "sciris-js": "^0.2.7",
     "vue": "^2.5.17",
     "vue-paper-dashboard": "git+https://github.com/creativetimofficial/vue-paper-dashboard.git",
     "vue-router": "^3.0.1",

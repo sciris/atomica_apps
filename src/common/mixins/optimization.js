@@ -356,7 +356,7 @@ var OptimizationMixin = {
         }
       }
       else { // Else (we are adding a new optimization)...
-        newOptim.name = utils.getUniqueName(newOptim.name, optimNames)
+        newOptim.name = this.$sciris.getUniqueName(newOptim.name, optimNames)
         newOptim.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + newOptim.name
         this.optimSummaries.push(newOptim)
         this.getOptimTaskState(newOptim)
@@ -406,7 +406,7 @@ var OptimizationMixin = {
       this.optimSummaries.forEach(optimSum => {
         otherNames.push(optimSum.name)
       })
-      newOptim.name = utils.getUniqueName(newOptim.name, otherNames)
+      newOptim.name = this.$sciris.getUniqueName(newOptim.name, otherNames)
       newOptim.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + newOptim.name
       this.optimSummaries.push(newOptim)
       this.getOptimTaskState(newOptim)
