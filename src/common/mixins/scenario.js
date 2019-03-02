@@ -7,6 +7,7 @@ var ScenarioMixin = {
       activeProgset: -1,
       parsetOptions: [],
       progsetOptions: [],
+      selectedProgset: 'None',
 
       // Plotting data
       showPlotControls: false,
@@ -34,7 +35,7 @@ var ScenarioMixin = {
         scenSummary: {},
         origName: '',
         mode: 'add',
-        scenEditMode: 'progbudget'
+        scenEditMode: 'parameters'
       },
     }
   },

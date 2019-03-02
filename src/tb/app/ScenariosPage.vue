@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-01
+Last update: 2019-03-02
 -->
 
 <template>
@@ -180,7 +180,7 @@ Last update: 2019-03-01
     <modal name="add-budget-scen"
            height="auto"
            :scrollable="true"
-           :width="500"
+           :width="1000"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
            :adaptive="true">
@@ -197,40 +197,46 @@ Last update: 2019-03-01
           <input type="text"
                  class="txbox"
                  v-model="addEditModal.scenSummary.name"/><br>
-                 
-          <!-- TODO: Set these in a row. -->
-          [Set this stuff in a row...]<br>
+                      
+          <div style="display:inline-block; padding-right:10px">
+            <b>Parameter set</b><br>
+            <select v-model="parsetOptions[0]">
+              <option v-for='parset in parsetOptions'>
+                {{ parset }}
+              </option>
+            </select><br><br>
+          </div>
+          <div style="display:inline-block; padding-right:10px">
+            <b>Program set</b><br>
+            <select v-model="selectedProgset">
+              <option>None</option>
+              <option v-for='progset in progsetOptions'>
+                {{ progset }}
+              </option>
+            </select><br><br>
+          </div><br>
           
-          <b>Parameter set</b><br>
-          <select v-model="parsetOptions[0]">
-            <option v-for='parset in parsetOptions'>
-              {{ parset }}
-            </option>
-          </select><br><br>
-          <b>Program set</b><br>
-          <select v-model="progsetOptions[0]">
-            <option v-for='progset in progsetOptions'>
-              {{ progset }}
-            </option>
-          </select><br><br>
           <b>Program start year</b><br>
           <input type="text"
                  class="txbox"
+                 :disabled="selectedProgset=='None'"
                  v-model="addEditModal.scenSummary.alloc_year"/><br>
-                 
+          
           <div style="display:inline-block; padding-right:10px">
             <button class="btn __blue" @click="addEditModal.scenEditMode='parameters'" data-tooltip="Edit parameter dynamics">Parameters</button>
           </div>
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" @click="addEditModal.scenEditMode='progbudget'" data-tooltip="Edit programs budget">Programs budget</button>
+            <button class="btn __blue" :disabled="selectedProgset=='None'"
+            @click="addEditModal.scenEditMode='progbudget'" data-tooltip="Edit programs budget">Programs budget</button>
           </div>
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" @click="addEditModal.scenEditMode='progcoverage'" data-tooltip="Edit programs coverage">Programs coverage</button>
+            <button class="btn __blue" :disabled="selectedProgset=='None'" 
+            @click="addEditModal.scenEditMode='progcoverage'" data-tooltip="Edit programs coverage">Programs coverage</button>
           </div>
           <br><br>
           
           <div v-if="addEditModal.scenEditMode == 'parameters'">
-            Crazy parametric foofah!...<br>
+            Complicated parameters GUI logic...<br><br>
           </div>
     
           <div v-if="addEditModal.scenEditMode == 'progbudget'">
