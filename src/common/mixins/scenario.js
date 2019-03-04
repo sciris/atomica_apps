@@ -83,13 +83,13 @@ var ScenarioMixin = {
     exportResults(datastoreID)        { return utils.exportResults(this, datastoreID) },
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
-    togglePlotControls()              { return this.$sciris.togglePlotControls(this) },
-    getPlotOptions(project_id)        { return this.$sciris.getPlotOptions(this, project_id) },
+    togglePlotControls()              { return utils.togglePlotControls(this) },
+    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
     makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') },
     reloadGraphs(showErr)             { 
       utils.validateYears(this);
       // Set to calibration=false, plotbudget=true
-      return this.$sciris.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) 
+      return utils.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) 
     }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },

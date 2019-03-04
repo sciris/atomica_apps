@@ -104,10 +104,10 @@ var CalibrationMixin = {
         return this.$sciris.clearGraphs(this) 
       },
       togglePlotControls() { 
-        return this.$sciris.togglePlotControls(this) 
+        return utils.togglePlotControls(this) 
       },
       getPlotOptions(project_id) { 
-        return this.$sciris.getPlotOptions(this, project_id) 
+        return utils.getPlotOptions(this, project_id) 
       },
       makeGraphs(graphdata) { 
         return this.$sciris.makeGraphs(this, graphdata, '/calibration') 
@@ -115,7 +115,7 @@ var CalibrationMixin = {
       reloadGraphs(showErr) { 
         // Set to calibration=true
         utils.validateYears(this)  // Make sure the start end years are in the right range.
-        return this.$sciris.reloadGraphs(
+        return utils.reloadGraphs(
           this, 
           this.projectID, 
           this.serverDatastoreId, 
