@@ -6,8 +6,7 @@ var ScenarioMixin = {
       activeParset:  -1,
       activeProgset: -1,
       parsetOptions: [],
-      progsetOptions: [],
-      selectedProgset: 'None',
+      progsetOptions: [],   
 
       // Plotting data
       showPlotControls: false,
@@ -35,7 +34,9 @@ var ScenarioMixin = {
         scenSummary: {},
         origName: '',
         mode: 'add',
-        scenEditMode: 'parameters'
+        selectedParset: 'default',
+        selectedProgset: 'default',
+        scenEditMode: 'parameters'       
       },
     }
   },
@@ -131,16 +132,16 @@ var ScenarioMixin = {
         })
     },
 
-    addBudgetScenModal() {
+    addScenModal() {
       // Open a model dialog for creating a new project
-      console.log('addBudgetScenModal() called');
+      console.log('addScenModal() called');
       this.$sciris.rpc('get_default_budget_scen', [this.projectID])
         .then(response => {
           this.defaultBudgetScen = response.data // Set the scenario to what we received.
           this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
-          this.$modal.show('add-budget-scen');
+          this.$modal.show('add-edit-scen');
           console.log(this.defaultBudgetScen)
         })
         .catch(error => {
@@ -148,9 +149,9 @@ var ScenarioMixin = {
         })
     },
 
-    addBudgetScen() {
-      console.log('addBudgetScen() called')
-      this.$modal.hide('add-budget-scen')
+    modalSave() {
+      console.log('modalSave() called')
+      this.$modal.hide('add-edit-scen')
       this.$sciris.start(this)
       let newScen = _.cloneDeep(this.addEditModal.scenSummary) // Get the new scenario summary from the modal.
       let scenNames = [] // Get the list of all of the current scenario names.
@@ -175,10 +176,10 @@ var ScenarioMixin = {
       console.log(this.scenSummaries)
       this.$sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
         .then( response => {
-          this.$sciris.succeed(this, 'Scenario added')
+          this.$sciris.succeed(this, 'Scenario saved')
         })
         .catch(error => {
-          this.$sciris.fail(this, 'Could not add scenario', error)
+          this.$sciris.fail(this, 'Could not save scenario', error)
         })
     },
 
@@ -191,7 +192,7 @@ var ScenarioMixin = {
       this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
-      this.$modal.show('add-budget-scen');
+      this.$modal.show('add-edit-scen');
     },
 
     copyScen(scenSummary) {

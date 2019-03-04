@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-02
+Last update: 2019-03-04
 -->
 
 <template>
@@ -57,7 +57,7 @@ Last update: 2019-03-02
 
         <div>
           <button class="btn __green" :disabled="!scenariosLoaded" @click="runScens()">Run scenarios</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addBudgetScenModal()">Add scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal()">Add scenario</button>
         </div>
       </div>
       <!-- ### End: scenarios card ### -->
@@ -177,7 +177,7 @@ Last update: 2019-03-02
 
 
     <!-- ### Start: add scenarios modal ### -->
-    <modal name="add-budget-scen"
+    <modal name="add-edit-scen"
            height="auto"
            :scrollable="true"
            :width="1000"
@@ -200,7 +200,7 @@ Last update: 2019-03-02
                       
           <div style="display:inline-block; padding-right:10px">
             <b>Parameter set</b><br>
-            <select v-model="parsetOptions[0]">
+            <select v-model="addEditModal.selectedParset">
               <option v-for='parset in parsetOptions'>
                 {{ parset }}
               </option>
@@ -208,7 +208,7 @@ Last update: 2019-03-02
           </div>
           <div style="display:inline-block; padding-right:10px">
             <b>Program set</b><br>
-            <select v-model="selectedProgset">
+            <select v-model="addEditModal.selectedProgset">
               <option>None</option>
               <option v-for='progset in progsetOptions'>
                 {{ progset }}
@@ -219,18 +219,18 @@ Last update: 2019-03-02
           <b>Program start year</b><br>
           <input type="text"
                  class="txbox"
-                 :disabled="selectedProgset=='None'"
+                 :disabled="addEditModal.selectedProgset=='None'"
                  v-model="addEditModal.scenSummary.alloc_year"/><br>
           
           <div style="display:inline-block; padding-right:10px">
             <button class="btn __blue" @click="addEditModal.scenEditMode='parameters'" data-tooltip="Edit parameter dynamics">Parameters</button>
           </div>
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" :disabled="selectedProgset=='None'"
+            <button class="btn __blue" :disabled="addEditModal.selectedProgset=='None'"
             @click="addEditModal.scenEditMode='progbudget'" data-tooltip="Edit programs budget">Programs budget</button>
           </div>
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" :disabled="selectedProgset=='None'" 
+            <button class="btn __blue" :disabled="addEditModal.selectedProgset=='None'" 
             @click="addEditModal.scenEditMode='progcoverage'" data-tooltip="Edit programs coverage">Programs coverage</button>
           </div>
           <br><br>
@@ -240,61 +240,75 @@ Last update: 2019-03-02
           </div>
     
           <div v-if="addEditModal.scenEditMode == 'progbudget'">
-            <table class="table table-bordered table-hover table-striped" style="width: 100%">
-              <thead>
-              <tr>
-                <th>Program</th>
-                <th>Budget</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="item in addEditModal.scenSummary.alloc">
-                <td>
-                  {{ item[2] }}
-                </td>
-                <td>
-                  <input type="text"
-                         class="txbox"
-                         v-model="item[1]"
-                         style="text-align: right"
-                  />
-                </td>
-              </tr>
-              </tbody>
-            </table>
+            <div class="scrolltable" style="max-height: 80vh;">
+              <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <thead>
+                <tr>
+                  <th colspan=100><div class="dialog-header">
+                    Program spending
+                  </div></th>
+                </tr>                
+                <tr>
+                  <th>Program</th>
+                  <th>Budget</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="item in addEditModal.scenSummary.alloc">
+                  <td>
+                    {{ item[2] }}
+                  </td>
+                  <td>
+                    <input type="text"
+                           class="txbox"
+                           v-model="item[1]"
+                           style="text-align: right"
+                    />
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
           
           <div v-if="addEditModal.scenEditMode == 'progcoverage'">
-            <table class="table table-bordered table-hover table-striped" style="width: 100%">
-              <thead>
-              <tr>
-                <th>Program</th>
-                <th>Coverage</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="item in addEditModal.scenSummary.alloc">
-                <td>
-                  {{ item[2] }}
-                </td>
-                <td>
-                  <input type="text"
-                         class="txbox"
-                         v-model="item[1]"
-                         style="text-align: right"
-                  />
-                </td>
-              </tr>
-              </tbody>
-            </table>
+            <div class="scrolltable" style="max-height: 80vh;">
+              <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <thead>
+                <tr>
+                  <th colspan=100><div class="dialog-header">
+                    Program coverages (%)
+                  </div></th>
+                </tr>                
+                <tr>
+                  <th>Program</th>
+                  <th>Coverage</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="item in addEditModal.scenSummary.alloc">
+                  <td>
+                    {{ item[2] }}
+                  </td>
+                  <td>
+                    <input type="text"
+                           class="txbox"
+                           v-model="item[1]"
+                           style="text-align: right"
+                    />
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
           
         </div>
         <div style="text-align:justify">
-          <button @click="addBudgetScen()" class='btn __green' style="display:inline-block">
+          <button @click="modalSave()" class='btn __green' style="display:inline-block">
             Save scenario
           </button>
-          <button @click="$modal.hide('add-budget-scen')" class='btn __red' style="display:inline-block">
+          <button @click="$modal.hide('add-edit-scen')" class='btn __red' style="display:inline-block">
             Cancel
           </button>
         </div>
