@@ -281,20 +281,19 @@ Last update: 2019-03-06
                 </tr>                
                 <tr>
                   <th>Program</th>
-                  <th>Coverage</th>
+                  <th v-for="year in addEditModal.scenSummary.coverageyears">{{ year }}</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="item in addEditModal.scenSummary.alloc">
+                <tr v-for="prog in addEditModal.scenSummary.progvals">
                   <td>
-                    {{ item[2] }}
+                    {{ prog.name }}
                   </td>
-                  <td>
+                  <td v-for="(val, index) in prog.coveragevals">
                     <input type="text"
                            class="txbox"
-                           v-model="item[1]"
                            style="text-align: right"
-                    />
+                           v-model="prog.coveragevals[index]"/>
                   </td>
                 </tr>
                 </tbody>

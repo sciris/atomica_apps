@@ -104,17 +104,20 @@ var ScenarioMixin = {
     
     doTestScen() {
       this.addEditModal.scenSummary.budgetyears = [2017, 2018, 2019]
+      this.addEditModal.scenSummary.coverageyears = [2017, 2018, 2019]
       this.addEditModal.scenSummary.progvals = []
       let prog = {
           name: 'BCG vaccination',
           shortname: 'BCG', 
-          budgetvals: ['345,000', '345,000', '345,000']
+          budgetvals: ['345,000', null, null],
+          coveragevals: ['95', null, null]
       }
       this.addEditModal.scenSummary.progvals.push(prog)
       prog = {
           name: 'Passive case finding',
           shortname: 'PCF', 
-          budgetvals: ['25,568,000', '25,568,000', '25,568,000']
+          budgetvals: ['25,568,000', '25,568,000', '25,568,000'],
+          coveragevals: ['95', null, null]
       }
       this.addEditModal.scenSummary.progvals.push(prog)
 //      this.addEditModal.scenSummary.progvals.budgetvals = [1.00, 2.11, 3.22]        
