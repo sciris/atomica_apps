@@ -34,8 +34,6 @@ var ScenarioMixin = {
         scenSummary: {},
         origName: '',
         mode: 'add',
-        selectedParset: 'default',
-        selectedProgset: 'default',
         scenEditMode: 'parameters'       
       },
     }
@@ -103,6 +101,24 @@ var ScenarioMixin = {
           this.$sciris.fail(this, 'Could not get default budget scenario', error)
         })
     },
+    
+    doTestScen() {
+      this.addEditModal.scenSummary.budgetyears = [2017, 2018, 2019]
+      this.addEditModal.scenSummary.progvals = []
+      let prog = {
+          name: 'BCG vaccination',
+          shortname: 'BCG', 
+          budgetvals: ['345,000', '345,000', '345,000']
+      }
+      this.addEditModal.scenSummary.progvals.push(prog)
+      prog = {
+          name: 'Passive case finding',
+          shortname: 'PCF', 
+          budgetvals: ['25,568,000', '25,568,000', '25,568,000']
+      }
+      this.addEditModal.scenSummary.progvals.push(prog)
+//      this.addEditModal.scenSummary.progvals.budgetvals = [1.00, 2.11, 3.22]        
+    },
 
     getScenSummaries() {
       console.log('getScenSummaries() called')
@@ -139,6 +155,9 @@ var ScenarioMixin = {
         .then(response => {
           this.defaultBudgetScen = response.data // Set the scenario to what we received.
           this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
+          
+          this.doTestScen()
+          
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
           this.$modal.show('add-edit-scen');
@@ -182,7 +201,7 @@ var ScenarioMixin = {
           this.$sciris.fail(this, 'Could not save scenario', error)
         })
     },
-
+    
     editScen(scenSummary) {
       // Open a model dialog for creating a new project
       console.log('editScen() called');
@@ -190,6 +209,9 @@ var ScenarioMixin = {
       console.log('defaultBudgetScen')
       console.log(this.defaultBudgetScen)
       this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
+      
+      this.doTestScen()
+      
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
       this.$modal.show('add-edit-scen');

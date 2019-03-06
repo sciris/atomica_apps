@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-04
+Last update: 2019-03-06
 -->
 
 <template>
@@ -200,7 +200,7 @@ Last update: 2019-03-04
                       
           <div style="display:inline-block; padding-right:10px">
             <b>Parameter set</b><br>
-            <select v-model="addEditModal.selectedParset">
+            <select v-model="addEditModal.scenSummary.parsetname">
               <option v-for='parset in parsetOptions'>
                 {{ parset }}
               </option>
@@ -208,7 +208,7 @@ Last update: 2019-03-04
           </div>
           <div style="display:inline-block; padding-right:10px">
             <b>Program set</b><br>
-            <select v-model="addEditModal.selectedProgset">
+            <select v-model="addEditModal.scenSummary.progsetname">
               <option>None</option>
               <option v-for='progset in progsetOptions'>
                 {{ progset }}
@@ -219,18 +219,18 @@ Last update: 2019-03-04
           <b>Program start year</b><br>
           <input type="text"
                  class="txbox"
-                 :disabled="addEditModal.selectedProgset=='None'"
+                 :disabled="addEditModal.scenSummary.progsetname=='None'"
                  v-model="addEditModal.scenSummary.alloc_year"/><br>
           
           <div style="display:inline-block; padding-right:10px">
             <button class="btn __blue" @click="addEditModal.scenEditMode='parameters'" data-tooltip="Edit parameter dynamics">Parameters</button>
           </div>
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" :disabled="addEditModal.selectedProgset=='None'"
+            <button class="btn __blue" :disabled="addEditModal.scenSummary.progsetname=='None'"
             @click="addEditModal.scenEditMode='progbudget'" data-tooltip="Edit programs budget">Programs budget</button>
           </div>
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" :disabled="addEditModal.selectedProgset=='None'" 
+            <button class="btn __blue" :disabled="addEditModal.scenSummary.progsetname=='None'" 
             @click="addEditModal.scenEditMode='progcoverage'" data-tooltip="Edit programs coverage">Programs coverage</button>
           </div>
           <br><br>
@@ -250,20 +250,19 @@ Last update: 2019-03-04
                 </tr>                
                 <tr>
                   <th>Program</th>
-                  <th>Budget</th>
+                  <th v-for="year in addEditModal.scenSummary.budgetyears">{{ year }}</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="item in addEditModal.scenSummary.alloc">
+                <tr v-for="prog in addEditModal.scenSummary.progvals">
                   <td>
-                    {{ item[2] }}
+                    {{ prog.name }}
                   </td>
-                  <td>
+                  <td v-for="(val, index) in prog.budgetvals">
                     <input type="text"
                            class="txbox"
-                           v-model="item[1]"
                            style="text-align: right"
-                    />
+                           v-model="prog.budgetvals[index]"/>
                   </td>
                 </tr>
                 </tbody>
