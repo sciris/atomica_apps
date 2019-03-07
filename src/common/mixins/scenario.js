@@ -119,8 +119,7 @@ var ScenarioMixin = {
           budgetvals: ['25,568,000', '25,568,000', '25,568,000'],
           coveragevals: ['95', null, null]
       }
-      this.addEditModal.scenSummary.progvals.push(prog)
-//      this.addEditModal.scenSummary.progvals.budgetvals = [1.00, 2.11, 3.22]        
+      this.addEditModal.scenSummary.progvals.push(prog)      
     },
 
     getScenSummaries() {
@@ -154,11 +153,16 @@ var ScenarioMixin = {
     addScenModal() {
       // Open a model dialog for creating a new project
       console.log('addScenModal() called');
-      this.$sciris.rpc('get_default_budget_scen', [this.projectID])
+      // TODO: I'm thinking we don't really need this RPC call, since the default budget
+      // scenario gets loaded on creation of the page.
+      // Or, alternatively, we should take the call out of the create() function.
+      this.$sciris.rpc('get_default_budget_scen', [this.projectID]) 
         .then(response => {
           this.defaultBudgetScen = response.data // Set the scenario to what we received.
           this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
           
+          this.addEditModal.scenSummary.parsetname = this.activeParset
+          this.addEditModal.scenSummary.progsetname = 'None'
           this.doTestScen()
           
           this.addEditModal.origName = this.addEditModal.scenSummary.name
