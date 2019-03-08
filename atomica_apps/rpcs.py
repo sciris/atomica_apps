@@ -1592,69 +1592,127 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 ### Scenario RPCs
 ##################################################################################
 
-def py_to_js_scen(py_scen, project=None):
-    ''' Convert a Python to JSON representation of a scenario. The Python scenario might be a dictionary or an object. '''
-    js_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname', 'alloc_year']
-    for attr in attrs:
-        if isinstance(py_scen, dict):
-            js_scen[attr] = py_scen[attr] # Copy the attributes directly
+def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
+    ''' Convert a Python scenario to JSON representation
+
+    '''
+
+    js_scen = dict()
+    js_scen['name'] = scen.name
+    js_scen['active'] = scen.active
+    js_scen['parsetname'] = scen.parsetname if scen.parsetname else 'None'
+    js_scen['progsetname'] = scen.progsetname if scen.progsetname else 'None'
+
+    # TODO - add in parameter overwrites here
+
+    # Work out the budget years and coverage years
+    # Fundamentally, this bit of code needs to populate the FE with placeholder None values
+    # in places where the scenario doesn't have an overwrite yet e.g. if the user has not overridden
+    # values for a particular program
+    js_scen['budgetyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
+    js_scen['coverageyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
+
+    js_scen['progvals'] = []
+
+    if scen.instructions:
+        js_scen['program_start_year'] = scen.instructions.start_year
+    else:
+        js_scen['program_start_year'] = None
+
+
+    print(scen.instructions.alloc)
+
+    if not proj.progsets:
+        # If no progsets, we can't retrieve the full names from the short names in the instructions
+        # In that case, we don't show any program overwrite values at all
+        # TODO - test this!
+        return js_scen # Abort early if there are no programs to add
+
+
+    # Otherwise, populate the program values
+    # If user has not selected a progset, then we need to populate the program list somehow
+    # Actually what we SHOULD do is populate the list of programs only when the user selects
+    # the progset, in case the programs differ across progsets. So this step should be skipped
+    # entirely here if the progsetname is 'None' and would instead be called in the callback
+    # when the dropdown is
+
+    format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
+
+    if scen.progsetname:
+        progset = proj.progsets[scen.progsetname]
+    else:
+        progset = proj.progsets[-1] # TODO - move this to dropdown callback - we need to use -1 here so that we get *some* programs in the UI with the current setup
+
+    for prog in progset.programs.values():
+        progdict = dict()
+        progdict['name'] = prog.label
+        progdict['shortname'] = prog.name
+        if prog.name in scen.instructions.alloc:
+            progdict['budgetvals'] = []
+            for year in js_scen['budgetyears']:
+                val = scen.instructions.alloc[prog.name].get(year)
+                progdict['budgetvals'].append(format_number(val))
         else:
-            js_scen[attr] = getattr(py_scen, attr) # Copy the attributes into a dictionary
-            
-    js_scen['alloc'] = []
-    if isinstance(py_scen, dict): alloc = py_scen['alloc']
-    else:                         alloc = py_scen.alloc
-    for prog_name,budget in alloc.items():
-        prog_label = project.progset().programs[prog_name].label
-        if sc.isiterable(budget):
-            if len(budget)>1:
-                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
-            else:
-                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-        budgetstr = format(int(round(float(budget))), ',')
-        js_scen['alloc'].append([prog_name,budgetstr, prog_label])
+            progdict['budgetvals'] = [None]*len(js_scen['budgetyears'])
+
+        if prog.name in scen.instructions.coverage:
+            progdict['coveragevals'] = []
+            for year in js_scen['coverageyears']:
+                val = scen.instructions.coverage[prog.name].get(year)
+                if val is not None:
+                    val *= 100
+                progdict['coveragevals'].append(format_number(val))
+        else:
+            progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
+
+        js_scen['progvals'].append(progdict)
+
     return js_scen
 
 
-def js_to_py_scen(js_scen):
-    ''' Convert a Python to JSON representation of a scenario '''
-    py_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname']
-    for attr in attrs:
-        py_scen[attr] = js_scen[attr] # Copy the attributes into a dictionary
-    py_scen['alloc_year'] = float(js_scen['alloc_year']) # Convert to number
-    py_scen['start_year'] = py_scen['alloc_year'] # Normally, the start year will be set by the set_scen_info() RPC but this is a fallback to ensure the scenario is still usable even if that step is omitted
-    py_scen['alloc'] = sc.odict()
-    for item in js_scen['alloc']:
-        prog_name = item[0]
-        budget = item[1]
-        if sc.isstring(budget):
-            try:
-                budget = to_float(budget)
-            except Exception as E:
-                raise Exception('Could not convert budget to number: %s' % repr(E))
-        if sc.isiterable(budget):
-            if len(budget)>1:
-                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
-            else:
-                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-        py_scen['alloc'][prog_name] = to_float(budget)
-    return py_scen
-    
+def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
+    """
+    Convert JSON content to an Atomica scenario
+
+    :param js_scen: Dictionary representation of FE web form
+    :return: ``at.CombinedScenario`` instance
+
+    """
+
+    # Assemble budget overwrites
+    name = js_scen['name']
+    active = js_scen['active']
+    parsetname = js_scen['parsetname']
+    progsetname = js_scen['progsetname']
+
+    # Assemble parameter overwrites
+    # TODO: Connect to FE form once it is written
+    scvalues = None
+
+    # Parse and convert the budget and coverage into instructions
+    start_year = to_float(js_scen['program_start_year']) if js_scen['program_start_year'] is not None else None # NB. If the progsetname is not None then an error will occur if the start year is None
+
+    alloc = sc.odict()
+    coverage = sc.odict()
+    for prog in js_scen['progvals']:
+        if any(prog['budgetvals']):
+            alloc[prog['shortname']] = at.TimeSeries(js_scen['budgetyears'],[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
+        if any(prog['coveragevals']):
+            coverage[prog['shortname']] = at.TimeSeries(js_scen['coverageyears'],[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
+    instructions = at.ProgramInstructions(start_year=start_year,alloc=alloc,coverage=coverage)
+
+    # Construct the scenario
+    scen = at.CombinedScenario(name=name,active=active,parsetname=parsetname,progsetname=progsetname,scvalues=scvalues,instructions=instructions)
+    return scen
 
 @RPC()
 def get_scen_info(project_id, verbose=True):
     print('Getting scenario info...')
     proj = load_project(project_id, die=True)
-    scenario_jsons = []
-    for py_scen in proj.scens.values():
-        js_scen = py_to_js_scen(py_scen, project=proj)
-        scenario_jsons.append(js_scen)
+    scenario_jsons = [py_to_js_scen(scen,proj) for scen in proj.scens.values()]
     if verbose:
         print('JavaScript scenario info:')
         sc.pp(scenario_jsons)
-
     return scenario_jsons
 
 
@@ -1665,23 +1723,37 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
     proj.scens.clear()
     for j,js_scen in enumerate(scenario_jsons):
         print('Setting scenario %s of %s...' % (j+1, len(scenario_jsons)))
-        py_scen = js_to_py_scen(js_scen)
-        py_scen['start_year'] = proj.data.end_year # The scenario program start year is the same as the end year
-        if verbose: 
+        proj.scens.append(js_to_py_scen(js_scen))
+        if verbose:
             print('Python scenario info for scenario %s:' % (j+1))
-            sc.pp(py_scen)
-        proj.make_scenario(which='budget', json=py_scen)
+            sc.pp(proj.scens[-1])
     print('Saving project...')
     save_project(proj)
     return None
 
 
 @RPC()    
-def get_default_budget_scen(project_id):
+def new_scen(project_id) -> dict:
+    """
+    Instantiate a new temporary scenario and return JS representation
+
+    The workflow is that a basic scenario with the default
+    budget is created, and then converted to JS. The JS conversion needs to
+    handle initialization of extra fields e.g. years that aren't present in the
+    data
+
+    :param project_id: Project ID for database
+    :return: JS representation of scenario (via ``py_to_js_scen``)
+
+    """
+
     print('Creating default scenario...')
     proj = load_project(project_id, die=True)
-    py_scen = proj.demo_scenarios(doadd=False)
-    js_scen = py_to_js_scen(py_scen, project=proj)
+    assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
+    start_year = proj.data.end_year
+    instructions = at.ProgramInstructions(start_year, alloc=proj.progsets[-1])
+    scen = at.CombinedScenario(name='New scenario',active=True,parsetname=proj.parsets[-1].name,progsetname=proj.progsets[-1].name,instructions=instructions)
+    js_scen = py_to_js_scen(scen,proj)
     print('Created default JavaScript scenario:')
     sc.pp(js_scen)
     return js_scen

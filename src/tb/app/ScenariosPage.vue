@@ -220,7 +220,7 @@ Last update: 2019-03-06
           <input type="text"
                  class="txbox"
                  :disabled="addEditModal.scenSummary.progsetname=='None'"
-                 v-model="addEditModal.scenSummary.alloc_year"/><br>
+                 v-model="addEditModal.scenSummary.program_start_year"/><br>
           
           <div style="display:inline-block; padding-right:10px">
             <button class="btn __blue" @click="addEditModal.scenEditMode='parameters'" data-tooltip="Edit parameter dynamics">Parameters</button>
