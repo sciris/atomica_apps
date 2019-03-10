@@ -67,7 +67,6 @@ var ScenarioMixin = {
             .then(response2 => {
               // The order of execution / completion of these doesn't matter.
               this.getScenSummaries()
-              this.getDefaultBudgetScen()
               this.reloadGraphs(false)
             })
         })
@@ -88,19 +87,6 @@ var ScenarioMixin = {
     reloadGraphs(showErr)             { return this.$sciris.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) }, // Set to calibration=false, plotbudget=true
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
-
-    getDefaultBudgetScen() {
-      console.log('getDefaultBudgetScen() called')
-      this.$sciris.rpc('get_default_budget_scen', [this.projectID])
-        .then(response => {
-          this.defaultBudgetScen = response.data // Set the scenario to what we received.
-          console.log('This is the default:')
-          console.log(this.defaultBudgetScen);
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not get default budget scenario', error)
-        })
-    },
     
     getScenSummaries() {
       console.log('getScenSummaries() called')
@@ -131,20 +117,16 @@ var ScenarioMixin = {
     },
 
     addScenModal() {
-      // Open a model dialog for creating a new project
       console.log('addScenModal() called');
-      // TODO: I'm thinking we don't really need this RPC call, since the default budget
-      // scenario gets loaded on creation of the page.
-      // Or, alternatively, we should take the call out of the create() function.
+
+      // Get a "template" new scenario from the server.
       this.$sciris.rpc('new_scen', [this.projectID])
         .then(response => {
           this.new_scen = response.data // Set the scenario to what we received.
           this.addEditModal.scenSummary = _.cloneDeep(this.new_scen)
-          
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
           this.$modal.show('add-edit-scen');
-          console.log(this.defaultBudgetScen)
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not open add scenario modal', error)
