@@ -102,26 +102,6 @@ var ScenarioMixin = {
         })
     },
     
-    doTestScen() {
-      this.addEditModal.scenSummary.budgetyears = [2017, 2018, 2019]
-      this.addEditModal.scenSummary.coverageyears = [2017, 2018, 2019]
-      this.addEditModal.scenSummary.progvals = []
-      let prog = {
-          name: 'BCG vaccination',
-          shortname: 'BCG', 
-          budgetvals: ['345,000', null, null],
-          coveragevals: ['95', null, null]
-      }
-      this.addEditModal.scenSummary.progvals.push(prog)
-      prog = {
-          name: 'Passive case finding',
-          shortname: 'PCF', 
-          budgetvals: ['25,568,000', '25,568,000', '25,568,000'],
-          coveragevals: ['95', null, null]
-      }
-      this.addEditModal.scenSummary.progvals.push(prog)      
-    },
-
     getScenSummaries() {
       console.log('getScenSummaries() called')
       this.$sciris.start(this)
@@ -160,8 +140,6 @@ var ScenarioMixin = {
         .then(response => {
           this.new_scen = response.data // Set the scenario to what we received.
           this.addEditModal.scenSummary = _.cloneDeep(this.new_scen)
-
-          // this.doTestScen()
           
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
@@ -187,6 +165,10 @@ var ScenarioMixin = {
         if (index > -1) {
           this.scenSummaries[index].name = newScen.name  // hack to make sure Vue table updated
           this.scenSummaries[index] = newScen
+          
+          // Hack to get the Vue display of scenSummaries to update
+          this.scenSummaries.push(this.scenSummaries[0])
+          this.scenSummaries.pop()          
         }
         else {
           console.log('Error: a mismatch in editing keys')
@@ -208,17 +190,11 @@ var ScenarioMixin = {
     },
     
     editScen(scenSummary) {
-      // Open a model dialog for creating a new project
       console.log('editScen() called');
-      this.defaultBudgetScen = scenSummary
-      console.log('defaultBudgetScen')
-      console.log(this.defaultBudgetScen)
-      this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
-      
-      // this.doTestScen()
-      
+      this.addEditModal.scenSummary = _.cloneDeep(scenSummary)     
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
+      // Open a model dialog for creating a new project
       this.$modal.show('add-edit-scen');
     },
 
