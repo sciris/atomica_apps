@@ -35,7 +35,7 @@ var ProjectMixin = {
 
   methods: {
 
-    updateSorting() { return utils.updateSorting(this) },
+    updateSorting(column) { return utils.updateSorting(this, column) },
 
     projectLoaded(uid) {
       console.log('projectLoaded called')
