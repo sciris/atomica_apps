@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-06
+Last update: 2019-03-12
 -->
 
 <template>
@@ -250,7 +250,20 @@ Last update: 2019-03-06
                 </tr>                
                 <tr>
                   <th>Program</th>
-                  <th v-for="year in addEditModal.scenSummary.budgetyears">{{ year }}</th>
+                  <th v-for="(val, index) in addEditModal.scenSummary.budgetyears">
+                    <input type="text"
+                           class="txbox"
+                           style="text-align: right"
+                           v-model="addEditModal.scenSummary.budgetyears[index]"/>   
+                    <button @click="modalSave()" class='btn __red' style="display:inline-block">
+                      X
+                    </button>         
+                  </th>                  
+                  <th>
+                    <button @click="modalSave()" class='btn __green' style="display:inline-block">
+                      +
+                    </button>
+                  </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -263,6 +276,8 @@ Last update: 2019-03-06
                            class="txbox"
                            style="text-align: right"
                            v-model="prog.budgetvals[index]"/>
+                  </td>
+                  <td>
                   </td>
                 </tr>
                 </tbody>
