@@ -255,12 +255,12 @@ Last update: 2019-03-12
                            class="txbox"
                            style="text-align: right"
                            v-model="addEditModal.scenSummary.budgetyears[index]"/>   
-                    <button @click="modalSave()" class='btn __red' style="display:inline-block">
+                    <button @click="modalRemoveBudgetYear(index)" class='btn __red' style="display:inline-block">
                       X
                     </button>         
                   </th>                  
                   <th>
-                    <button @click="modalSave()" class='btn __green' style="display:inline-block">
+                    <button @click="modalAddBudgetYear()" class='btn __green' style="display:inline-block">
                       +
                     </button>
                   </th>

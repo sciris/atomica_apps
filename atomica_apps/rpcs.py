@@ -1609,8 +1609,10 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
     # Fundamentally, this bit of code needs to populate the FE with placeholder None values
     # in places where the scenario doesn't have an overwrite yet e.g. if the user has not overridden
     # values for a particular program
-    js_scen['budgetyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
-    js_scen['coverageyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
+    # js_scen['budgetyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
+    # js_scen['coverageyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
+    js_scen['budgetyears'] = np.arange(proj.data.end_year,proj.data.end_year+1)
+    js_scen['coverageyears'] = np.arange(proj.data.end_year,proj.data.end_year+1)
 
     js_scen['progvals'] = []
 

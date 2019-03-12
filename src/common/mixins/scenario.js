@@ -171,6 +171,31 @@ var ScenarioMixin = {
         })
     },
     
+    modalAddBudgetYear() {
+      console.log('modalAddBudgetYear() called')
+      
+      // Add a new budget year which is the maximum year already there plus 1.
+      let newYear = Math.max(...this.addEditModal.scenSummary.budgetyears) + 1
+      this.addEditModal.scenSummary.budgetyears.push(newYear)
+      
+      // For each program, add a null to the end of the list, so we have a blank textbox.
+      for (var i = 0; i < this.addEditModal.scenSummary.progvals.length; i++) {
+        this.addEditModal.scenSummary.progvals[i].budgetvals.push(null)
+      }      
+    },
+    
+    modalRemoveBudgetYear(yearindex) {
+      console.log('modalRemoveBudgetYear() called')
+      
+      // Delete the budget year itself.
+      this.addEditModal.scenSummary.budgetyears.splice(yearindex, 1)
+      
+      // For each program, delete all spending values corresponding to that budget year.
+      for (var i = 0; i < this.addEditModal.scenSummary.progvals.length; i++) {
+        this.addEditModal.scenSummary.progvals[i].budgetvals.splice(yearindex, 1)
+      }      
+    },    
+    
     editScen(scenSummary) {
       console.log('editScen() called');
       this.addEditModal.scenSummary = _.cloneDeep(scenSummary)     
