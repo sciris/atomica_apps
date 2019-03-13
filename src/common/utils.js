@@ -244,15 +244,15 @@ function updateDatasets(vm) {
 function getPlotOptions(vm, project_id) {
   return new Promise((resolve, reject) => {
     console.log('getPlotOptions() called')
-    status.start(vm) // Start indicating progress.
-    rpcs.rpc('get_supported_plots', [project_id, true])
+    sciris.status.start(vm) // Start indicating progress.
+    sciris.rpcs.rpc('get_supported_plots', [project_id, true])
       .then(response => {
         vm.plotOptions = response.data // Get the parameter values
-        status.succeed(vm, '')
+        sciris.status.succeed(vm, '')
         resolve(response)
       })
       .catch(error => {
-        status.fail(vm, 'Could not get plot options', error)
+        sciris.status.fail(vm, 'Could not get plot options', error)
         reject(error)
       })
   })
@@ -264,8 +264,8 @@ function togglePlotControls(vm) {
 
 function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration, plotbudget) {
   console.log('reloadGraphs() called')
-  status.start(vm)
-  rpcs.rpc('plot_results', [
+  sciris.status.start(vm)
+  sciris.rpcs.rpc('plot_results', [
     project_id, 
     cache_id, 
     vm.plotOptions
@@ -279,13 +279,13 @@ function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration,
   }).then(response => {
     vm.table = response.data.table
     vm.makeGraphs(response.data)
-    status.succeed(vm, 'Data loaded, graphs now rendering...')
+    sciris.status.succeed(vm, 'Data loaded, graphs now rendering...')
   }).catch(error => {
     if (showNoCacheError) {
-      status.fail(vm, 'Could not make graphs', error)
+      sciris.status.fail(vm, 'Could not make graphs', error)
     }
     else {
-      status.succeed(vm, '')  // Silently stop progress bar and spinner.
+      sciris.status.succeed(vm, '')  // Silently stop progress bar and spinner.
     }
   })
 }
