@@ -1,3 +1,5 @@
+import utils from "../utils"
+
 var ScenarioMixin = {
 
   data() {
@@ -39,13 +41,13 @@ var ScenarioMixin = {
   },
 
   computed: {
-    projectID()    { return this.$sciris.projectID(this) },
-    hasData()      { return this.$sciris.hasData(this) },
-    hasPrograms()  { return this.$sciris.hasPrograms(this) },
-    simStart()     { return this.$sciris.dataEnd(this) },
-    simEnd()       { return this.$sciris.simEnd(this) },
-    projectionYears()     { return this.$sciris.projectionYears(this) },
-    activePops()   { return this.$sciris.activePops(this) },
+    projectID()    { return utils.projectID(this) },
+    hasData()      { return utils.hasData(this) },
+    hasPrograms()  { return utils.hasPrograms(this) },
+    simStart()     { return utils.dataEnd(this) },
+    simEnd()       { return utils.simEnd(this) },
+    projectionYears()     { return utils.projectionYears(this) },
+    activePops()   { return utils.activePops(this) },
     placeholders() { return this.$sciris.placeholders(this, 1) },
   },
 
@@ -75,16 +77,20 @@ var ScenarioMixin = {
 
   methods: {
 
-    validateYears()                   { return this.$sciris.validateYears(this) },
-    updateSets()                      { return this.$sciris.updateSets(this) },
-    exportGraphs()                    { return this.$sciris.exportGraphs(this) },
-    exportResults(datastoreID)        { return this.$sciris.exportResults(this, datastoreID) },
+    validateYears()                   { return utils.validateYears(this) },
+    updateSets()                      { return utils.updateSets(this) },
+    exportGraphs()                    { return utils.exportGraphs(this) },
+    exportResults(datastoreID)        { return utils.exportResults(this, datastoreID) },
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
-    togglePlotControls()              { return this.$sciris.togglePlotControls(this) },
-    getPlotOptions(project_id)        { return this.$sciris.getPlotOptions(this, project_id) },
+    togglePlotControls()              { return utils.togglePlotControls(this) },
+    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
     makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') },
-    reloadGraphs(showErr)             { return this.$sciris.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) }, // Set to calibration=false, plotbudget=true
+    reloadGraphs(showErr)             { 
+      utils.validateYears(this);
+      // Set to calibration=false, plotbudget=true
+      return utils.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) 
+    }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
 

@@ -25,7 +25,6 @@ Last update: 2018-08-16
   </div>
 </template>
 <script>
-import sciris from 'sciris-js';
 import ContentFooter from './ContentFooter.vue'
 import DashboardContent from './Content.vue'
 
