@@ -28,7 +28,7 @@ var ScenarioMixin = {
 
       // Page-specific data
       scenSummaries: [],
-      defaultBudgetScen: {},
+      spendingBaselines: {},
       scenariosLoaded: false,
       addEditModal: {
         scenSummary: {},
@@ -122,7 +122,7 @@ var ScenarioMixin = {
       this.$sciris.start(this)
       this.$sciris.rpc('get_baseline_spending', [this.projectID])
         .then(response => {
-          this.xxx = response.data // Set the xxx to what we received.
+          this.spendingBaselines = response.data // Set the spending baselines to what we received.
           this.$sciris.succeed(this, 'Spending baselines loaded')
         })
         .catch(error => {
