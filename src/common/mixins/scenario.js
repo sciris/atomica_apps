@@ -67,6 +67,7 @@ var ScenarioMixin = {
             .then(response2 => {
               // The order of execution / completion of these doesn't matter.
               this.getScenSummaries()
+              this.getSpendingBaselines()
               this.reloadGraphs(false)
             })
         })
@@ -114,6 +115,19 @@ var ScenarioMixin = {
         .catch(error => {
           this.$sciris.fail(this, 'Could not save scenarios', error)
         })
+    },
+    
+    getSpendingBaselines() {
+      console.log('getSpendingBaselines() called')
+      this.$sciris.start(this)
+      this.$sciris.rpc('get_baseline_spending', [this.projectID])
+        .then(response => {
+          this.xxx = response.data // Set the xxx to what we received.
+          this.$sciris.succeed(this, 'Spending baselines loaded')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get spending baselines', error)
+        })      
     },
 
     addScenModal() {
