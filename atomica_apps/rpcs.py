@@ -1726,6 +1726,8 @@ def get_baseline_spending(project_id, verbose=True):
                 y_max = max(y_max,prog.spend_data.t[-1])
         spending['years'][pset.name] = np.arange(np.floor(y_min),np.ceil(y_max)+1)
         spending['vals'][pset.name] = pset.get_alloc(spending['years'][pset.name])
+        spending['data_start'] = proj.data.start_year
+        spending['data_end'] = proj.data.end_year
 
     if verbose:
         print('Baseline spending:')
