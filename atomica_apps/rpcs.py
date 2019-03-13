@@ -1225,12 +1225,15 @@ def supported_plots_func(framework):
         Output: {name:quantities}: a dict with all of the plot quantities in the framework keyed by name
     '''
     if 'plots' not in framework.sheets:
+        print('TEMP FAIL1')
         return sc.odict()
     else:
         df = framework.sheets['plots'][0]
         plots = sc.odict()
         for name,output in zip(df['name'], df['quantities']):
             plots[name] = at.evaluate_plot_string(output)
+        print('WORKKKED')
+        print(plots)
         return plots
 
 
@@ -1270,6 +1273,10 @@ def download_graphs(username):
 
 
 def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, pops='all', outputs=None, do_plot_data=None, replace_nans=True, stacked=False, xlims=None, figsize=None, calibration=False):
+    print('TEMP GETATOMICAPLOTS')
+    print(plot_names)
+    print('ANDDDD')
+    print(plot_options)
     results = sc.promotetolist(results)
     supported_plots = supported_plots_func(proj.framework)
     if plot_names is None: 
@@ -1338,10 +1345,14 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
 
     cascadeoutput,cascadefigs,cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
     if tool == 'cascade': # For Cascade Tool
+        print('TEMP RUNNING CASCADE')
         output = cascadeoutput
         allfigs = cascadefigs
         alllegends = cascadelegends
     else: # For Optima TB
+        print('TEMP RUNNING TB')
+        print(calibration)
+        print(plot_options)
         if calibration: output, allfigs, alllegends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, calibration=True, stacked=False)
         else:           output, allfigs, alllegends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, calibration=False)
         output['table'] = cascadeoutput['table'] # Put this back in -- warning kludgy! -- also not used for Optima TB...
@@ -1568,6 +1579,7 @@ def get_json_cascade(results,data):
 @RPC()  
 def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, plotyear=None, pops=None, tool=None, cascade=None, dosave=True):
     print('Running "manual calibration"...')
+    print('TEMP! %s' % tool)
     print(plot_options)
     proj = load_project(project_id, die=True)
     result = proj.run_sim(parset=parsetname, store_results=False)
