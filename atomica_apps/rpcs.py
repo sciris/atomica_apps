@@ -1609,10 +1609,13 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
     # Fundamentally, this bit of code needs to populate the FE with placeholder None values
     # in places where the scenario doesn't have an overwrite yet e.g. if the user has not overridden
     # values for a particular program
-    # js_scen['budgetyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
-    # js_scen['coverageyears'] = np.arange(proj.data.end_year,proj.data.end_year+3) # Come up with a better way of doing this
-    js_scen['budgetyears'] = np.arange(proj.data.end_year,proj.data.end_year+1)
-    js_scen['coverageyears'] = np.arange(proj.data.end_year,proj.data.end_year+1)
+    budgetyears = set()
+    [budgetyears.update(x.t) for x in scen.instructions.alloc.values()]
+    js_scen['budgetyears'] = np.array(sorted(budgetyears))
+
+    coverageyears = set()
+    [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
+    js_scen['coverageyears'] = np.array(sorted(coverageyears))
 
     js_scen['progvals'] = []
 
@@ -1620,9 +1623,6 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
         js_scen['program_start_year'] = scen.instructions.start_year
     else:
         js_scen['program_start_year'] = None
-
-
-    print(scen.instructions.alloc)
 
     if not proj.progsets:
         # If no progsets, we can't retrieve the full names from the short names in the instructions
@@ -1782,11 +1782,62 @@ def new_scen(project_id) -> dict:
     proj = load_project(project_id, die=True)
     assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
     start_year = proj.data.end_year
-    instructions = at.ProgramInstructions(start_year, alloc=proj.progsets[-1])
+    alloc = {}
+    print('MAKESCEN')
+    for prog in proj.progsets[-1].programs.values():
+        print(prog.spend_data)
+        if prog.spend_data.has_time_data:
+            alloc[prog.name] = sc.dcp(prog.spend_data)
+        else:
+            alloc[prog.name] = at.TimeSeries(start_year,prog.spend_data.assumption)
+    instructions = at.ProgramInstructions(start_year, alloc=alloc)
     scen = at.CombinedScenario(name='New scenario',active=True,parsetname=proj.parsets[-1].name,progsetname=proj.progsets[-1].name,instructions=instructions)
     js_scen = py_to_js_scen(scen,proj)
     print('Created default JavaScript scenario:')
-    sc.pp(js_scen)
+    return js_scen
+
+@RPC()
+def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict:
+    py_scen = js_to_py_scen(js_scen)
+    proj = load_project(project_id, die=True)
+
+    old_alloc = py_scen.instructions.alloc
+    old_progset = proj.progsets[py_scen.progsetname]
+    new_progset = proj.progsets[new_progset_name]
+    alloc = sc.odict()
+
+    # Fuse the allocs
+    # - If the new progset has the same programs, then leave them intact
+    # - If the new progset has a new program, draw values from the progbook
+    for prog in new_progset.programs.values():
+        if prog.name in old_alloc:
+            alloc[prog.name] = sc.dcp(old_alloc[prog.name])
+        else:
+            if prog.spend_data.has_time_data:
+                alloc[prog.name] = sc.dcp(prog.spend_data)
+            else:
+                alloc[prog.name] = at.TimeSeries(py_scen.instructions.start_year, prog.spend_data.assumption)
+
+    py_scen.instructions.alloc = alloc
+    py_scen.progsetname = new_progset_name
+    js_scen = py_to_js_scen(py_scen,proj)
+    return js_scen
+
+@RPC()
+def scen_reset_spending(js_scen, project_id):
+    py_scen = js_to_py_scen(js_scen)
+    proj = load_project(project_id, die=True)
+
+    alloc = sc.odict()
+    for prog in proj.progsets[py_scen.progsetname].programs.values():
+        print(prog.spend_data)
+        if prog.spend_data.has_time_data:
+            alloc[prog.name] = sc.dcp(prog.spend_data)
+        else:
+            alloc[prog.name] = at.TimeSeries(py_scen.instructions.start_year,prog.spend_data.assumption)
+
+    py_scen.instructions.alloc = alloc
+    js_scen = py_to_js_scen(py_scen,proj)
     return js_scen
 
 
