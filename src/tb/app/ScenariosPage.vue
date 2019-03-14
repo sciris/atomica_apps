@@ -253,7 +253,6 @@ Last update: 2019-03-14
                 </tr>                
                 <tr>
                   <th>Program</th>
-                  <th>Baseline in {{ addEditModal.scenSummary.program_start_year }}</th>
                   <th v-for="(val, index) in addEditModal.scenSummary.budgetyears">
                     <input type="text"
                            class="txbox"
@@ -272,9 +271,6 @@ Last update: 2019-03-14
                 </thead>
                 <tbody>
                 <tr v-for="prog in addEditModal.scenSummary.progvals">
-                  <td>
-                    {{ prog.name }}
-                  </td>
                   <td>
                     {{ prog.name }}
                   </td>
