@@ -29,6 +29,7 @@ var ScenarioMixin = {
       // Page-specific data
       scenSummaries: [],
       spendingBaselines: {},
+      validProgramStartYears: [],
       scenariosLoaded: false,
       addEditModal: {
         scenSummary: {},
@@ -123,6 +124,11 @@ var ScenarioMixin = {
       this.$sciris.rpc('get_baseline_spending', [this.projectID])
         .then(response => {
           this.spendingBaselines = response.data // Set the spending baselines to what we received.
+          this.validProgramStartYears = []
+          for (var year = this.spendingBaselines.data_start; 
+            year <= this.spendingBaselines.data_end + 10; year++) {
+              this.validProgramStartYears.push(year)
+          }
           this.$sciris.succeed(this, 'Spending baselines loaded')
         })
         .catch(error => {
