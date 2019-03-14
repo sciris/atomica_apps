@@ -208,7 +208,7 @@ Last update: 2019-03-14
           </div>
           <div style="display:inline-block; padding-right:10px">
             <b>Program set</b><br>
-            <select v-model="addEditModal.scenSummary.progsetname">
+            <select @change="changeProgset()" v-model="addEditModal.scenSummary.progsetname">
               <option>None</option>
               <option v-for='progset in progsetOptions'>
                 {{ progset }}

@@ -135,6 +135,20 @@ var ScenarioMixin = {
           this.$sciris.fail(this, 'Could not get spending baselines', error)
         })      
     },
+    
+    changeProgset() {
+      if (this.addEditModal.scenSummary.progsetname == 'None') {
+        this.addEditModal.scenEditMode = 'parameters'
+      }        
+    },
+    
+    initModal() {
+      if (this.addEditModal.scenSummary.progsetname == 'None') {
+        this.addEditModal.scenEditMode = 'parameters'
+      } else {
+        this.addEditModal.scenEditMode = 'progbudget'
+      }
+    },
 
     addScenModal() {
       console.log('addScenModal() called');
@@ -146,7 +160,8 @@ var ScenarioMixin = {
           this.addEditModal.scenSummary = _.cloneDeep(this.new_scen)
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
-          this.$modal.show('add-edit-scen');
+          this.initModal()
+          this.$modal.show('add-edit-scen')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not open add scenario modal', error)
@@ -221,6 +236,7 @@ var ScenarioMixin = {
       this.addEditModal.scenSummary = _.cloneDeep(scenSummary)     
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
+      this.initModal()
       // Open a model dialog for creating a new project
       this.$modal.show('add-edit-scen');
     },
