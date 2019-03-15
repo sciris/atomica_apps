@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-14
+Last update: 2019-03-15
 -->
 
 <template>
@@ -266,6 +266,9 @@ Last update: 2019-03-14
                     <button @click="modalAddBudgetYear()" class='btn __green' style="display:inline-block">
                       +
                     </button>
+                    <button @click="resetToProgbook()" class='btn __red' style="display:inline-block">
+                      Reset to progbook
+                    </button>                                        
                   </th>
                 </tr>
                 </thead>

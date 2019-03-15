@@ -137,9 +137,34 @@ var ScenarioMixin = {
     },
     
     changeProgset() {
+      // If we've switched off program sets, change the modal mode to parameters overwrites.
       if (this.addEditModal.scenSummary.progsetname == 'None') {
         this.addEditModal.scenEditMode = 'parameters'
-      }        
+        
+      // Otherwise...
+      } else {
+        this.$sciris.start(this)
+        this.$sciris.rpc('scen_change_progset', [this.addEditModal.scenSummary, this.addEditModal.scenSummary.progsetname, this.projectID])
+          .then(response => {           
+            this.addEditModal.scenSummary = response.data
+            this.$sciris.succeed(this, 'Progset change completed')
+          })
+          .catch(error => {
+            this.$sciris.fail(this, 'Could not properly change the progset', error)
+          })           
+      }
+    },
+    
+    resetToProgbook() {
+      this.$sciris.start(this)
+      this.$sciris.rpc('scen_reset_spending', [this.addEditModal.scenSummary, this.projectID])
+        .then(response => {           
+          this.addEditModal.scenSummary = response.data
+          this.$sciris.succeed(this, 'Spending reset completed')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not properly reset the spending', error)
+        })          
     },
     
     initModal() {
