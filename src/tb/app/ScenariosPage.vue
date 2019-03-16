@@ -254,11 +254,16 @@ Last update: 2019-03-16
                 <tr>
                   <th>Program</th>
                   <th v-for="(val, index) in addEditModal.scenSummary.budgetyears">
+                    <select v-model="addEditModal.scenSummary.budgetyears[index]">
+                      <option v-for='year in validSimYears'>
+                        {{ year }}
+                      </option>
+                    </select>                 
 <!--                    <input type="text"
                            class="txbox"
                            style="text-align: right"
                            v-model="addEditModal.scenSummary.budgetyears[index]"/> --> 
-                    {{ addEditModal.scenSummary.budgetyears[index] }}       
+<!--                    {{ addEditModal.scenSummary.budgetyears[index] }}    -->   
                     <button @click="modalRemoveBudgetYear(index)" class='btn __red' style="display:inline-block">
                       X
                     </button>         

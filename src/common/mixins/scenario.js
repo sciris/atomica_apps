@@ -12,6 +12,8 @@ var ScenarioMixin = {
       showPlotControls: false,
       hasGraphs: false,
       table: null,
+      simStartYear: 0,
+      simEndYear: 2035,
       startYear: 0,
       endYear: 2018, // TEMP FOR DEMO
       activePop: "All",
@@ -30,6 +32,7 @@ var ScenarioMixin = {
       scenSummaries: [],
       spendingBaselines: {},
       validProgramStartYears: [],
+      validSimYears: [],
       scenariosLoaded: false,
       addEditModal: {
         scenSummary: {},
@@ -58,6 +61,11 @@ var ScenarioMixin = {
       (this.$store.state.activeProject.project.hasData) &&
       (this.$store.state.activeProject.project.hasPrograms)) {
       console.log('created() called')
+      this.validSimYears = []
+      for (var year = 2000; 
+        year <= 2035; year++) {
+        this.validSimYears.push(year)
+      }
       this.startYear = this.simStart
       this.endYear = this.simEnd
       this.popOptions = this.activePops
