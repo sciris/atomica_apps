@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-15
+Last update: 2019-03-16
 -->
 
 <template>
@@ -254,10 +254,11 @@ Last update: 2019-03-15
                 <tr>
                   <th>Program</th>
                   <th v-for="(val, index) in addEditModal.scenSummary.budgetyears">
-                    <input type="text"
+<!--                    <input type="text"
                            class="txbox"
                            style="text-align: right"
-                           v-model="addEditModal.scenSummary.budgetyears[index]"/>   
+                           v-model="addEditModal.scenSummary.budgetyears[index]"/> --> 
+                    {{ addEditModal.scenSummary.budgetyears[index] }}       
                     <button @click="modalRemoveBudgetYear(index)" class='btn __red' style="display:inline-block">
                       X
                     </button>         
