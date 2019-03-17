@@ -7,6 +7,7 @@ import UserChangeInfoPage from './views/UserChangeInfoPage.vue';
 import EventBus from './eventbus.js';
 import NavigationPlugin from './plugins/navigation/index.js';
 import HelpLink from './plugins/help/HelpLink.vue';
+import THSortable from './plugins/sortable/THSortable.vue';
 
 import { events } from './eventbus.js';
 
@@ -39,6 +40,7 @@ function install(Vue, options={}) {
     Vue.use(NavigationPlugin, navigationOptions);
   }
   Vue.component('help', HelpLink);
+  Vue.component('th-sortable', THSortable);
 
   let afterLoginPath = options.afterLoginPath || "/"; 
   let afterPasswordChangePath = options.afterPasswordChangePath || "/"; 
