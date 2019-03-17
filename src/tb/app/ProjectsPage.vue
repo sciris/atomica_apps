@@ -36,31 +36,9 @@ Last update: 2018oct04
             <th style="text-align:center">
               <input type="checkbox" @click="selectAll()" v-model="allSelected"/>
             </th>
-            <th @click="updateSorting('name')" class="sortable">
-              Name
-              <span v-show="sortColumn == 'name' && !sortReverse">
-                <i class="fas fa-caret-down"></i>
-              </span>
-              <span v-show="sortColumn == 'name' && sortReverse">
-                <i class="fas fa-caret-up"></i>
-              </span>
-              <span v-show="sortColumn != 'name'">
-                <i class="fas fa-caret-up" style="visibility: hidden"></i>
-              </span>
-            </th>
+            <th-sortable column="name" :sortReverse="sortReverse" :sortColumn="sortColumn" @sortingUpdated="updateSorting">Name</th-sortable>
             <th style="text-align:left">Project actions</th>
-            <th @click="updateSorting('updatedTime')" class="sortable" style="text-align:left">
-              Last modified
-              <span v-show="sortColumn == 'updatedTime' && !sortReverse">
-                <i class="fas fa-caret-down"></i>
-              </span>
-              <span v-show="sortColumn == 'updatedTime' && sortReverse">
-                <i class="fas fa-caret-up"></i>
-              </span>
-              <span v-show="sortColumn != 'updatedTime'">
-                <i class="fas fa-caret-up" style="visibility: hidden"></i>
-              </span>
-            </th>
+            <th-sortable column="updatedTime" :sortReverse="sortReverse" :sortColumn="sortColumn" @sortingUpdated="updateSorting">Last modified</th-sortable>
             <th style="text-align:left">Databook</th>
             <th style="text-align:left">Program book</th>
           </tr>

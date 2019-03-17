@@ -7,12 +7,15 @@ import UserChangeInfoPage from './views/UserChangeInfoPage.vue';
 import EventBus from './eventbus.js';
 import NavigationPlugin from './plugins/navigation/index.js';
 import HelpLink from './plugins/help/HelpLink.vue';
+import THSortable from './plugins/sortable/THSortable.vue';
 
 import { events } from './eventbus.js';
 
 import Simplert from 'vue2-simplert-plugin';
 import { directive as vClickOutside } from 'vue-clickaway';
 import _ from 'lodash';
+
+import utils from './utils.js';
 
 require('vue2-simplert-plugin/dist/vue2-simplert-plugin.css')
 
@@ -37,6 +40,7 @@ function install(Vue, options={}) {
     Vue.use(NavigationPlugin, navigationOptions);
   }
   Vue.component('help', HelpLink);
+  Vue.component('th-sortable', THSortable);
 
   let afterLoginPath = options.afterLoginPath || "/"; 
   let afterPasswordChangePath = options.afterPasswordChangePath || "/"; 
@@ -82,6 +86,7 @@ const views = {
 export {
   EventBus,
   events,
+  utils,
   views, 
   mixins
 }

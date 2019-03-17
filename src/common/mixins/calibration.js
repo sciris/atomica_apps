@@ -1,3 +1,5 @@
+import utils from "../utils"
+
 var CalibrationMixin = {
     data() {
       return {
@@ -38,13 +40,13 @@ var CalibrationMixin = {
     },
 
     computed: {
-      projectID()    { return this.$sciris.projectID(this) },
-      hasData()      { return this.$sciris.hasData(this) },
-      hasPrograms()  { return this.$sciris.hasPrograms(this) },
-      simStart()     { return this.$sciris.simStart(this) },
-      simEnd()       { return this.$sciris.simEnd(this) },
-      simYears()     { return this.$sciris.simYears(this) },
-      activePops()   { return this.$sciris.activePops(this) },
+      projectID()    { return utils.projectID(this) },
+      hasData()      { return utils.hasData(this) },
+      hasPrograms()  { return utils.hasPrograms(this) },
+      simStart()     { return utils.simStart(this) },
+      simEnd()       { return utils.simEnd(this) },
+      simYears()     { return utils.simYears(this) },
+      activePops()   { return utils.activePops(this) },
       placeholders() { return this.$sciris.placeholders(this, 1) },
 
       filteredParlist() {
@@ -84,16 +86,16 @@ var CalibrationMixin = {
     methods: {
 
       validateYears(){ 
-        return this.$sciris.validateYears(this) 
+        return utils.validateYears(this) 
       },
       updateSets(){ 
-        return this.$sciris.updateSets(this) 
+        return utils.updateSets(this) 
       },
       exportGraphs() { 
-        return this.$sciris.exportGraphs(this) 
+        return utils.exportGraphs(this) 
       },
       exportResults(datastoreID) { 
-        return this.$sciris.exportResults(this, datastoreID) 
+        return utils.exportResults(this, datastoreID) 
       },
       scaleFigs(frac) { 
         return this.$sciris.scaleFigs(this, frac)
@@ -102,17 +104,18 @@ var CalibrationMixin = {
         return this.$sciris.clearGraphs(this) 
       },
       togglePlotControls() { 
-        return this.$sciris.togglePlotControls(this) 
+        return utils.togglePlotControls(this) 
       },
       getPlotOptions(project_id) { 
-        return this.$sciris.getPlotOptions(this, project_id) 
+        return utils.getPlotOptions(this, project_id) 
       },
       makeGraphs(graphdata) { 
         return this.$sciris.makeGraphs(this, graphdata, '/calibration') 
       },
       reloadGraphs(showErr) { 
         // Set to calibration=true
-        return this.$sciris.reloadGraphs(
+        utils.validateYears(this)  // Make sure the start end years are in the right range.
+        return utils.reloadGraphs(
           this, 
           this.projectID, 
           this.serverDatastoreId, 

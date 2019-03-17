@@ -1568,7 +1568,6 @@ def get_json_cascade(results,data):
 @RPC()  
 def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, plotyear=None, pops=None, tool=None, cascade=None, dosave=True):
     print('Running "manual calibration"...')
-    print(plot_options)
     proj = load_project(project_id, die=True)
     result = proj.run_sim(parset=parsetname, store_results=False)
     cache_result(proj, result, cache_id)

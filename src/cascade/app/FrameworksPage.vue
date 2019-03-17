@@ -32,43 +32,10 @@ Last update: 2018oct04
           <th>
             <input type="checkbox" @click="selectAll()" v-model="allSelected"/>
           </th>
-          <th @click="updateSorting('name')" class="sortable">
-            Name
-            <span v-show="sortColumn == 'name' && !sortReverse">
-                <i class="fas fa-caret-down"></i>
-              </span>
-            <span v-show="sortColumn == 'name' && sortReverse">
-                <i class="fas fa-caret-up"></i>
-              </span>
-            <span v-show="sortColumn != 'name'">
-                <i class="fas fa-caret-up" style="visibility: hidden"></i>
-              </span>
-          </th>
+          <th-sortable column="name" :sortReverse="sortReverse" :sortColumn="sortColumn" @sortingUpdated="updateSorting">Name</th-sortable>
           <th>Framework actions</th>
-          <th @click="updateSorting('creationTime')" class="sortable">
-            Created on
-            <span v-show="sortColumn == 'creationTime' && !sortReverse">
-                <i class="fas fa-caret-down"></i>
-              </span>
-            <span v-show="sortColumn == 'creationTime' && sortReverse">
-                <i class="fas fa-caret-up"></i>
-              </span>
-            <span v-show="sortColumn != 'creationTime'">
-                <i class="fas fa-caret-up" style="visibility: hidden"></i>
-              </span>
-          </th>
-          <th @click="updateSorting('updatedTime')" class="sortable">
-            Last modified
-            <span v-show="sortColumn == 'updatedTime' && !sortReverse">
-                <i class="fas fa-caret-down"></i>
-              </span>
-            <span v-show="sortColumn == 'updatedTime' && sortReverse">
-                <i class="fas fa-caret-up"></i>
-              </span>
-            <span v-show="sortColumn != 'updatedTime'">
-                <i class="fas fa-caret-up" style="visibility: hidden"></i>
-              </span>
-          </th>
+          <th-sortable column="creationTime" :sortReverse="sortReverse" :sortColumn="sortColumn" @sortingUpdated="updateSorting">Created on</th-sortable>
+          <th-sortable column="updatedTime" :sortReverse="sortReverse" :sortColumn="sortColumn" @sortingUpdated="updateSorting">Last modified</th-sortable>
         </tr>
         </thead>
         <tbody>
