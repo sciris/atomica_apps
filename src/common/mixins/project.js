@@ -322,12 +322,12 @@ var ProjectMixin = {
         projectSummary.renaming = projectSummary.project.name
         // Add a click listener to run the rename when outside the input box is click, and remember
         // which project needs to be renamed.
-        window.addEventListener('click', this.finishRename)
+//        window.addEventListener('click', this.finishRename)
         this.projectToRename = projectSummary
       } else { // Otherwise (it is to be renamed)...
         // Remove the listener for reading the clicks outside the input box, and null out the project
         // to be renamed.
-        window.removeEventListener('click', this.finishRename)
+//        window.removeEventListener('click', this.finishRename)
         this.projectToRename = null
         // Make a deep copy of the projectSummary object by 
         // JSON-stringifying the old object, and then parsing 
