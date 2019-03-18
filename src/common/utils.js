@@ -272,7 +272,7 @@ function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration,
   ], {
     tool: vm.toolName(), 
     'cascade': null, 
-    plotyear: vm.endYear, 
+    plotyear: vm.simEndYear, 
     pops: vm.activePop, 
     calibration: iscalibration, 
     plotbudget: plotbudget

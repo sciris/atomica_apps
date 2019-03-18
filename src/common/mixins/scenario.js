@@ -96,7 +96,13 @@ var ScenarioMixin = {
     reloadGraphs(showErr)             { 
       utils.validateYears(this);
       // Set to calibration=false, plotbudget=true
-      return utils.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) 
+      return utils.reloadGraphs(
+        this,
+        this.projectID,
+        this.serverDatastoreId,
+        showErr,
+        false,
+        true)
     }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },

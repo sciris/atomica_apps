@@ -1,7 +1,7 @@
 <!--
 Optimizations Page
 
-Last update: 2018-09-26
+Last update: 2019-03-18
 -->
 
 <template>
@@ -77,7 +77,7 @@ Last update: 2018-09-26
             <div>
 
               <b>Year: &nbsp;</b>
-              <select v-model="endYear" @change="reloadGraphs(displayResultDatastoreId, true)">
+              <select v-model="simEndYear" @change="reloadGraphs(displayResultDatastoreId, true)">
                 <option v-for='year in projectionYears'>
                   {{ year }}
                 </option>

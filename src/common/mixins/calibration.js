@@ -13,8 +13,8 @@ var CalibrationMixin = {
         showPlotControls: false,
         hasGraphs: false,
         table: null, // Not actually used on this page
-        startYear: 0,
-        endYear: 2018, // TEMP FOR DEMO
+        simStartYear: 0,
+        simEndYear: 2018, // TEMP FOR DEMO
         activePop: "All",
         popOptions: [],
         plotOptions: [],
@@ -60,8 +60,8 @@ var CalibrationMixin = {
       if ((this.$store.state.activeProject.project !== undefined) &&
         (this.$store.state.activeProject.project.hasData) ) {
         console.log('created() called')
-        this.startYear = this.simStart
-        this.endYear = this.simEnd // CK: Uncomment to set the end year to 2035 instead of 2018
+        this.simStartYear = this.simStart
+        this.simEndYear = this.simEnd
         this.popOptions = this.activePops
         this.serverDatastoreId = this.$store.state.activeProject.project.id + ':calibration'
         this.getPlotOptions(this.$store.state.activeProject.project.id)
@@ -285,7 +285,7 @@ var CalibrationMixin = {
         ], {
           'parsetname': this.activeParset, 
           'plot_options': this.plotOptions,
-          'plotyear':this.endYear, 
+          'plotyear':this.simEndYear, 
           'pops':this.activePop, 
           'tool': this.toolName(), 
           'cascade':null
@@ -317,7 +317,7 @@ var CalibrationMixin = {
           'parsetname': this.activeParset, 
           'max_time': maxtime, 
           'plot_options': this.plotOptions,
-          'plotyear': this.endYear, 
+          'plotyear': this.simEndYear, 
           'pops': this.activePop, 
           'tool': this.toolName(), 
           'cascade':null
