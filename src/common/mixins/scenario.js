@@ -244,9 +244,16 @@ var ScenarioMixin = {
     
     modalAddBudgetYear() {
       console.log('modalAddBudgetYear() called')
-      
-      // Add a new budget year which is the maximum year already there plus 1.
-      let newYear = Math.max(...this.addEditModal.scenSummary.budgetyears) + 1
+    
+      var newYear
+      // If the budget years list is non-empty, add a new budget year which is the maximum 
+      // year already there plus 1.
+      if (this.addEditModal.scenSummary.budgetyears.length > 0) {
+        newYear = Math.max(...this.addEditModal.scenSummary.budgetyears) + 1
+      // Otherwise, make the new year the data_end year.
+      } else {
+        newYear = this.spendingBaselines.data_end
+      }
       this.addEditModal.scenSummary.budgetyears.push(newYear)
       
       // For each program, add a null to the end of the list, so we have a blank textbox.
