@@ -1708,24 +1708,6 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
 
 
 @RPC()
-def get_sim_params(project_id, verbose=True):
-    print('Getting simulation parameters...')
-    proj = load_project(project_id, die=True)
-
-    sim_params = sc.odict()
-    sim_params['sim_start_year'] = proj.settings.sim_start
-    sim_params['sim_end_year'] = proj.settings.sim_end
-
-    if verbose:
-        print('Start sim year:')
-        print(sim_params['sim_start_year'])
-        print('Start end year:')
-        print(sim_params['sim_end_year'])
-
-    return sim_params
-
-
-@RPC()
 def get_baseline_spending(project_id, verbose=True):
     print('Getting baseline spending...')
     proj = load_project(project_id, die=True)

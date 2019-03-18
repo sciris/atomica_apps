@@ -16,8 +16,6 @@ var ScenarioMixin = {
       table: null,
       simStartYear: 0,
       simEndYear: 2035,
-      startYear: 0,
-      endYear: 2018, // TEMP FOR DEMO
       activePop: "All",
       popOptions: [],
       plotOptions: [],
@@ -49,7 +47,7 @@ var ScenarioMixin = {
     projectID()    { return utils.projectID(this) },
     hasData()      { return utils.hasData(this) },
     hasPrograms()  { return utils.hasPrograms(this) },
-    simStart()     { return utils.dataEnd(this) },
+    simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
@@ -63,8 +61,12 @@ var ScenarioMixin = {
       (this.$store.state.activeProject.project.hasData) &&
       (this.$store.state.activeProject.project.hasPrograms)) {
       console.log('created() called')
-      this.startYear = this.simStart
-      this.endYear = this.simEnd
+      this.simStartYear = this.simStart
+      this.simEndYear = this.simEnd
+      this.validSimYears = []
+      for (var year = this.simStartYear; year <= this.simEndYear; year++) {
+        this.validSimYears.push(year)
+      }      
       this.popOptions = this.activePops
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
       this.getPlotOptions(this.$store.state.activeProject.project.id)
@@ -73,7 +75,6 @@ var ScenarioMixin = {
             .then(response2 => {
               // The order of execution / completion of these doesn't matter.
               this.getScenSummaries()
-              this.getSimParams()
               this.getSpendingBaselines()
               this.reloadGraphs(false)
             })
@@ -144,23 +145,6 @@ var ScenarioMixin = {
         .catch(error => {
           this.$sciris.fail(this, 'Could not get spending baselines', error)
         })      
-    },
-    
-    getSimParams() {
-      console.log('getSimParams() called')
-      this.$sciris.start(this)
-      this.$sciris.rpc('get_sim_params', [this.projectID])
-        .then(response => {
-          this.validSimYears = []
-          for (var year = response.data.sim_start_year; 
-              year <= response.data.sim_end_year; year++) {
-            this.validSimYears.push(year)
-          }
-          this.$sciris.succeed(this, 'Simulation params loaded')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not load simulation params', error)
-        })         
     },
     
     changeProgset() {
@@ -344,7 +328,7 @@ var ScenarioMixin = {
           {
             saveresults: false, 
             tool: this.toolName(),
-            plotyear:this.endYear, 
+            plotyear:this.simEndYear, 
             pops:this.activePop
           })
             .then(response => {
