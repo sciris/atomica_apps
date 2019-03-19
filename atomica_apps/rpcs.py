@@ -1688,7 +1688,7 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
 
     # Assemble parameter overwrites
     # TODO: Connect to FE form once it is written
-    scvalues = None
+    scenario_values = None
 
     # Parse and convert the budget and coverage into instructions
     start_year = to_float(js_scen['program_start_year']) if js_scen['program_start_year'] is not None else None # NB. If the progsetname is not None then an error will occur if the start year is None
@@ -1705,7 +1705,7 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
     instructions = at.ProgramInstructions(start_year=start_year,alloc=alloc,coverage=coverage)
 
     # Construct the scenario
-    scen = at.CombinedScenario(name=name,active=active,parsetname=parsetname,progsetname=progsetname,scvalues=scvalues,instructions=instructions)
+    scen = at.CombinedScenario(name=name,active=active,parsetname=parsetname,progsetname=progsetname,scenario_values=scenario_values,instructions=instructions)
     return scen
 
 
