@@ -226,15 +226,58 @@ Last update: 2019-03-16
           </div><br>
           
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" @click="addEditModal.scenEditMode='parameters'" data-tooltip="Edit parameter dynamics">Parameters</button>
+            <div v-if="addEditModal.scenEditMode == 'parameters'">
+              <button class="btn __blue"
+                      @click="addEditModal.scenEditMode='parameters'"
+                      data-tooltip="Edit parameter dynamics">
+                Parameters
+              </button>
+            </div>
+            <div v-else>
+              <button class="btn __bw"
+                      @click="addEditModal.scenEditMode='parameters'"
+                      data-tooltip="Edit parameter dynamics">
+                Parameters
+              </button>            
+            </div>
           </div>
+          
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" :disabled="addEditModal.scenSummary.progsetname=='None'"
-            @click="addEditModal.scenEditMode='progbudget'" data-tooltip="Edit programs budget">Programs budget</button>
+            <div v-if="addEditModal.scenEditMode == 'progbudget'">
+              <button class="btn __blue"
+                      :disabled="addEditModal.scenSummary.progsetname=='None'"
+                      @click="addEditModal.scenEditMode='progbudget'"
+                      data-tooltip="Edit programs budget">
+                Programs budget
+              </button>
+            </div>
+            <div v-else>
+              <button class="btn __bw"
+                      :disabled="addEditModal.scenSummary.progsetname=='None'"
+                      @click="addEditModal.scenEditMode='progbudget'"
+                      data-tooltip="Edit programs budget">
+                Programs budget
+              </button>            
+            </div>
           </div>
+          
           <div style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" :disabled="addEditModal.scenSummary.progsetname=='None'" 
-            @click="addEditModal.scenEditMode='progcoverage'" data-tooltip="Edit programs coverage">Programs coverage</button>
+            <div v-if="addEditModal.scenEditMode == 'progcoverage'">
+              <button class="btn __blue"
+                      :disabled="addEditModal.scenSummary.progsetname=='None'" 
+                      @click="addEditModal.scenEditMode='progcoverage'"
+                      data-tooltip="Edit programs coverage">
+                Programs coverage
+              </button>
+            </div>
+            <div v-else>
+              <button class="btn __bw"
+                      :disabled="addEditModal.scenSummary.progsetname=='None'" 
+                      @click="addEditModal.scenEditMode='progcoverage'"
+                      data-tooltip="Edit programs coverage">
+                Programs coverage
+              </button>            
+            </div>           
           </div>
           <br><br>
           
