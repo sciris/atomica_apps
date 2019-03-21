@@ -1616,7 +1616,7 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
     [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
     js_scen['coverageyears'] = np.array(sorted(coverageyears))
 
-    js_scen['progvals'] = []
+    js_scen['progs'] = []
 
     if scen.instructions:
         js_scen['program_start_year'] = scen.instructions.start_year
@@ -1666,7 +1666,7 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
         else:
             progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
 
-        js_scen['progvals'].append(progdict)
+        js_scen['progs'].append(progdict)
 
     return js_scen
 
@@ -1695,7 +1695,7 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
 
     alloc = sc.odict()
     coverage = sc.odict()
-    for prog in js_scen['progvals']:
+    for prog in js_scen['progs']:
         if any(prog['budgetvals']):
             budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
             alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])

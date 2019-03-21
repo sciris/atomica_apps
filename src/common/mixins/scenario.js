@@ -37,8 +37,7 @@ var ScenarioMixin = {
       addEditModal: {
         scenSummary: {},
         origName: '',
-        mode: 'add',
-        scenEditMode: 'parameters'       
+        mode: 'add',     
       },
     }
   },
@@ -154,9 +153,10 @@ var ScenarioMixin = {
     },
     
     changeProgset() {
-      // If we've switched off program sets, change the modal mode to parameters overwrites.
+      // If we've switched off program sets, change the scenario type automatically 
+      // to parameters overwrites.
       if (this.addEditModal.scenSummary.progsetname == 'None') {
-        this.addEditModal.scenEditMode = 'parameters'
+        this.addEditModal.scenSummary.scentype = 'parameter'
         
       // Otherwise...
       } else {
@@ -186,14 +186,14 @@ var ScenarioMixin = {
     
     initModal() {
       if (this.addEditModal.scenSummary.progsetname == 'None') {
-        this.addEditModal.scenEditMode = 'parameters'
+        this.addEditModal.scenSummary.scentype = 'parameter'
       } else {
-        this.addEditModal.scenEditMode = 'progbudget'
+        this.addEditModal.scenSummary.scentype = 'budget'
       }
     },
 
     addScenModal() {
-      console.log('addScenModal() called');
+      console.log('addScenModal() called')
 
       // Get a "template" new scenario from the server.
       this.$sciris.rpc('new_scen', [this.projectID])
@@ -263,8 +263,8 @@ var ScenarioMixin = {
       this.addEditModal.scenSummary.budgetyears.push(newYear)
       
       // For each program, add a null to the end of the list, so we have a blank textbox.
-      for (var i = 0; i < this.addEditModal.scenSummary.progvals.length; i++) {
-        this.addEditModal.scenSummary.progvals[i].budgetvals.push(null)
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].budgetvals.push(null)
       }      
     },
     
@@ -275,13 +275,45 @@ var ScenarioMixin = {
       this.addEditModal.scenSummary.budgetyears.splice(yearindex, 1)
       
       // For each program, delete all spending values corresponding to that budget year.
-      for (var i = 0; i < this.addEditModal.scenSummary.progvals.length; i++) {
-        this.addEditModal.scenSummary.progvals[i].budgetvals.splice(yearindex, 1)
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].budgetvals.splice(yearindex, 1)
       }      
-    },    
+    },   
+    
+    modalAddCoverageYear() {
+      console.log('modalAddCoverageYear() called')
+    
+      var newYear
+      // If the coverage years list is non-empty, add a new coverage year which is the maximum 
+      // year already there plus 1.
+      if (this.addEditModal.scenSummary.coverageyears.length > 0) {
+        newYear = Math.max(...this.addEditModal.scenSummary.coverageyears) + 1
+      // Otherwise, make the new year the data_end year.
+      } else {
+        newYear = this.spendingBaselines.data_end
+      }
+      this.addEditModal.scenSummary.coverageyears.push(newYear)
+      
+      // For each program, add a null to the end of the list, so we have a blank textbox.
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].coveragevals.push(null)
+      }      
+    },
+    
+    modalRemoveCoverageYear(yearindex) {
+      console.log('modalRemoveCoverageYear() called')
+      
+      // Delete the coverage year itself.
+      this.addEditModal.scenSummary.coverageyears.splice(yearindex, 1)
+      
+      // For each program, delete all coverage values corresponding to that coverage year.
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].coveragevals.splice(yearindex, 1)
+      }      
+    },  
     
     editScen(scenSummary) {
-      console.log('editScen() called');
+      console.log('editScen() called')
       this.addEditModal.scenSummary = _.cloneDeep(scenSummary)     
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
@@ -293,7 +325,7 @@ var ScenarioMixin = {
     copyScen(scenSummary) {
       console.log('copyScen() called')
       this.$sciris.start(this)
-      var newScen = _.cloneDeep(scenSummary);
+      var newScen = _.cloneDeep(scenSummary)
       var otherNames = []
       this.scenSummaries.forEach(scenSum => {
         otherNames.push(scenSum.name)

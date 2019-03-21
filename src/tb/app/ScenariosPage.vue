@@ -226,61 +226,56 @@ Last update: 2019-03-21
           </div><br>
           
           <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenEditMode == 'progbudget'">
+            <div v-if="addEditModal.scenSummary.scentype == 'budget'">
               <button class="btn __blue"
                       :disabled="addEditModal.scenSummary.progsetname=='None'"
-                      @click="addEditModal.scenEditMode='progbudget'"
-                      data-tooltip="Edit programs budget">
+                      @click="addEditModal.scenSummary.scentype='budget'">
                 Budget scenario
               </button>
             </div>
             <div v-else>
               <button class="btn __bw"
                       :disabled="addEditModal.scenSummary.progsetname=='None'"
-                      @click="addEditModal.scenEditMode='progbudget'"
-                      data-tooltip="Edit programs budget">
+                      @click="addEditModal.scenSummary.scentype='budget'">
                 Budget scenario
               </button>            
             </div>
           </div>
           
           <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenEditMode == 'progcoverage'">
+            <div v-if="addEditModal.scenSummary.scentype == 'coverage'">
               <button class="btn __blue"
                       :disabled="addEditModal.scenSummary.progsetname=='None'" 
-                      @click="addEditModal.scenEditMode='progcoverage'"
-                      data-tooltip="Edit programs coverage">
+                      @click="addEditModal.scenSummary.scentype='coverage'">
                 Coverage scenario
               </button>
             </div>
             <div v-else>
               <button class="btn __bw"
                       :disabled="addEditModal.scenSummary.progsetname=='None'" 
-                      @click="addEditModal.scenEditMode='progcoverage'"
-                      data-tooltip="Edit programs coverage">
+                      @click="addEditModal.scenSummary.scentype='coverage'">
                 Coverage scenario
               </button>            
             </div>           
           </div>
          
           <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenEditMode == 'parameters'">
+            <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
               <button class="btn __blue"
-                      @click="addEditModal.scenEditMode='parameters'"
-                      data-tooltip="Edit parameter dynamics">
+                      @click="addEditModal.scenSummary.scentype='parameter'">
                 Parameter scenario
               </button>
             </div>
             <div v-else>
               <button class="btn __bw"
-                      @click="addEditModal.scenEditMode='parameters'"
-                      data-tooltip="Edit parameter dynamics">
+                      @click="addEditModal.scenSummary.scentype='parameter'">
                 Parameter scenario
               </button>            
             </div>
           </div>
-          <br><br>         
-          <div v-if="addEditModal.scenEditMode == 'progbudget'">
+          <br><br> 
+          
+          <div v-if="addEditModal.scenSummary.scentype == 'budget'">
             <div class="scrolltable" style="max-height: 80vh;">
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
@@ -312,7 +307,7 @@ Last update: 2019-03-21
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="prog in addEditModal.scenSummary.progvals">
+                <tr v-for="prog in addEditModal.scenSummary.progs">
                   <td>
                     {{ prog.name }}
                   </td>
@@ -330,7 +325,7 @@ Last update: 2019-03-21
             </div>
           </div>
           
-          <div v-if="addEditModal.scenEditMode == 'progcoverage'">
+          <div v-if="addEditModal.scenSummary.scentype == 'coverage'">
             <div class="scrolltable" style="max-height: 80vh;">
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
@@ -341,11 +336,28 @@ Last update: 2019-03-21
                 </tr>                
                 <tr>
                   <th>Program</th>
-                  <th v-for="year in addEditModal.scenSummary.coverageyears">{{ year }}</th>
+                  <th v-for="(val, index) in addEditModal.scenSummary.coverageyears">
+                    <select v-model="addEditModal.scenSummary.coverageyears[index]">
+                      <option v-for='year in validSimYears'>
+                        {{ year }}
+                      </option>
+                    </select> 
+                    <button @click="modalRemoveCoverageYear(index)" class='btn __red' style="display:inline-block">
+                      X
+                    </button>         
+                  </th>                  
+                  <th>
+                    <button @click="modalAddCoverageYear()" class='btn __green' style="display:inline-block">
+                      +
+                    </button>
+                    <button @click="resetToProgbook()" class='btn __red' style="display:inline-block">
+                      Reset to progbook
+                    </button>                                        
+                  </th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="prog in addEditModal.scenSummary.progvals">
+                <tr v-for="prog in addEditModal.scenSummary.progs">
                   <td>
                     {{ prog.name }}
                   </td>
@@ -361,7 +373,7 @@ Last update: 2019-03-21
             </div>
           </div>
           
-          <div v-if="addEditModal.scenEditMode == 'parameters'">
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
             Complicated parameters GUI logic...<br><br>
           </div>
              
