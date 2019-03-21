@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-16
+Last update: 2019-03-21
 -->
 
 <template>
@@ -226,29 +226,12 @@ Last update: 2019-03-16
           </div><br>
           
           <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenEditMode == 'parameters'">
-              <button class="btn __blue"
-                      @click="addEditModal.scenEditMode='parameters'"
-                      data-tooltip="Edit parameter dynamics">
-                Parameters
-              </button>
-            </div>
-            <div v-else>
-              <button class="btn __bw"
-                      @click="addEditModal.scenEditMode='parameters'"
-                      data-tooltip="Edit parameter dynamics">
-                Parameters
-              </button>            
-            </div>
-          </div>
-          
-          <div style="display:inline-block; padding-right:10px">
             <div v-if="addEditModal.scenEditMode == 'progbudget'">
               <button class="btn __blue"
                       :disabled="addEditModal.scenSummary.progsetname=='None'"
                       @click="addEditModal.scenEditMode='progbudget'"
                       data-tooltip="Edit programs budget">
-                Programs budget
+                Budget scenario
               </button>
             </div>
             <div v-else>
@@ -256,7 +239,7 @@ Last update: 2019-03-16
                       :disabled="addEditModal.scenSummary.progsetname=='None'"
                       @click="addEditModal.scenEditMode='progbudget'"
                       data-tooltip="Edit programs budget">
-                Programs budget
+                Budget scenario
               </button>            
             </div>
           </div>
@@ -267,7 +250,7 @@ Last update: 2019-03-16
                       :disabled="addEditModal.scenSummary.progsetname=='None'" 
                       @click="addEditModal.scenEditMode='progcoverage'"
                       data-tooltip="Edit programs coverage">
-                Programs coverage
+                Coverage scenario
               </button>
             </div>
             <div v-else>
@@ -275,16 +258,28 @@ Last update: 2019-03-16
                       :disabled="addEditModal.scenSummary.progsetname=='None'" 
                       @click="addEditModal.scenEditMode='progcoverage'"
                       data-tooltip="Edit programs coverage">
-                Programs coverage
+                Coverage scenario
               </button>            
             </div>           
           </div>
-          <br><br>
-          
-          <div v-if="addEditModal.scenEditMode == 'parameters'">
-            Complicated parameters GUI logic...<br><br>
+         
+          <div style="display:inline-block; padding-right:10px">
+            <div v-if="addEditModal.scenEditMode == 'parameters'">
+              <button class="btn __blue"
+                      @click="addEditModal.scenEditMode='parameters'"
+                      data-tooltip="Edit parameter dynamics">
+                Parameter scenario
+              </button>
+            </div>
+            <div v-else>
+              <button class="btn __bw"
+                      @click="addEditModal.scenEditMode='parameters'"
+                      data-tooltip="Edit parameter dynamics">
+                Parameter scenario
+              </button>            
+            </div>
           </div>
-    
+          <br><br>         
           <div v-if="addEditModal.scenEditMode == 'progbudget'">
             <div class="scrolltable" style="max-height: 80vh;">
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
@@ -366,6 +361,10 @@ Last update: 2019-03-16
             </div>
           </div>
           
+          <div v-if="addEditModal.scenEditMode == 'parameters'">
+            Complicated parameters GUI logic...<br><br>
+          </div>
+             
         </div>
         <div style="text-align:justify">
           <button @click="modalSave()" class='btn __green' style="display:inline-block">
