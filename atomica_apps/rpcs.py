@@ -1766,7 +1766,7 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
 
 
 @RPC()    
-def new_scen(project_id) -> dict:
+def new_scen(project_id, scen_type) -> dict:
     """
     Instantiate a new temporary scenario and return JS representation
 

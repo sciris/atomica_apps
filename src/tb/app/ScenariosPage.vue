@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-21
+Last update: 2019-03-22
 -->
 
 <template>
@@ -57,7 +57,9 @@ Last update: 2019-03-21
 
         <div>
           <button class="btn __green" :disabled="!scenariosLoaded" @click="runScens()">Run scenarios</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal()">Add scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('budget')">Add budget scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('coverage')">Add coverage scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('parameter')">Add parameter scenario</button>          
         </div>
       </div>
       <!-- ### End: scenarios card ### -->
@@ -224,56 +226,6 @@ Last update: 2019-03-21
               </option>
             </select><br><br>
           </div><br>
-          
-          <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenSummary.scentype == 'budget'">
-              <button class="btn __blue"
-                      :disabled="addEditModal.scenSummary.progsetname=='None'"
-                      @click="addEditModal.scenSummary.scentype='budget'">
-                Budget scenario
-              </button>
-            </div>
-            <div v-else>
-              <button class="btn __bw"
-                      :disabled="addEditModal.scenSummary.progsetname=='None'"
-                      @click="addEditModal.scenSummary.scentype='budget'">
-                Budget scenario
-              </button>            
-            </div>
-          </div>
-          
-          <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenSummary.scentype == 'coverage'">
-              <button class="btn __blue"
-                      :disabled="addEditModal.scenSummary.progsetname=='None'" 
-                      @click="addEditModal.scenSummary.scentype='coverage'">
-                Coverage scenario
-              </button>
-            </div>
-            <div v-else>
-              <button class="btn __bw"
-                      :disabled="addEditModal.scenSummary.progsetname=='None'" 
-                      @click="addEditModal.scenSummary.scentype='coverage'">
-                Coverage scenario
-              </button>            
-            </div>           
-          </div>
-         
-          <div style="display:inline-block; padding-right:10px">
-            <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
-              <button class="btn __blue"
-                      @click="addEditModal.scenSummary.scentype='parameter'">
-                Parameter scenario
-              </button>
-            </div>
-            <div v-else>
-              <button class="btn __bw"
-                      @click="addEditModal.scenSummary.scentype='parameter'">
-                Parameter scenario
-              </button>            
-            </div>
-          </div>
-          <br><br> 
           
           <div v-if="addEditModal.scenSummary.scentype == 'budget'">
             <div class="scrolltable" style="max-height: 80vh;">

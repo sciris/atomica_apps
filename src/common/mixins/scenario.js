@@ -191,25 +191,17 @@ var ScenarioMixin = {
         })          
     },
     
-    initModal() {
-      if (this.addEditModal.scenSummary.progsetname == 'None') {
-        this.addEditModal.scenSummary.scentype = 'parameter'
-      } else {
-        this.addEditModal.scenSummary.scentype = 'budget'
-      }
-    },
-
-    addScenModal() {
+    addScenModal(scentype) {
       console.log('addScenModal() called')
 
       // Get a "template" new scenario from the server.
-      this.$sciris.rpc('new_scen', [this.projectID])
+      this.$sciris.rpc('new_scen', [this.projectID, scentype])
         .then(response => {
           this.new_scen = response.data // Set the scenario to what we received.
           this.addEditModal.scenSummary = _.cloneDeep(this.new_scen)
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
-          this.initModal()
+          this.addEditModal.scenSummary.scentype = scentype  // TODO: remove this
           this.$modal.show('add-edit-scen')
         })
         .catch(error => {
@@ -324,7 +316,6 @@ var ScenarioMixin = {
       this.addEditModal.scenSummary = _.cloneDeep(scenSummary)     
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
-      this.initModal()
       // Open a model dialog for creating a new project
       this.$modal.show('add-edit-scen');
     },
