@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-22
+Last update: 2019-03-23
 -->
 
 <template>
@@ -35,6 +35,7 @@ Last update: 2019-03-22
           <tr>
             <th>Name</th>
             <th>Active</th>
+            <th>Type</th>
             <th>Actions</th>
           </tr>
           </thead>
@@ -45,6 +46,9 @@ Last update: 2019-03-22
             </td>
             <td style="text-align: center">
               <input type="checkbox" v-model="scenSummary.active"/>
+            </td>
+            <td>
+              {{ scenSummary.scentype }}
             </td>
             <td style="white-space: nowrap">
               <button class="btn btn-icon" @click="editScen(scenSummary)" data-tooltip="Edit scenario"><i class="ti-pencil"></i></button>
