@@ -1591,7 +1591,7 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 ### Scenario RPCs
 ##################################################################################
 
-def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
+def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     ''' Convert a Python scenario to JSON representation
 
     '''
@@ -1601,6 +1601,15 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
     js_scen['active'] = scen.active
     js_scen['parsetname'] = scen.parsetname if scen.parsetname else 'None'
     js_scen['progsetname'] = scen.progsetname if scen.progsetname else 'None'
+    if isinstance(scen, at.BudgetScenario):
+        js_scen['scentype'] = 'budget'
+    elif isinstance(scen, at.CoverageScenario):
+        js_scen['scentype'] = 'coverage'
+    elif isinstance(scen, at.ParameterScenario):
+        js_scen['scentype'] = 'parameter'
+    else:
+        js_scen['scentype'] = 'unknown'
+    js_scen['progstartyear'] = scen.start_year
 
     # TODO - add in parameter overwrites here
 
@@ -1609,19 +1618,21 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
     # in places where the scenario doesn't have an overwrite yet e.g. if the user has not overridden
     # values for a particular program
     budgetyears = set()
-    [budgetyears.update(x.t) for x in scen.instructions.alloc.values()]
+    # [budgetyears.update(x.t) for x in scen.instructions.alloc.values()]
+    [budgetyears.update(x.t) for x in scen.alloc.values()]
     js_scen['budgetyears'] = np.array(sorted(budgetyears))
 
     coverageyears = set()
-    [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
+    # [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
+    [coverageyears.update(x.t) for x in scen.alloc.values()]
     js_scen['coverageyears'] = np.array(sorted(coverageyears))
 
     js_scen['progs'] = []
 
-    if scen.instructions:
-        js_scen['program_start_year'] = scen.instructions.start_year
-    else:
-        js_scen['program_start_year'] = None
+    # if scen.instructions:
+    #     js_scen['program_start_year'] = scen.instructions.start_year
+    # else:
+    #     js_scen['program_start_year'] = None
 
     if not proj.progsets:
         # If no progsets, we can't retrieve the full names from the short names in the instructions
@@ -1648,23 +1659,27 @@ def py_to_js_scen(scen: at.CombinedScenario, proj=at.Project) -> dict:
         progdict = dict()
         progdict['name'] = prog.label
         progdict['shortname'] = prog.name
-        if prog.name in scen.instructions.alloc:
+        # if prog.name in scen.instructions.alloc:
+        if prog.name in scen.alloc:
             progdict['budgetvals'] = []
             for year in js_scen['budgetyears']:
-                val = scen.instructions.alloc[prog.name].get(year)
+                # val = scen.instructions.alloc[prog.name].get(year)
+                val = scen.alloc[prog.name].get(year)
                 progdict['budgetvals'].append(format_number(val))
         else:
             progdict['budgetvals'] = [None]*len(js_scen['budgetyears'])
 
-        if prog.name in scen.instructions.coverage:
-            progdict['coveragevals'] = []
-            for year in js_scen['coverageyears']:
-                val = scen.instructions.coverage[prog.name].get(year)
-                if val is not None:
-                    val *= 100
-                progdict['coveragevals'].append(format_number(val))
-        else:
-            progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
+        # if prog.name in scen.instructions.coverage:
+        # if prog.name in scen.coverage:
+        #     progdict['coveragevals'] = []
+        #     for year in js_scen['coverageyears']:
+        #         # val = scen.instructions.coverage[prog.name].get(year)
+        #         val = scen.coverage[prog.name].get(year)
+        #         if val is not None:
+        #             val *= 100
+        #         progdict['coveragevals'].append(format_number(val))
+        # else:
+        #     progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
 
         js_scen['progs'].append(progdict)
 
@@ -1685,13 +1700,14 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
     active = js_scen['active']
     parsetname = js_scen['parsetname']
     progsetname = js_scen['progsetname']
+    scentype = js_scen['scentype']
 
     # Assemble parameter overwrites
     # TODO: Connect to FE form once it is written
     scenario_values = None
 
     # Parse and convert the budget and coverage into instructions
-    start_year = to_float(js_scen['program_start_year']) if js_scen['program_start_year'] is not None else None # NB. If the progsetname is not None then an error will occur if the start year is None
+    start_year = to_float(js_scen['progstartyear']) if js_scen['progstartyear'] is not None else None # NB. If the progsetname is not None then an error will occur if the start year is None
 
     alloc = sc.odict()
     coverage = sc.odict()
@@ -1699,13 +1715,16 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
         if any(prog['budgetvals']):
             budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
             alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
-        if any(prog['coveragevals']):
-            coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
-            coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
-    instructions = at.ProgramInstructions(start_year=start_year,alloc=alloc,coverage=coverage)
+        # if any(prog['coveragevals']):
+        #     coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
+        #     coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
+    # instructions = at.ProgramInstructions(start_year=start_year,alloc=alloc,coverage=coverage)
 
     # Construct the scenario
-    scen = at.CombinedScenario(name=name,active=active,parsetname=parsetname,progsetname=progsetname,scenario_values=scenario_values,instructions=instructions)
+    # scen = at.CombinedScenario(name=name,active=active,parsetname=parsetname,progsetname=progsetname,scenario_values=scenario_values,instructions=instructions)
+    scen = at.BudgetScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
+        alloc=alloc, start_year=start_year)
+
     return scen
 
 
