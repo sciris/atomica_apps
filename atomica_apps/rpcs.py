@@ -1874,7 +1874,7 @@ def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict
 
         py_scen.alloc = alloc
         py_scen.progsetname = new_progset_name
-        
+
     # Handle the coverage scenario case...
     elif isinstance(py_scen, at.CoverageScenario):
         pass
@@ -1889,20 +1889,21 @@ def scen_reset_spending(js_scen, project_id):
     py_scen = js_to_py_scen(js_scen)
     proj = load_project(project_id, die=True)
 
+    # Handle the budget scenario case...
     if isinstance(py_scen, at.BudgetScenario):
-        pass
+        alloc = sc.odict()
+        for prog in proj.progsets[py_scen.progsetname].programs.values():
+            print(prog.spend_data)
+            if prog.spend_data.has_time_data:
+                alloc[prog.name] = sc.dcp(prog.spend_data)
+            else:
+                alloc[prog.name] = at.TimeSeries(py_scen.start_year, prog.spend_data.assumption)
+
+        py_scen.alloc = alloc
+
+    # Handle the coverage scenario case...
     elif isinstance(py_scen, at.CoverageScenario):
         pass
-
-    alloc = sc.odict()
-    for prog in proj.progsets[py_scen.progsetname].programs.values():
-        print(prog.spend_data)
-        if prog.spend_data.has_time_data:
-            alloc[prog.name] = sc.dcp(prog.spend_data)
-        else:
-            alloc[prog.name] = at.TimeSeries(py_scen.instructions.start_year,prog.spend_data.assumption)
-
-    py_scen.instructions.alloc = alloc
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(py_scen, proj)
