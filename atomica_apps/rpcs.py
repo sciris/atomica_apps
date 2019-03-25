@@ -1802,7 +1802,7 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
 
 
 @RPC()    
-def new_scen(project_id, scen_type) -> dict:
+def new_scen(project_id, scentype) -> dict:
     """
     Instantiate a new temporary scenario and return JS representation
 
@@ -1820,6 +1820,7 @@ def new_scen(project_id, scen_type) -> dict:
     proj = load_project(project_id, die=True)
     assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
     start_year = proj.data.end_year
+
     alloc = {}
     print('MAKESCEN')
     for prog in proj.progsets[-1].programs.values():
@@ -1827,12 +1828,25 @@ def new_scen(project_id, scen_type) -> dict:
         if prog.spend_data.has_time_data:
             alloc[prog.name] = sc.dcp(prog.spend_data)
         else:
-            alloc[prog.name] = at.TimeSeries(start_year,prog.spend_data.assumption)
-    instructions = at.ProgramInstructions(start_year, alloc=alloc)
-    scen = at.CombinedScenario(name='New scenario',active=True,parsetname=proj.parsets[-1].name,progsetname=proj.progsets[-1].name,instructions=instructions)
-    js_scen = py_to_js_scen(scen,proj)
+            alloc[prog.name] = at.TimeSeries(start_year, prog.spend_data.assumption)
+
+    # Construct the scenario
+    if scentype == 'budget':
+        scen = at.BudgetScenario(name='New budget scenario', active=True, parsetname=proj.parsets[-1].name,
+            progsetname=proj.progsets[-1].name, alloc=alloc, start_year=start_year)
+    elif scentype == 'coverage':
+        scen = at.CoverageScenario(name='New coverage scenario', active=True, parsetname=proj.parsets[-1].name,
+            progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
+    elif scentype == 'parameter':
+        scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,
+            scenario_values=None)
+
+    # Make the JSON for the scenario
+    js_scen = py_to_js_scen(scen, proj)
+
     print('Created default JavaScript scenario:')
     return js_scen
+
 
 @RPC()
 def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict:
