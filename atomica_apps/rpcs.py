@@ -1624,7 +1624,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # Handle the special cases for coverage scenarios...
     elif js_scen['scentype'] == 'coverage':
         js_scen['progstartyear'] = scen.start_year
-
+        js_scen['coverageyears'] = np.array([])
         js_scen['budgetyears'] = np.array([])
 
     # Handle the special cases for parameter scenarios...
@@ -1713,35 +1713,34 @@ def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
 
     """
 
-    # Assemble budget overwrites
     name = js_scen['name']
     active = js_scen['active']
     parsetname = js_scen['parsetname']
     progsetname = js_scen['progsetname']
     scentype = js_scen['scentype']
-
-    # Assemble parameter overwrites
-    # TODO: Connect to FE form once it is written
-    scenario_values = None
-
-    # Parse and convert the budget and coverage into instructions
-    start_year = to_float(js_scen['progstartyear']) if js_scen['progstartyear'] is not None else None # NB. If the progsetname is not None then an error will occur if the start year is None
+    start_year = to_float(js_scen['progstartyear']) if js_scen['progstartyear'] is not None else None
 
     alloc = sc.odict()
     coverage = sc.odict()
     for prog in js_scen['progs']:
-        if any(prog['budgetvals']):
-            budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
-            alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
-        # if any(prog['coveragevals']):
-        #     coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
-        #     coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
-    # instructions = at.ProgramInstructions(start_year=start_year,alloc=alloc,coverage=coverage)
+        if scentype == 'budget':
+            if any(prog['budgetvals']):
+                budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
+                alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
+        elif scentype == 'coverage':
+            if any(prog['coveragevals']):
+                coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
+                coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
 
     # Construct the scenario
-    # scen = at.CombinedScenario(name=name,active=active,parsetname=parsetname,progsetname=progsetname,scenario_values=scenario_values,instructions=instructions)
-    scen = at.BudgetScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
-        alloc=alloc, start_year=start_year)
+    if scentype == 'budget':
+        scen = at.BudgetScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
+            alloc=alloc, start_year=start_year)
+    elif scentype == 'coverage':
+        scen = at.CoverageScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
+            coverage=coverage, start_year=start_year)
+    elif scentype == 'parameter':
+        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=None)
 
     return scen
 
