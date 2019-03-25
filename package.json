@@ -20,7 +20,7 @@
     "lodash": "^4.17.11",
     "normalize-scss": "^7.0.1",
     "popper.js": "^1.14.4",
-    "sciris-js": "^0.2.8",
+    "sciris-js": "^0.2.10",
     "vue": "^2.5.17",
     "vue-paper-dashboard": "git+https://github.com/creativetimofficial/vue-paper-dashboard.git",
     "vue-router": "^3.0.1",
@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "mpld3": "0.4.1",
     "babel-core": "^6.22.1",
     "babel-loader": "^7.1.5",
     "babel-plugin-component": "^1.1.1",
