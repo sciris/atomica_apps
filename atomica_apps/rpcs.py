@@ -1596,11 +1596,14 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
 
     '''
 
+    # Start with empty JSON
     js_scen = dict()
     js_scen['name'] = scen.name
     js_scen['active'] = scen.active
     js_scen['parsetname'] = scen.parsetname if scen.parsetname else 'None'
     js_scen['progsetname'] = scen.progsetname if scen.progsetname else 'None'
+
+    # Get the scenario type by looking at the type of the Scenario object.
     if isinstance(scen, at.BudgetScenario):
         js_scen['scentype'] = 'budget'
     elif isinstance(scen, at.CoverageScenario):
@@ -1609,7 +1612,27 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
         js_scen['scentype'] = 'parameter'
     else:
         js_scen['scentype'] = 'unknown'
-    js_scen['progstartyear'] = scen.start_year
+
+    # Handle the special cases for budget scenarios...
+    if js_scen['scentype'] == 'budget':
+        js_scen['progstartyear'] = scen.start_year
+        budgetyears = set()
+        [budgetyears.update(x.t) for x in scen.alloc.values()]
+        js_scen['budgetyears'] = np.array(sorted(budgetyears))
+        js_scen['coverageyears'] = np.array([])
+
+    # Handle the special cases for coverage scenarios...
+    elif js_scen['scentype'] == 'coverage':
+        js_scen['progstartyear'] = scen.start_year
+
+        js_scen['budgetyears'] = np.array([])
+
+    # Handle the special cases for parameter scenarios...
+    elif js_scen['scentype'] == 'parameter':
+        pass
+
+
+
 
     # TODO - add in parameter overwrites here
 
@@ -1617,22 +1640,19 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # Fundamentally, this bit of code needs to populate the FE with placeholder None values
     # in places where the scenario doesn't have an overwrite yet e.g. if the user has not overridden
     # values for a particular program
-    budgetyears = set()
-    # [budgetyears.update(x.t) for x in scen.instructions.alloc.values()]
-    [budgetyears.update(x.t) for x in scen.alloc.values()]
-    js_scen['budgetyears'] = np.array(sorted(budgetyears))
+    # budgetyears = set()
+    # # [budgetyears.update(x.t) for x in scen.instructions.alloc.values()]
+    # [budgetyears.update(x.t) for x in scen.alloc.values()]
+    # js_scen['budgetyears'] = np.array(sorted(budgetyears))
 
-    coverageyears = set()
-    # [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
-    [coverageyears.update(x.t) for x in scen.alloc.values()]
-    js_scen['coverageyears'] = np.array(sorted(coverageyears))
+    # coverageyears = set()
+    # # [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
+    # [coverageyears.update(x.t) for x in scen.alloc.values()]
+    # js_scen['coverageyears'] = np.array(sorted(coverageyears))
+
+
 
     js_scen['progs'] = []
-
-    # if scen.instructions:
-    #     js_scen['program_start_year'] = scen.instructions.start_year
-    # else:
-    #     js_scen['program_start_year'] = None
 
     if not proj.progsets:
         # If no progsets, we can't retrieve the full names from the short names in the instructions
@@ -1659,30 +1679,28 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
         progdict = dict()
         progdict['name'] = prog.label
         progdict['shortname'] = prog.name
-        # if prog.name in scen.instructions.alloc:
-        if prog.name in scen.alloc:
-            progdict['budgetvals'] = []
-            for year in js_scen['budgetyears']:
-                # val = scen.instructions.alloc[prog.name].get(year)
-                val = scen.alloc[prog.name].get(year)
-                progdict['budgetvals'].append(format_number(val))
-        else:
-            progdict['budgetvals'] = [None]*len(js_scen['budgetyears'])
-
-        # if prog.name in scen.instructions.coverage:
-        # if prog.name in scen.coverage:
-        #     progdict['coveragevals'] = []
-        #     for year in js_scen['coverageyears']:
-        #         # val = scen.instructions.coverage[prog.name].get(year)
-        #         val = scen.coverage[prog.name].get(year)
-        #         if val is not None:
-        #             val *= 100
-        #         progdict['coveragevals'].append(format_number(val))
-        # else:
-        #     progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
+        if js_scen['scentype'] == 'budget':
+            if prog.name in scen.alloc:
+                progdict['budgetvals'] = []
+                for year in js_scen['budgetyears']:
+                    val = scen.alloc[prog.name].get(year)
+                    progdict['budgetvals'].append(format_number(val))
+            else:
+                progdict['budgetvals'] = [None] * len(js_scen['budgetyears'])
+        elif js_scen['scentype'] == 'coverage':
+            if prog.name in scen.coverage:
+                progdict['coveragevals'] = []
+                for year in js_scen['coverageyears']:
+                    val = scen.coverage[prog.name].get(year)
+                    if val is not None:
+                        val *= 100
+                    progdict['coveragevals'].append(format_number(val))
+            else:
+                progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
 
         js_scen['progs'].append(progdict)
 
+    # Return the dict for the complete JSON.
     return js_scen
 
 

@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-23
+Last update: 2019-03-25
 -->
 
 <template>
@@ -224,7 +224,7 @@ Last update: 2019-03-23
           <div style="display:inline-block; padding-right:10px">
             <b>Program start year</b><br>
             <select :disabled="addEditModal.scenSummary.progsetname=='None'"
-                    v-model="addEditModal.scenSummary.program_start_year">
+                    v-model="addEditModal.scenSummary.progstartyear">
               <option v-for='year in validProgramStartYears'>
                 {{ year }}
               </option>
