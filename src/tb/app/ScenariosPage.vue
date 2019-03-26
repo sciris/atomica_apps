@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-03-25
+Last update: 2019-03-26
 -->
 
 <template>
@@ -212,16 +212,17 @@ Last update: 2019-03-25
               </option>
             </select><br><br>
           </div>
-          <div style="display:inline-block; padding-right:10px">
+          <div v-if="addEditModal.scenSummary.scentype != 'parameter'"
+               style="display:inline-block; padding-right:10px">
             <b>Program set</b><br>
             <select @change="changeProgset()" v-model="addEditModal.scenSummary.progsetname">
-              <option>None</option>
               <option v-for='progset in progsetOptions'>
                 {{ progset }}
               </option>
             </select><br><br>
           </div>
-          <div style="display:inline-block; padding-right:10px">
+          <div v-if="addEditModal.scenSummary.scentype != 'parameter'" 
+               style="display:inline-block; padding-right:10px">
             <b>Program start year</b><br>
             <select :disabled="addEditModal.scenSummary.progsetname=='None'"
                     v-model="addEditModal.scenSummary.progstartyear">
