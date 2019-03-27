@@ -111,12 +111,7 @@ var ScenarioMixin = {
       this.$sciris.start(this)
       this.$sciris.rpc('get_scen_info', [this.projectID])
         .then(response => {
-          this.scenSummaries = response.data // Set the scenarios to what we received.
-          // TODO: delete this extra code that fills in budget scenario types for all scenarios.
-          this.scenSummaries.forEach(scenSum => {
-            scenSum.scentype = 'budget'
-          })
-      
+          this.scenSummaries = response.data // Set the scenarios to what we received.      
           console.log('Scenario summaries:')
           console.log(this.scenSummaries)
           this.scenariosLoaded = true
@@ -169,7 +164,6 @@ var ScenarioMixin = {
         this.$sciris.rpc('scen_change_progset', [this.addEditModal.scenSummary, this.addEditModal.scenSummary.progsetname, this.projectID])
           .then(response => {           
             this.addEditModal.scenSummary = response.data
-            this.addEditModal.scenSummary.scentype = 'budget'  // TODO: remove this
             this.$sciris.succeed(this, 'Progset change completed')
           })
           .catch(error => {
@@ -183,7 +177,6 @@ var ScenarioMixin = {
       this.$sciris.rpc('scen_reset_spending', [this.addEditModal.scenSummary, this.projectID])
         .then(response => {           
           this.addEditModal.scenSummary = response.data
-          this.addEditModal.scenSummary.scentype = 'budget'  // TODO: remove this
           this.$sciris.succeed(this, 'Spending reset completed')
         })
         .catch(error => {
@@ -201,7 +194,6 @@ var ScenarioMixin = {
           this.addEditModal.scenSummary = _.cloneDeep(this.new_scen)
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
-          this.addEditModal.scenSummary.scentype = scentype  // TODO: remove this
           this.$modal.show('add-edit-scen')
         })
         .catch(error => {

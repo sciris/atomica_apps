@@ -1624,42 +1624,22 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # Handle the special cases for coverage scenarios...
     elif js_scen['scentype'] == 'coverage':
         js_scen['progstartyear'] = scen.start_year
-        js_scen['coverageyears'] = np.array([])
+        coverageyears = set()
+        [coverageyears.update(x.t) for x in scen.coverage.values()]
+        js_scen['coverageyears'] = np.array(sorted(coverageyears))
         js_scen['budgetyears'] = np.array([])
 
     # Handle the special cases for parameter scenarios...
     elif js_scen['scentype'] == 'parameter':
         pass
 
-
-
-
-    # TODO - add in parameter overwrites here
-
-    # Work out the budget years and coverage years
-    # Fundamentally, this bit of code needs to populate the FE with placeholder None values
-    # in places where the scenario doesn't have an overwrite yet e.g. if the user has not overridden
-    # values for a particular program
-    # budgetyears = set()
-    # # [budgetyears.update(x.t) for x in scen.instructions.alloc.values()]
-    # [budgetyears.update(x.t) for x in scen.alloc.values()]
-    # js_scen['budgetyears'] = np.array(sorted(budgetyears))
-
-    # coverageyears = set()
-    # # [coverageyears.update(x.t) for x in scen.instructions.alloc.values()]
-    # [coverageyears.update(x.t) for x in scen.alloc.values()]
-    # js_scen['coverageyears'] = np.array(sorted(coverageyears))
-
-
-
+    # Set up the programs information.
     js_scen['progs'] = []
 
     if not proj.progsets:
         # If no progsets, we can't retrieve the full names from the short names in the instructions
-        # In that case, we don't show any program overwrite values at all
-        # TODO - test this!
+        # In that case, we don't show any program overwrite values at all.
         return js_scen # Abort early if there are no programs to add
-
 
     # Otherwise, populate the program values
     # If user has not selected a progset, then we need to populate the program list somehow
@@ -1704,7 +1684,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     return js_scen
 
 
-def js_to_py_scen(js_scen: dict) -> at.CombinedScenario:
+def js_to_py_scen(js_scen: dict) -> at.Scenario:
     """
     Convert JSON content to an Atomica scenario
 
