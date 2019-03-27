@@ -1298,14 +1298,16 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
                         if nan_ind>0: # Skip the first point
                             series.vals[nan_ind] = series.vals[nan_ind-1]
                             nans_replaced += 1
-            if nans_replaced: print('Warning: %s nans were replaced' % nans_replaced)
-    
+            if nans_replaced:
+                print('Warning: %s nans were replaced' % nans_replaced)
+
             if calibration:
-               if stacked: figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
-               else:       figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate') # Only plot data if not stacked
+                if stacked: figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
+                else: figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate')  # Only plot data if not stacked
             else:
-               if stacked: figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
-               else:       figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
+                if stacked: figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
+                else: figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
+
             for fig in figs[0:-1]:
                 allfigjsons.append(customize_fig(fig=fig, output=output, plotdata=plotdata, xlims=xlims, figsize=figsize))
                 alllegendjsons.append(customize_fig(fig=figs[-1], output=output, plotdata=plotdata, xlims=xlims, figsize=figsize, is_legend=True))
@@ -1336,21 +1338,35 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
 
-    cascadeoutput,cascadefigs,cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
-    if tool == 'cascade': # For Cascade Tool
-        output = cascadeoutput
-        allfigs = cascadefigs
-        alllegends = cascadelegends
-    else: # For Optima TB
-        if calibration: output, allfigs, alllegends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, calibration=True, stacked=False)
-        else:           output, allfigs, alllegends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, calibration=False)
-        output['table'] = cascadeoutput['table'] # Put this back in -- warning kludgy! -- also not used for Optima TB...
-        for key in ['graphs','legends']:
-            output[key] = cascadeoutput[key] + output[key]
-        allfigs = cascadefigs + allfigs
-        alllegends = cascadelegends + alllegends
-    savefigs(allfigs, username=proj.webapp.username) # WARNING, dosave ignored fornow
-    if outputfigs: return output, allfigs, alllegends
+    output = {'graphs':[],'legends':[]}
+    all_figs = []
+    all_legends = []
+
+    def append_plots(d,figs,legends):
+        nonlocal all_figs, all_legends
+        all_figs += figs
+        all_legends += legends
+        output['graphs'] += d['graphs']
+        output['legends'] += d['legends']
+
+    if plot_budget:
+        # Make program related plots
+        d, figs, legends = get_budget_plots(results=results,year=year)
+        append_plots(d, figs, legends)
+
+        d, figs, legends = get_coverage_plot(results=results)
+        append_plots(d, figs, legends)
+
+    cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
+    append_plots(cascadeoutput,cascadefigs,cascadelegends)
+
+    if tool != 'cascade':
+        if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
+        else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
+        append_plots(d, figs, legends)
+
+    savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
+    if outputfigs: return output, all_figs, all_legends
     else:          return output
 
 
@@ -1398,51 +1414,44 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
     graph_dict = sw.mpld3ify(fig, jsonify=False) # Convert to mpld3
     pl.close(fig)
     return graph_dict
-    
 
-#def get_program_plots(results,year,budget=True,coverage=True):
-#    # Generate program related plots
-#    # INPUTS
-#    # - proj : Project instance
-#    # - results : Result or list of Results
-#    # - year : If making a budget bar plot, it will be displayed for this year
-#    # - budget : True/False flag for whether to include budget bar plot
-#    # - coverage : True/False flag for whether to include program coverage figures
-#
-#    figs = []
-#    if budget:
-#        d = at.PlotData.programs(results, quantity='spending')
-#        d.interpolate(year)
-#        budget_figs = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='horizontal')
-#
-#        ax = budget_figs[0].axes[0]
-#        ax.set_xlabel('Spending ($/year)')
-#
-#        # The legend is too big for the figure -- WARNING, think of a better solution
-#        #        budget_figs[1].set_figheight(8.9)
-#        #        budgetfigs[1].set_figwidth(8.7)
-#
-#        figs += budget_figs
-#        print('Budget plot succeeded')
-#
-#    if coverage:
-#        d = at.PlotData.programs(results,quantity='coverage_fraction')
-#        coverage_figs = at.plot_series(d, axis='results')
-#        for fig,(output_name,output_label) in zip(coverage_figs,d.outputs.items()):
-#            fig.axes[0].set_title(output_label)
-#            series = d[d.results.keys()[0],d.pops.keys()[0],output_name]
-#            fig.axes[0].set_ylabel(series.units.title())
-#        figs += coverage_figs
-#        print('Coverage plots succeeded')
-#
-#    graphs = []
-#    for fig in figs:
-#        graph_dict = mpld3.fig_to_dict(fig)
-#        graph_dict = sc.sanitizejson(graph_dict) # This shouldn't be necessary, but it is...
-#        graphs.append(graph_dict)
-#        pl.close(fig)
-#    output = {'graphs':graphs}
-#    return output, figs
+def get_budget_plots(results, year):
+
+    # Prepare data
+    d = at.PlotData.programs(results, quantity='spending')
+    d.interpolate(year)
+
+    # Budget figure
+    figs = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='vertical')
+    ax = figs[0].axes[0]
+    figs[0].set_size_inches(10, 4)
+    ax.set_position([0.15, 0.2, 0.35, 0.7])
+    ax.set_xlabel('Spending ($/year)')
+
+    # Budget legend
+    legends = [sc.emptyfig()] # Not sure why this is useful
+
+    output = {
+        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+    }
+    return output, figs, legends
+
+def get_coverage_plot(results):
+
+    # Coverage figures
+    d = at.PlotData.programs(results, quantity='coverage_fraction', nan_outside=True)
+    figs = at.plot_series(d, axis='results')
+
+    # Budget legend
+    legends = len(figs)*[sc.emptyfig()]
+
+    output = {
+        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+    }
+    return output, figs, legends
+
 
 def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plot_budget=False):
     
@@ -1461,23 +1470,6 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
     figs.append(fig)
     legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
-    
-    if plot_budget:
-        d = at.PlotData.programs(results, quantity='spending')
-        d.interpolate(year)
-        budgetfig = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='vertical')[0]
-        budgetfig.set_size_inches(10, 4)
-        budgetfig.get_axes()[0].set_position([0.15, 0.2, 0.35, 0.7])
-
-        figjsons.append(customize_fig(fig=budgetfig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
-        budgetlegends = [sc.emptyfig()]
-        
-        ax = budgetfig.axes[0]
-        ax.set_xlabel('Spending ($/year)')
-
-        figs.append(budgetfig)
-        legends += budgetlegends
-        print('Budget plot succeeded')
     
     for fig in legends: # Different enough to warrant its own block, although ugly
         try:
