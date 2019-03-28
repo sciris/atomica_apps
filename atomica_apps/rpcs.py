@@ -1875,7 +1875,9 @@ def scen_reset_spending(js_scen, project_id):
 
     # Handle the coverage scenario case...
     elif isinstance(py_scen, at.CoverageScenario):
-        pass
+        # Create a new coverage scenario with the settings from the old.
+        py_scen = at.CoverageScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
+            progsetname=py_scen.progsetname, coverage=None, start_year=py_scen.start_year)
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(py_scen, proj)
