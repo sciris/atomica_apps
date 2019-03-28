@@ -1825,11 +1825,12 @@ def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict
     py_scen = js_to_py_scen(js_scen)
     proj = load_project(project_id, die=True)
 
+    old_progset = proj.progsets[py_scen.progsetname]
+    new_progset = proj.progsets[new_progset_name]
+
     # Handle the budget scenario case...
     if isinstance(py_scen, at.BudgetScenario):
         old_alloc = py_scen.alloc
-        old_progset = proj.progsets[py_scen.progsetname]
-        new_progset = proj.progsets[new_progset_name]
         alloc = sc.odict()
 
         # Fuse the allocs
@@ -1845,11 +1846,27 @@ def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict
                     alloc[prog.name] = at.TimeSeries(py_scen.start_year, prog.spend_data.assumption)
 
         py_scen.alloc = alloc
-        py_scen.progsetname = new_progset_name
 
     # Handle the coverage scenario case...
     elif isinstance(py_scen, at.CoverageScenario):
-        pass
+        old_coverage = py_scen.coverage
+        coverage = sc.odict()
+
+        # Fuse the coverages
+        # - If the new progset has the same programs, then leave them intact
+        # - If the new progset has a new program, draw values from the progbook
+        for prog in new_progset.programs.values():
+            if prog.name in old_coverage:
+                coverage[prog.name] = sc.dcp(old_coverage[prog.name])
+            else:
+                if prog.coverage.has_time_data:
+                    coverage[prog.name] = sc.dcp(prog.coverage)
+                else:
+                    coverage[prog.name] = at.TimeSeries(py_scen.start_year, prog.coverage.assumption)
+
+        py_scen.coverage = coverage
+
+    py_scen.progsetname = new_progset_name
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(py_scen, proj)
