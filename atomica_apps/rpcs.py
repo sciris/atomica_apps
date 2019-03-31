@@ -20,6 +20,8 @@ import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
+from distutils.version import LooseVersion
+
 pl.rc('font', size=14)
 
 # Globals
@@ -253,8 +255,23 @@ def admin_upload_db(pw, filename=None, host=None):
 ##################################################################################
     
 def load_project(project_key, die=None):
-    output = datastore.loadblob(project_key, objtype='project', die=die)
-    return output
+    proj = datastore.loadblob(project_key, objtype='project', die=die)
+
+    if sc.compareversions(proj.version, at.version) < 0:
+        # Need to migrate - load in separate results first though
+
+        for k in proj.results.keys():
+            proj.results[k] = load_result(proj.results[k])
+
+        proj = at.migrate(proj)
+
+        for k in proj.result.keys():
+            result_key = save_result(proj.results[k])
+            proj.results[k] = result_key
+
+        save_project(proj)
+
+    return proj
 
 def load_framework(framework_key, die=None):
     output = datastore.loadblob(framework_key, objtype='framework', die=die)
