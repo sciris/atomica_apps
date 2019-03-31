@@ -260,14 +260,16 @@ def load_project(project_key, die=None):
     if sc.compareversions(proj.version, at.version) < 0:
         # Need to migrate - load in separate results first though
 
-        for k in proj.results.keys():
-            proj.results[k] = load_result(proj.results[k])
+        original_results = sc.dcp(proj.results.values()) # This is a list of redis keys
+
+        for i in range(len(proj.results)):
+            proj.results[i] = load_result(original_results[i]) # Retrieve result by redis key and store it in the project
 
         proj = at.migrate(proj)
 
-        for k in proj.result.keys():
-            result_key = save_result(proj.results[k])
-            proj.results[k] = result_key
+        for i in range(len(proj.results)):
+            save_result(proj.results[i], key=original_results[i])
+            proj.results[i] = original_results[i]
 
         save_project(proj)
 
