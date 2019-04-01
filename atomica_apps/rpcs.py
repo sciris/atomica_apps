@@ -1848,23 +1848,28 @@ def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict
         py_scen.alloc = alloc
 
     # Handle the coverage scenario case...
+    # TODO: We ultimately need something that comes out of actually running the model.
     elif isinstance(py_scen, at.CoverageScenario):
-        old_coverage = py_scen.coverage
-        coverage = sc.odict()
+        # Create a new coverage scenario with the settings from the old, but with the new progset.
+        py_scen = at.CoverageScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
+            progsetname=new_progset_name, coverage=None, start_year=py_scen.start_year)
 
-        # Fuse the coverages
-        # - If the new progset has the same programs, then leave them intact
-        # - If the new progset has a new program, draw values from the progbook
-        for prog in new_progset.programs.values():
-            if prog.name in old_coverage:
-                coverage[prog.name] = sc.dcp(old_coverage[prog.name])
-            else:
-                if prog.coverage.has_time_data:
-                    coverage[prog.name] = sc.dcp(prog.coverage)
-                else:
-                    coverage[prog.name] = at.TimeSeries(py_scen.start_year, prog.coverage.assumption)
-
-        py_scen.coverage = coverage
+        # old_coverage = py_scen.coverage
+        # coverage = sc.odict()
+        #
+        # # Fuse the coverages
+        # # - If the new progset has the same programs, then leave them intact
+        # # - If the new progset has a new program, draw values from the progbook
+        # for prog in new_progset.programs.values():
+        #     if prog.name in old_coverage:
+        #         coverage[prog.name] = sc.dcp(old_coverage[prog.name])
+        #     else:
+        #         if prog.coverage.has_time_data:
+        #             coverage[prog.name] = sc.dcp(prog.coverage)
+        #         else:
+        #             coverage[prog.name] = at.TimeSeries(py_scen.start_year, prog.coverage.assumption)
+        #
+        # py_scen.coverage = coverage
 
     py_scen.progsetname = new_progset_name
 
