@@ -301,7 +301,42 @@ var ScenarioMixin = {
       for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
         this.addEditModal.scenSummary.progs[i].coveragevals.splice(yearindex, 1)
       }      
-    },  
+    }, 
+    
+    modalAddParamYear() {
+      console.log('modalAddParamYear() called')
+    
+      var newYear
+      // If the parameter years list is non-empty, add a new parameter year which is the maximum 
+      // year already there plus 1.
+      if (this.addEditModal.scenSummary.paramyears.length > 0) {
+        newYear = Math.max(...this.addEditModal.scenSummary.paramyears) + 1
+      // Otherwise, make the new year the data_end year.
+      } else {
+        newYear = this.spendingBaselines.data_end
+      }
+      this.addEditModal.scenSummary.paramyears.push(newYear)
+      
+      // For each program, add a null to the end of the list, so we have a blank textbox.
+/*      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].paramvals.push(null)
+      } */   
+    },
+    
+    modalRemoveParamYear(yearindex) {
+      console.log('modalRemoveParamYear() called')
+      
+      // Delete the coverage year itself.
+      this.addEditModal.scenSummary.paramyears.splice(yearindex, 1)
+      
+      // For each program, delete all coverage values corresponding to that coverage year.
+/*      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].paramvals.splice(yearindex, 1)
+      } */   
+    },
+    
+    modalAddParameter() {
+    },
     
     editScen(scenSummary) {
       console.log('editScen() called')

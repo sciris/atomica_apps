@@ -1811,7 +1811,7 @@ def new_scen(project_id, scentype) -> dict:
             progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
     elif scentype == 'parameter':
         scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,
-            scenario_values=None)
+            scenario_values=dict())
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(scen, proj)
