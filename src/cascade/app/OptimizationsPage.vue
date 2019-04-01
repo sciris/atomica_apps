@@ -75,12 +75,14 @@ Last update: 2018-09-26
             <help reflink="results-plots" label="Results"></help>
             <div>
 
-              <b>Cascade: &nbsp;</b>
-              <select v-model="activeCascade" @change="reloadGraphs(displayResultDatastoreId, true)">
-                <option v-for='cascade in simCascades'>
-                  {{ cascade }}
-                </option>
-              </select>
+              <template v-if="simCascades.length>1">
+                <b>Cascade: &nbsp;</b>
+                <select v-model="activeCascade" @change="reloadGraphs(true)">
+                  <option v-for='cascade in simCascades'>
+                    {{ cascade }}
+                  </option>
+                </select>
+              </template>
 
               <b>Year: &nbsp;</b>
               <select v-model="endYear" @change="reloadGraphs(displayResultDatastoreId, true)">
