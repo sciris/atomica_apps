@@ -107,9 +107,15 @@ Last update: 2018-10-05
       <div class="PageSection" v-if="hasGraphs">
         <div class="card">
           <!-- ### Start: plot controls ### -->
-          <div class="calib-title">
-            <help reflink="bl-results" label="Results"></help>
-            <div>
+          <div class="calib-title"><help reflink="bl-results" label="Results"></help></div>
+              <div class="controls-box">
+
+              <b>Cascade: &nbsp;</b>
+              <select v-model="activeCascade" @change="reloadGraphs(true)">
+                <option v-for='cascade in simCascades'>
+                  {{ cascade }}
+                </option>
+              </select>
 
               <b>Year: &nbsp;</b>
               <select v-model="endYear" @change="reloadGraphs(true)">
@@ -129,7 +135,6 @@ Last update: 2018-10-05
               <button class="btn" @click="exportResults(serverDatastoreId)">Export data</button>
               <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="$globaltool=='tb'" -->
             </div>
-          </div>
           <!-- ### End: plot controls ### -->
 
 

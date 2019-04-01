@@ -475,6 +475,7 @@ def jsonify_project(project_id, verbose=False):
                 'data_end':     proj.data.end_year if proj.data else None,
                 'framework':    framework_name,
                 'pops':         pop_pairs,
+                'cascades':     list(proj.framework.cascades.keys()),
                 'n_results':    len(proj.results),
                 'n_tasks':      len(proj.webapp.tasks)
             })
