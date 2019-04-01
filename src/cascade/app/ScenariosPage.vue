@@ -71,6 +71,13 @@ Last update: 2018-09-09
             <help reflink="results-plots" label="Results"></help>
             <div>
 
+              <b>Cascade: &nbsp;</b>
+              <select v-model="activeCascade" @change="reloadGraphs(true)">
+                <option v-for='cascade in simCascades'>
+                  {{ cascade }}
+                </option>
+              </select>
+
               <b>Year: &nbsp;</b>
               <select v-model="endYear" @change="reloadGraphs(true)">
                 <option v-for='year in projectionYears'>

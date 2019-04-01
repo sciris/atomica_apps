@@ -17,6 +17,7 @@ var ScenarioMixin = {
       startYear: 0,
       endYear: 2018, // TEMP FOR DEMO
       activePop: "All",
+      activeCascade: "",
       popOptions: [],
       plotOptions: [],
       yearOptions: [],
@@ -46,6 +47,7 @@ var ScenarioMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.dataEnd(this) },
     simEnd()       { return utils.simEnd(this) },
+    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     placeholders() { return this.$sciris.placeholders(this, 1) },
@@ -61,6 +63,7 @@ var ScenarioMixin = {
       this.startYear = this.simStart
       this.endYear = this.simEnd
       this.popOptions = this.activePops
+      this.activeCascade = this.simCascades[0]
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {
