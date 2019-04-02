@@ -16,6 +16,7 @@ var OptimizationMixin = {
       startYear: 0,
       endYear: 2018, // TEMP FOR DEMO
       activePop: "All",
+      activeCascade: "",
       popOptions: [],
       plotOptions: [],
       yearOptions: [],
@@ -47,6 +48,7 @@ var OptimizationMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
+    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     placeholders() { return this.$sciris.placeholders(this, 1) },
@@ -62,6 +64,7 @@ var OptimizationMixin = {
       this.startYear = this.simStart
       this.endYear = this.simEnd
       this.popOptions = this.activePops
+      this.activeCascade = this.simCascades[0]
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {
           this.updateSets()

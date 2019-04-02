@@ -20,6 +20,7 @@ import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
+
 pl.rc('font', size=14)
 
 # Globals
@@ -253,8 +254,25 @@ def admin_upload_db(pw, filename=None, host=None):
 ##################################################################################
     
 def load_project(project_key, die=None):
-    output = datastore.loadblob(project_key, objtype='project', die=die)
-    return output
+    proj = datastore.loadblob(project_key, objtype='project', die=die)
+
+    if sc.compareversions(proj.version, at.version) < 0:
+        # Need to migrate - load in separate results first though
+
+        original_results = sc.dcp(proj.results.values()) # This is a list of redis keys
+
+        for i in range(len(proj.results)):
+            proj.results[i] = load_result(original_results[i]) # Retrieve result by redis key and store it in the project
+
+        proj = at.migrate(proj)
+
+        for i in range(len(proj.results)):
+            save_result(proj.results[i], key=original_results[i])
+            proj.results[i] = original_results[i]
+
+        save_project(proj)
+
+    return proj
 
 def load_framework(framework_key, die=None):
     output = datastore.loadblob(framework_key, objtype='framework', die=die)
@@ -456,6 +474,7 @@ def jsonify_project(project_id, verbose=False):
                 'data_end':     proj.data.end_year if proj.data else None,
                 'framework':    framework_name,
                 'pops':         pop_pairs,
+                'cascades':     list(proj.framework.cascades.keys()),
                 'n_results':    len(proj.results),
                 'n_tasks':      len(proj.webapp.tasks)
             })
