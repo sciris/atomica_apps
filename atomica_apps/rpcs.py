@@ -20,7 +20,6 @@ import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
-from distutils.version import LooseVersion
 
 pl.rc('font', size=14)
 
