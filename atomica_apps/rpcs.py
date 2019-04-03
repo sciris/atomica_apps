@@ -1623,7 +1623,9 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
 
     # Handle the special cases for parameter scenarios...
     elif js_scen['scentype'] == 'parameter':
-        pass
+        js_scen['paramyears'] = np.array([])
+        js_scen['params'] = []
+        # TODO: pull the actual information out of scen.
 
     # Set up the programs information.
     js_scen['progs'] = []
@@ -1690,7 +1692,8 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
     parsetname = js_scen['parsetname']
     progsetname = js_scen['progsetname']
     scentype = js_scen['scentype']
-    start_year = to_float(js_scen['progstartyear']) if js_scen['progstartyear'] is not None else None
+    if 'progstartyear' in js_scen:
+        start_year = to_float(js_scen['progstartyear']) if js_scen['progstartyear'] is not None else None
 
     alloc = sc.odict()
     coverage = sc.odict()
@@ -1712,7 +1715,8 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
         scen = at.CoverageScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
             coverage=coverage, start_year=start_year)
     elif scentype == 'parameter':
-        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=None)
+        # scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=None)
+        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=dict())
 
     return scen
 
@@ -1795,7 +1799,7 @@ def new_scen(project_id, scentype) -> dict:
 
     alloc = {}
     print('MAKESCEN')
-    for prog in proj.progsets[-1].programs.values():
+    for prog in proj.progsets[-1].programs.values():  # Start with programs in the last progset.
         print(prog.spend_data)
         if prog.spend_data.has_time_data:
             alloc[prog.name] = sc.dcp(prog.spend_data)
