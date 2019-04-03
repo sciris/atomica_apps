@@ -1417,6 +1417,15 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
 
 def get_budget_plots(results, year):
 
+    output = {'graphs': [], 'legends': []}
+    figs = []
+    legends = []
+
+    results = [x for x in results if x.used_programs] # Only include results that used programs
+    results = [x for x in results if not x.model.program_instructions.coverage] # Only include results that did NOT have coverage overwrites
+    if not results:
+        return output, figs, legends
+
     # Prepare data
     d = at.PlotData.programs(results, quantity='spending')
     d.interpolate(year)
@@ -1438,6 +1447,14 @@ def get_budget_plots(results, year):
     return output, figs, legends
 
 def get_coverage_plot(results):
+
+    output = {'graphs': [], 'legends': []}
+    figs = []
+    legends = []
+
+    results = [x for x in results if x.used_programs]  # Only include results that used programs
+    if not results:
+        return output, figs, legends
 
     # Coverage figures
     d = at.PlotData.programs(results, quantity='coverage_fraction', nan_outside=True)
