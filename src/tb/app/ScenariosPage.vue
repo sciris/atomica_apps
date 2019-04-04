@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-02
+Last update: 2019-04-03
 -->
 
 <template>
@@ -360,6 +360,7 @@ Last update: 2019-04-02
                 </tr>                
                 <tr>
                   <th>Parameter</th>
+                  <th>Parameter group</th>
                   <th>Population</th>
                   <th v-for="(val, index) in addEditModal.scenSummary.paramyears">
                     <select v-model="addEditModal.scenSummary.paramyears[index]">

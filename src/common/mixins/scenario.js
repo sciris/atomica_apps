@@ -31,6 +31,7 @@ var ScenarioMixin = {
       // Page-specific data
       scenSummaries: [],
       spendingBaselines: {},
+      paramGroups: {}, 
       validProgramStartYears: [],
       validSimYears: [],
       scenariosLoaded: false,
@@ -75,6 +76,7 @@ var ScenarioMixin = {
               // The order of execution / completion of these doesn't matter.
               this.getScenSummaries()
               this.getSpendingBaselines()
+              this.getParamGroups()
               this.reloadGraphs(false)
             })
         })
@@ -151,6 +153,19 @@ var ScenarioMixin = {
           this.$sciris.fail(this, 'Could not get spending baselines', error)
         })      
     },
+    
+    getParamGroups() {
+      console.log('getParamGroups() called')
+      this.$sciris.start(this)
+      this.$sciris.rpc('get_param_groups', [this.projectID])
+        .then(response => {
+          this.paramGroups = response.data // Set the parameter groups to what we received.
+          this.$sciris.succeed(this, 'Parameter groups loaded')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get parameter groups', error)
+        })      
+    }, 
     
     changeProgset() {
       // If we've switched off program sets, change the scenario type automatically 
