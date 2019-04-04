@@ -244,7 +244,7 @@ Last update: 2019-04-04
           
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
                style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" @click="modalAddParameter">
+            <button class="btn __blue" @click="modalAddParameter(addEditModal.selectedParamGroup)">
               Add parameter from group
             </button><br><br>
           </div>
@@ -349,8 +349,7 @@ Last update: 2019-04-04
           </div>
           
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
-<!--            <div v-if="addEditModal.scenSummary.params.length > 0" class="scrolltable" style="max-height: 80vh;"> -->
-            <div v-if="1 == 0" class="scrolltable" style="max-height: 80vh;">            
+            <div v-if="addEditModal.scenSummary.params.length > 0" class="scrolltable" style="max-height: 80vh;">        
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
                 <tr>

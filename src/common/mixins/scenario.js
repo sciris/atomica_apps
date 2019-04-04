@@ -352,7 +352,8 @@ var ScenarioMixin = {
       } */   
     },
     
-    modalAddParameter() {
+    modalAddParameter(selectedParamGroup) {
+      console.log('modalAddParameter() called')
     },
     
     editScen(scenSummary) {
