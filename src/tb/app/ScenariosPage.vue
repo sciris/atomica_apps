@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-03
+Last update: 2019-04-04
 -->
 
 <template>
@@ -235,9 +235,9 @@ Last update: 2019-04-03
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
                style="display:inline-block; padding-right:10px">
             <b>Parameter group</b><br>
-            <select @change="changeProgset()" v-model="addEditModal.scenSummary.progsetname">
-              <option v-for='progset in progsetOptions'>
-                {{ progset }}
+            <select v-model="addEditModal.selectedParamGroup">
+              <option v-for='group in paramGroups.grouplist'>
+                {{ group }}
               </option>
             </select><br><br>
           </div>   

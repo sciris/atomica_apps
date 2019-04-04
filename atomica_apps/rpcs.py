@@ -13,6 +13,7 @@ import socket
 import psutil
 import numpy as np
 import pylab as pl
+import pandas as pd
 import mpld3
 import re
 import sciris as sc
@@ -1772,28 +1773,20 @@ def get_param_groups(project_id, verbose=True):
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
 
-    spending = sc.odict()
-    spending['years'] = sc.odict()
-    spending['vals'] = sc.odict()
+    # Start with empty JSON
+    param_groups = dict()
 
-    for pset in proj.progsets.values():
+    param_groups['groups'] = sc.odict()
+    param_groups['params'] = sc.odict()
 
-        y_min = proj.data.end_year
-        y_max = proj.data.end_year
-        for prog in pset.programs.values():
-            if prog.spend_data.has_time_data:
-                y_min = min(y_min,prog.spend_data.t[0])
-                y_max = max(y_max,prog.spend_data.t[-1])
-        spending['years'][pset.name] = np.arange(np.floor(y_min),np.ceil(y_max)+1)
-        spending['vals'][pset.name] = pset.get_alloc(spending['years'][pset.name])
-        spending['data_start'] = proj.data.start_year
-        spending['data_end'] = proj.data.end_year
+    param_groups['grouplist'] = pd.unique(proj.framework.pars['scenario'].dropna())
+
 
     if verbose:
-        print('Baseline spending:')
-        sc.pp(spending)
+        print('Parameter groups:')
+        sc.pp(param_groups)
 
-    return spending
+    return param_groups
 
 
 @RPC()

@@ -38,7 +38,8 @@ var ScenarioMixin = {
       addEditModal: {
         scenSummary: {},
         origName: '',
-        mode: 'add',     
+        mode: 'add',  
+        selectedParamGroup: '',        
       },
     }
   },
@@ -160,6 +161,7 @@ var ScenarioMixin = {
       this.$sciris.rpc('get_param_groups', [this.projectID])
         .then(response => {
           this.paramGroups = response.data // Set the parameter groups to what we received.
+          this.addEditModal.selectedParamGroup = this.paramGroups.grouplist[0]
           this.$sciris.succeed(this, 'Parameter groups loaded')
         })
         .catch(error => {
