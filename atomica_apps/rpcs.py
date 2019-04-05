@@ -1776,11 +1776,19 @@ def get_param_groups(project_id, verbose=True):
     # Start with empty JSON
     param_groups = dict()
 
-    param_groups['groups'] = sc.odict()
-    param_groups['params'] = sc.odict()
+    param_groups['groups'] = sc.odict()  # TODO: Do we need this?
+    param_groups['params'] = sc.odict()  # TODO: Do we need this?
 
+    # Get the list of parameter groups from the framework dataframe.
     param_groups['grouplist'] = pd.unique(proj.framework.pars['scenario'].dropna())
 
+    # Pull out a DataFrame only of the parameters that are in groups.
+    df = proj.framework.pars.loc[:, ['scenario', 'display name']].dropna().reset_index()
+
+    # Pull out arrays for the code names, group names, and display names.
+    param_groups['codenames'] = df['code name'].values
+    param_groups['groupnames'] = df['scenario'].values
+    param_groups['displaynames'] = df['display name'].values
 
     if verbose:
         print('Parameter groups:')
