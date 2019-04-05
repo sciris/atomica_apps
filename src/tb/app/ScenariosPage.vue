@@ -349,7 +349,7 @@ Last update: 2019-04-04
           </div>
           
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
-            <div v-if="addEditModal.scenSummary.params.length > 0" class="scrolltable" style="max-height: 80vh;">        
+            <div v-if="addEditModal.scenSummary.paramoverwrites.length > 0" class="scrolltable" style="max-height: 80vh;">        
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
                 <tr>
@@ -379,19 +379,27 @@ Last update: 2019-04-04
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="param in addEditModal.scenSummary.params">
+                <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites">
                   <td>
-                    {{ param.name }}
+                    {{ paramoverwrite.paramname }}
                   </td>
-<!--                  <td v-for="(val, index) in param.coveragevals">
+                  <td>
+                    {{ paramoverwrite.groupname }}
+                  </td>
+                  <td>
+                    {{ paramoverwrite.popname }}
+                  </td>                  
+                  <td v-for="(val, index) in paramoverwrite.paramvals">
                     <input type="text"
                            class="txbox"
                            style="text-align: right"
-                           v-model="param.coveragevals[index]"/>
-                  </td> -->
-                </tr>
-                <tr>
-                 
+                           v-model="paramoverwrite.paramvals[index]"/>
+                  </td>
+                  <td>
+                    <button class='btn __red'>
+                      X
+                    </button>                   
+                  </td>
                 </tr>
                 </tbody>
               </table>

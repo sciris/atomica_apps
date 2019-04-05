@@ -354,6 +354,15 @@ var ScenarioMixin = {
     
     modalAddParameter(selectedParamGroup) {
       console.log('modalAddParameter() called')
+      
+      let newParamOverwrite = {
+        paramname: 'Foo', 
+        paramcodename: 'Foocode', 
+        groupname: selectedParamGroup, 
+        popname: 'Bar', 
+        paramvals: [], 
+      }
+      this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
     },
     
     editScen(scenSummary) {

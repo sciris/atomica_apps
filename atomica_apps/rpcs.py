@@ -1642,7 +1642,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # Handle the special cases for parameter scenarios...
     elif js_scen['scentype'] == 'parameter':
         js_scen['paramyears'] = np.array([])
-        js_scen['params'] = []
+        js_scen['paramoverwrites'] = []
         # TODO: pull the actual information out of scen.
 
     # Set up the programs information.
