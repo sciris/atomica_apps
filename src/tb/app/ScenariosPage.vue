@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-04
+Last update: 2019-04-06
 -->
 
 <template>
@@ -381,7 +381,11 @@ Last update: 2019-04-04
                 <tbody>
                 <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites">
                   <td>
-                    {{ paramoverwrite.paramname }}
+                    <select v-model="paramoverwrite.paramname">
+                      <option v-for="paramname in paramGroupMembers(paramoverwrite.groupname)">
+                        {{ paramname }}
+                      </option>
+                    </select>
                   </td>
                   <td>
                     {{ paramoverwrite.groupname }}

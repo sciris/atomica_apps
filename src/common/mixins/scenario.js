@@ -109,6 +109,16 @@ var ScenarioMixin = {
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
     
+    paramGroupMembers(groupname) { 
+      let members = []
+      for (var ind = 0; ind < this.paramGroups.codenames.length; ind++) {
+        if (this.paramGroups.groupnames[ind] == groupname) {
+          members.push(this.paramGroups.displaynames[ind])
+        }
+      }  
+      return members
+    },    
+    
     getScenSummaries() {
       console.log('getScenSummaries() called')
       this.$sciris.start(this)
@@ -356,7 +366,7 @@ var ScenarioMixin = {
       console.log('modalAddParameter() called')
       
       let newParamOverwrite = {
-        paramname: 'Foo', 
+        paramname: this.paramGroupMembers(selectedParamGroup)[0],
         paramcodename: 'Foocode', 
         groupname: selectedParamGroup, 
         popname: 'Bar', 
