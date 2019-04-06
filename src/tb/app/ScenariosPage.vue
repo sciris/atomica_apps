@@ -391,7 +391,7 @@ Last update: 2019-04-06
                     {{ paramoverwrite.groupname }}
                   </td>
                   <td>
-                    {{ paramoverwrite.popname }}
+                    {{ paramoverwrite.paramcodename }}
                   </td>                  
                   <td v-for="(val, index) in paramoverwrite.paramvals">
                     <input type="text"

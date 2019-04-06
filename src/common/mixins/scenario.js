@@ -117,7 +117,15 @@ var ScenarioMixin = {
         }
       }  
       return members
-    },    
+    },
+    
+    getParamCodeNameFromDisplayName(displayname) {
+      for (var ind = 0; ind < this.paramGroups.displaynames.length; ind++) {         
+        if (this.paramGroups.displaynames[ind] == displayname) {
+          return this.paramGroups.codenames[ind]
+        }
+      }          
+    },
     
     getScenSummaries() {
       console.log('getScenSummaries() called')
@@ -365,12 +373,13 @@ var ScenarioMixin = {
     modalAddParameter(selectedParamGroup) {
       console.log('modalAddParameter() called')
       
+      let paramname = this.paramGroupMembers(selectedParamGroup)[0]
       let newParamOverwrite = {
-        paramname: this.paramGroupMembers(selectedParamGroup)[0],
-        paramcodename: 'Foocode', 
+        paramname: paramname,
+        paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
         groupname: selectedParamGroup, 
         popname: 'Bar', 
-        paramvals: [], 
+        paramvals: [], // TODO: need to pad for cases where multiple paramyears
       }
       this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
     },
