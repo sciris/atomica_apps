@@ -378,7 +378,7 @@ var ScenarioMixin = {
         paramname: paramname,
         paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
         groupname: selectedParamGroup, 
-        popname: 'Bar', 
+        popname: this.paramGroups.popnames[0], 
         paramvals: [], // TODO: need to pad for cases where multiple paramyears
       }
       this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)

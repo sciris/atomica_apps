@@ -391,7 +391,11 @@ Last update: 2019-04-06
                     {{ paramoverwrite.groupname }}
                   </td>
                   <td>
-                    {{ paramoverwrite.paramcodename }}
+                    <select v-model="paramoverwrite.popname">
+                      <option v-for="popname in paramGroups.popnames">
+                        {{ popname }}
+                      </option>
+                    </select>
                   </td>                  
                   <td v-for="(val, index) in paramoverwrite.paramvals">
                     <input type="text"
