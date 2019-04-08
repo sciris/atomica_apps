@@ -1747,6 +1747,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
                     scen_values[paramname][popname] = dict()
                 scen_values[paramname][popname]['t'] = paramyears
                 paramvals = paramoverwrite['paramvals']
+                paramvals = [to_float(pval) for pval in paramvals]
                 scen_values[paramname][popname]['y'] = paramvals
 
         scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values)
