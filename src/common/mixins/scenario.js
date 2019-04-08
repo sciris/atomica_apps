@@ -361,7 +361,7 @@ var ScenarioMixin = {
     modalRemoveParamYear(yearindex) {
       console.log('modalRemoveParamYear() called')
       
-      // Delete the coverage year itself.
+      // Delete the parameter year itself.
       this.addEditModal.scenSummary.paramyears.splice(yearindex, 1)
       
       // For each program, delete all coverage values corresponding to that coverage year.
@@ -382,6 +382,16 @@ var ScenarioMixin = {
         paramvals: [], // TODO: need to pad for cases where multiple paramyears
       }
       this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
+    },
+    
+    modalDeleteParameter(paramoverwrite) {
+      console.log('modalDeleteParameter() called')
+      for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        if ((this.addEditModal.scenSummary.paramoverwrites[i].paramname === paramoverwrite.paramname) && 
+            (this.addEditModal.scenSummary.paramoverwrites[i].popname === paramoverwrite.popname)) {
+          this.addEditModal.scenSummary.paramoverwrites.splice(i, 1);
+        }
+      }        
     },
     
     editScen(scenSummary) {
@@ -415,8 +425,8 @@ var ScenarioMixin = {
     deleteScen(scenSummary) {
       console.log('deleteScen() called')
       this.$sciris.start(this)
-      for(var i = 0; i< this.scenSummaries.length; i++) {
-        if(this.scenSummaries[i].name === scenSummary.name) {
+      for (var i = 0; i< this.scenSummaries.length; i++) {
+        if (this.scenSummaries[i].name === scenSummary.name) {
           this.scenSummaries.splice(i, 1);
         }
       }
