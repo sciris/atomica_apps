@@ -1733,8 +1733,23 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
         scen = at.CoverageScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
             coverage=coverage, start_year=start_year)
     elif scentype == 'parameter':
-        # scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=None)
-        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=dict())
+        scen_values = dict()
+        paramyears = []
+        if 'paramyears' in js_scen:
+            paramyears = js_scen['paramyears']
+        if 'paramoverwrites' in js_scen:
+            for paramoverwrite in js_scen['paramoverwrites']:
+                paramname = paramoverwrite['paramcodename']
+                if paramname not in scen_values:
+                    scen_values[paramname] = dict()
+                popname = paramoverwrite['popname']
+                if popname not in scen_values[paramname]:
+                    scen_values[paramname][popname] = dict()
+                scen_values[paramname][popname]['t'] = paramyears
+                paramvals = paramoverwrite['paramvals']
+                scen_values[paramname][popname]['y'] = paramvals
+
+        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values)
 
     return scen
 
