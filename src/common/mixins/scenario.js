@@ -352,10 +352,10 @@ var ScenarioMixin = {
       }
       this.addEditModal.scenSummary.paramyears.push(newYear)
       
-      // For each program, add a null to the end of the list, so we have a blank textbox.
-/*      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
-        this.addEditModal.scenSummary.progs[i].paramvals.push(null)
-      } */   
+      // For each parameter overwrite, add a null to the end of the list, so we have a blank textbox.
+      for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        this.addEditModal.scenSummary.paramoverwrites[i].paramvals.push(null)
+      }   
     },
     
     modalRemoveParamYear(yearindex) {
@@ -364,22 +364,29 @@ var ScenarioMixin = {
       // Delete the parameter year itself.
       this.addEditModal.scenSummary.paramyears.splice(yearindex, 1)
       
-      // For each program, delete all coverage values corresponding to that coverage year.
-/*      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
-        this.addEditModal.scenSummary.progs[i].paramvals.splice(yearindex, 1)
-      } */   
+      // For each parameter overwrite, delete all parameter values corresponding to that parameter 
+      // year.
+      for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        this.addEditModal.scenSummary.paramoverwrites[i].paramvals.splice(yearindex, 1)
+      }
     },
     
     modalAddParameter(selectedParamGroup) {
       console.log('modalAddParameter() called')
       
       let paramname = this.paramGroupMembers(selectedParamGroup)[0]
+      let newParamvals = []
+      if (this.addEditModal.scenSummary.paramoverwrites.length > 0) {
+        for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length; i++) {
+          newParamvals.push(null)
+        }
+      }      
       let newParamOverwrite = {
         paramname: paramname,
         paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
         groupname: selectedParamGroup, 
         popname: this.paramGroups.popnames[0], 
-        paramvals: [], // TODO: need to pad for cases where multiple paramyears
+        paramvals: newParamvals,
       }
       this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
     },
