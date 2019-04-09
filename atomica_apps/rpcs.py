@@ -1643,7 +1643,20 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     elif js_scen['scentype'] == 'parameter':
         js_scen['paramyears'] = np.array([])
         js_scen['paramoverwrites'] = []
-        # TODO: pull the actual information out of scen.
+        scen_values = scen.scenario_values
+        extracted_param_years = False
+        for code_param_name in scen_values.keys():
+            for pop_name in scen_values[code_param_name].keys():
+                paramoverwrite_dict = dict()
+                paramoverwrite_dict['paramname'] = param_code_name_to_param_diaplay_name(code_param_name, proj)
+                paramoverwrite_dict['paramcodename'] = code_param_name
+                paramoverwrite_dict['groupname'] = param_code_name_to_param_group_name(code_param_name, proj)
+                paramoverwrite_dict['popname'] = pop_name
+                paramoverwrite_dict['paramvals'] = scen_values[code_param_name][pop_name]['y']
+                if not extracted_param_years:
+                    js_scen['paramyears'] = scen_values[code_param_name][pop_name]['t']
+                    extracted_param_years = True
+                js_scen['paramoverwrites'].append(paramoverwrite_dict)
 
     # Set up the programs information.
     js_scen['progs'] = []
@@ -1811,6 +1824,16 @@ def get_param_groups(project_id, verbose=True):
         sc.pp(param_groups)
 
     return param_groups
+
+
+def param_code_name_to_param_diaplay_name(code_name, proj):
+    param_diaplay_name = proj.framework.pars.loc[code_name, 'display name']
+    return param_diaplay_name
+
+
+def param_code_name_to_param_group_name(code_name, proj):
+    param_group_name = proj.framework.pars.loc[code_name, 'scenario']
+    return param_group_name
 
 
 @RPC()
