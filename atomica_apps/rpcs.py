@@ -1969,7 +1969,7 @@ def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict
 
 
 @RPC()
-def scen_reset_spending(js_scen, project_id):
+def scen_reset_values(js_scen, project_id):
     py_scen = js_to_py_scen(js_scen)
     proj = load_project(project_id, die=True)
 
@@ -1990,6 +1990,12 @@ def scen_reset_spending(js_scen, project_id):
         # Create a new coverage scenario with the settings from the old.
         py_scen = at.CoverageScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
             progsetname=py_scen.progsetname, coverage=None, start_year=py_scen.start_year)
+
+    # Handle the parameter scenario case...
+    elif isinstance(py_scen, at.ParameterScenario):
+        # Create a new parameter scenario with the settings from the old.
+        py_scen = at.ParameterScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
+            scenario_values=dict())
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(py_scen, proj)

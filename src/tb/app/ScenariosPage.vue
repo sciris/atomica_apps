@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-08
+Last update: 2019-04-10
 -->
 
 <template>
@@ -267,17 +267,14 @@ Last update: 2019-04-08
                         {{ year }}
                       </option>
                     </select> 
-                    <button @click="modalRemoveBudgetYear(index)" class='btn __red' style="display:inline-block">
-                      X
+                    <button @click="modalRemoveBudgetYear(index)" class='btn-small' style="display:inline-block">
+                      <i class="ti-trash"></i>
                     </button>         
                   </th>                  
                   <th>
-                    <button @click="modalAddBudgetYear()" class='btn __green' style="display:inline-block">
+                    <button @click="modalAddBudgetYear()" class='btn-small' style="display:inline-block">
                       +
-                    </button>
-                    <button @click="resetToProgbook()" class='btn __red' style="display:inline-block">
-                      Reset to progbook
-                    </button>                                        
+                    </button>                                    
                   </th>
                 </tr>
                 </thead>
@@ -317,17 +314,14 @@ Last update: 2019-04-08
                         {{ year }}
                       </option>
                     </select> 
-                    <button @click="modalRemoveCoverageYear(index)" class='btn __red' style="display:inline-block">
-                      X
+                    <button @click="modalRemoveCoverageYear(index)" class='btn_small' style="display:inline-block">
+                      <i class="ti-trash"></i>
                     </button>         
                   </th>                  
                   <th>
-                    <button @click="modalAddCoverageYear()" class='btn __green' style="display:inline-block">
+                    <button @click="modalAddCoverageYear()" class='btn_small' style="display:inline-block">
                       +
-                    </button>
-                    <button @click="resetToProgbook()" class='btn __red' style="display:inline-block">
-                      Reset to progbook
-                    </button>                                        
+                    </button>                                       
                   </th>
                 </tr>
                 </thead>
@@ -367,12 +361,12 @@ Last update: 2019-04-08
                         {{ year }}
                       </option>
                     </select> 
-                    <button @click="modalRemoveParamYear(index)" class='btn __red' style="display:inline-block">
-                      X
+                    <button @click="modalRemoveParamYear(index)" class='btn_small' style="display:inline-block">
+                      <i class="ti-trash"></i>
                     </button>         
                   </th>                  
                   <th>
-                    <button @click="modalAddParamYear()" class='btn __green' style="display:inline-block">
+                    <button @click="modalAddParamYear()" class='btn_small' style="display:inline-block">
                       +
                     </button>                                       
                   </th>
@@ -419,6 +413,9 @@ Last update: 2019-04-08
           <button @click="modalSave()" class='btn __green' style="display:inline-block">
             Save scenario
           </button>
+          <button @click="resetToDefaultValues()" class='btn' style="display:inline-block">
+            Reset to default values
+          </button>          
           <button @click="$modal.hide('add-edit-scen')" class='btn __red' style="display:inline-block">
             Cancel
           </button>

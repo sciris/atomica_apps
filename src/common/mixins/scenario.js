@@ -207,15 +207,15 @@ var ScenarioMixin = {
       }
     },
     
-    resetToProgbook() {
+    resetToDefaultValues() {
       this.$sciris.start(this)
-      this.$sciris.rpc('scen_reset_spending', [this.addEditModal.scenSummary, this.projectID])
+      this.$sciris.rpc('scen_reset_values', [this.addEditModal.scenSummary, this.projectID])
         .then(response => {           
           this.addEditModal.scenSummary = response.data
-          this.$sciris.succeed(this, 'Spending reset completed')
+          this.$sciris.succeed(this, 'Value reset completed')
         })
         .catch(error => {
-          this.$sciris.fail(this, 'Could not properly reset the spending', error)
+          this.$sciris.fail(this, 'Could not properly reset the values', error)
         })          
     },
     
