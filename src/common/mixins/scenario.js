@@ -53,6 +53,9 @@ var ScenarioMixin = {
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     placeholders() { return this.$sciris.placeholders(this, 1) },
+    sortedParamOverwrites() {
+      return this.applyParamOverwriteSorting(this.addEditModal.scenSummary.paramoverwrites)
+    },
   },
 
   created() {
@@ -235,7 +238,31 @@ var ScenarioMixin = {
           this.$sciris.fail(this, 'Could not open add scenario modal', error)
         })
     },
-
+    
+    applyParamOverwriteSorting(paramoverwrites) {
+      return this.applyParamOverwriteSorting2(paramoverwrites).slice(0).sort((po1, po2) =>
+        {
+          return (po1.groupname.toLowerCase() > po2.groupname.toLowerCase())
+        }
+      )
+    },
+    
+    applyParamOverwriteSorting2(paramoverwrites) {
+      return this.applyParamOverwriteSorting3(paramoverwrites).slice(0).sort((po1, po2) =>
+        {
+          return (po1.paramname.toLowerCase() > po2.paramname.toLowerCase())
+        }
+      )
+    },
+    
+    applyParamOverwriteSorting3(paramoverwrites) {
+      return paramoverwrites.slice(0).sort((po1, po2) =>
+        {
+          return (po1.popname.toLowerCase() > po2.popname.toLowerCase())
+        }
+      )
+    }, 
+    
     modalSave() {
       console.log('modalSave() called')
       this.$modal.hide('add-edit-scen')

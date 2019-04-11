@@ -373,7 +373,8 @@ Last update: 2019-04-10
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites">
+<!--                <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites"> -->
+                <tr v-for="paramoverwrite in sortedParamOverwrites">
                   <td>
                     <select v-model="paramoverwrite.paramname">
                       <option v-for="paramname in paramGroupMembers(paramoverwrite.groupname)">
