@@ -8,14 +8,14 @@ var ScenarioMixin = {
       activeParset:  -1,
       activeProgset: -1,
       parsetOptions: [],
-      progsetOptions: [],
+      progsetOptions: [],   
 
       // Plotting data
       showPlotControls: false,
       hasGraphs: false,
       table: null,
-      startYear: 0,
-      endYear: 2018, // TEMP FOR DEMO
+      simStartYear: 0,
+      simEndYear: 2035,
       activePop: "All",
       activeCascade: "",
       popOptions: [],
@@ -31,12 +31,16 @@ var ScenarioMixin = {
 
       // Page-specific data
       scenSummaries: [],
-      defaultBudgetScen: {},
+      spendingBaselines: {},
+      paramGroups: {}, 
+      validProgramStartYears: [],
+      validSimYears: [],
       scenariosLoaded: false,
       addEditModal: {
         scenSummary: {},
         origName: '',
-        mode: 'add'
+        mode: 'add',  
+        selectedParamGroup: '',        
       },
     }
   },
@@ -45,12 +49,15 @@ var ScenarioMixin = {
     projectID()    { return utils.projectID(this) },
     hasData()      { return utils.hasData(this) },
     hasPrograms()  { return utils.hasPrograms(this) },
-    simStart()     { return utils.dataEnd(this) },
+    simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
     simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     placeholders() { return this.$sciris.placeholders(this, 1) },
+    sortedParamOverwrites() {
+      return this.applyParamOverwriteSorting(this.addEditModal.scenSummary.paramoverwrites)
+    },
   },
 
   created() {
@@ -60,8 +67,12 @@ var ScenarioMixin = {
       (this.$store.state.activeProject.project.hasData) &&
       (this.$store.state.activeProject.project.hasPrograms)) {
       console.log('created() called')
-      this.startYear = this.simStart
-      this.endYear = this.simEnd
+      this.simStartYear = this.simStart
+      this.simEndYear = this.simEnd
+      this.validSimYears = []
+      for (var year = this.simStartYear; year <= this.simEndYear; year++) {
+        this.validSimYears.push(year)
+      }      
       this.popOptions = this.activePops
       this.activeCascade = this.simCascades[0]
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
@@ -71,7 +82,8 @@ var ScenarioMixin = {
             .then(response2 => {
               // The order of execution / completion of these doesn't matter.
               this.getScenSummaries()
-              this.getDefaultBudgetScen()
+              this.getSpendingBaselines()
+              this.getParamGroups()
               this.reloadGraphs(false)
             })
         })
@@ -92,30 +104,41 @@ var ScenarioMixin = {
     reloadGraphs(showErr)             { 
       utils.validateYears(this);
       // Set to calibration=false, plotbudget=true
-      return utils.reloadGraphs(this, this.projectID, this.serverDatastoreId, showErr, false, true) 
+      return utils.reloadGraphs(
+        this,
+        this.projectID,
+        this.serverDatastoreId,
+        showErr,
+        false,
+        true)
     }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
-
-    getDefaultBudgetScen() {
-      console.log('getDefaultBudgetScen() called')
-      this.$sciris.rpc('get_default_budget_scen', [this.projectID])
-        .then(response => {
-          this.defaultBudgetScen = response.data // Set the scenario to what we received.
-          console.log('This is the default:')
-          console.log(this.defaultBudgetScen);
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not get default budget scenario', error)
-        })
+    
+    paramGroupMembers(groupname) { 
+      let members = []
+      for (var ind = 0; ind < this.paramGroups.codenames.length; ind++) {
+        if (this.paramGroups.groupnames[ind] == groupname) {
+          members.push(this.paramGroups.displaynames[ind])
+        }
+      }  
+      return members
     },
-
+    
+    getParamCodeNameFromDisplayName(displayname) {
+      for (var ind = 0; ind < this.paramGroups.displaynames.length; ind++) {         
+        if (this.paramGroups.displaynames[ind] == displayname) {
+          return this.paramGroups.codenames[ind]
+        }
+      }          
+    },
+    
     getScenSummaries() {
       console.log('getScenSummaries() called')
       this.$sciris.start(this)
       this.$sciris.rpc('get_scen_info', [this.projectID])
         .then(response => {
-          this.scenSummaries = response.data // Set the scenarios to what we received.
+          this.scenSummaries = response.data // Set the scenarios to what we received.      
           console.log('Scenario summaries:')
           console.log(this.scenSummaries)
           this.scenariosLoaded = true
@@ -137,27 +160,115 @@ var ScenarioMixin = {
           this.$sciris.fail(this, 'Could not save scenarios', error)
         })
     },
-
-    addBudgetScenModal() {
-      // Open a model dialog for creating a new project
-      console.log('addBudgetScenModal() called');
-      this.$sciris.rpc('get_default_budget_scen', [this.projectID])
+    
+    getSpendingBaselines() {
+      console.log('getSpendingBaselines() called')
+      this.$sciris.start(this)
+      this.$sciris.rpc('get_baseline_spending', [this.projectID])
         .then(response => {
-          this.defaultBudgetScen = response.data // Set the scenario to what we received.
-          this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
+          this.spendingBaselines = response.data // Set the spending baselines to what we received.
+          this.validProgramStartYears = []
+          for (var year = this.spendingBaselines.data_start; 
+            year <= this.spendingBaselines.data_end + 10; year++) {
+              this.validProgramStartYears.push(year)
+          }
+          this.$sciris.succeed(this, 'Spending baselines loaded')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get spending baselines', error)
+        })      
+    },
+    
+    getParamGroups() {
+      console.log('getParamGroups() called')
+      this.$sciris.start(this)
+      this.$sciris.rpc('get_param_groups', [this.projectID])
+        .then(response => {
+          this.paramGroups = response.data // Set the parameter groups to what we received.
+          this.addEditModal.selectedParamGroup = this.paramGroups.grouplist[0]
+          this.$sciris.succeed(this, 'Parameter groups loaded')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get parameter groups', error)
+        })      
+    }, 
+    
+    changeProgset() {
+      // If we've switched off program sets, change the scenario type automatically 
+      // to parameters overwrites.
+      if (this.addEditModal.scenSummary.progsetname == 'None') {
+        this.addEditModal.scenSummary.scentype = 'parameter'
+        
+      // Otherwise...
+      } else {
+        this.$sciris.start(this)
+        this.$sciris.rpc('scen_change_progset', [this.addEditModal.scenSummary, this.addEditModal.scenSummary.progsetname, this.projectID])
+          .then(response => {           
+            this.addEditModal.scenSummary = response.data
+            this.$sciris.succeed(this, 'Progset change completed')
+          })
+          .catch(error => {
+            this.$sciris.fail(this, 'Could not properly change the progset', error)
+          })           
+      }
+    },
+    
+    resetToDefaultValues() {
+      this.$sciris.start(this)
+      this.$sciris.rpc('scen_reset_values', [this.addEditModal.scenSummary, this.projectID])
+        .then(response => {           
+          this.addEditModal.scenSummary = response.data
+          this.$sciris.succeed(this, 'Value reset completed')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not properly reset the values', error)
+        })          
+    },
+    
+    addScenModal(scentype) {
+      console.log('addScenModal() called')
+
+      // Get a "template" new scenario from the server.
+      this.$sciris.rpc('new_scen', [this.projectID, scentype])
+        .then(response => {
+          this.new_scen = response.data // Set the scenario to what we received.
+          this.addEditModal.scenSummary = _.cloneDeep(this.new_scen)
           this.addEditModal.origName = this.addEditModal.scenSummary.name
           this.addEditModal.mode = 'add'
-          this.$modal.show('add-budget-scen');
-          console.log(this.defaultBudgetScen)
+          this.$modal.show('add-edit-scen')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not open add scenario modal', error)
         })
     },
-
-    addBudgetScen() {
-      console.log('addBudgetScen() called')
-      this.$modal.hide('add-budget-scen')
+    
+    applyParamOverwriteSorting(paramoverwrites) {
+      return this.applyParamOverwriteSorting2(paramoverwrites).slice(0).sort((po1, po2) =>
+        {
+          return (po1.groupname.toLowerCase() > po2.groupname.toLowerCase())
+        }
+      )
+    },
+    
+    applyParamOverwriteSorting2(paramoverwrites) {
+      return this.applyParamOverwriteSorting3(paramoverwrites).slice(0).sort((po1, po2) =>
+        {
+          return (po1.paramname.toLowerCase() > po2.paramname.toLowerCase())
+        }
+      )
+    },
+    
+    applyParamOverwriteSorting3(paramoverwrites) {
+      return paramoverwrites.slice(0).sort((po1, po2) =>
+        {
+          return (po1.popname.toLowerCase() > po2.popname.toLowerCase())
+        }
+      )
+    }, 
+    
+    modalSave() {
+      console.log('modalSave() called')
+      this.$modal.hide('add-edit-scen')
       this.$sciris.start(this)
       let newScen = _.cloneDeep(this.addEditModal.scenSummary) // Get the new scenario summary from the modal.
       let scenNames = [] // Get the list of all of the current scenario names.
@@ -169,6 +280,10 @@ var ScenarioMixin = {
         if (index > -1) {
           this.scenSummaries[index].name = newScen.name  // hack to make sure Vue table updated
           this.scenSummaries[index] = newScen
+          
+          // Hack to get the Vue display of scenSummaries to update
+          this.scenSummaries.push(this.scenSummaries[0])
+          this.scenSummaries.pop()          
         }
         else {
           console.log('Error: a mismatch in editing keys')
@@ -182,29 +297,153 @@ var ScenarioMixin = {
       console.log(this.scenSummaries)
       this.$sciris.rpc('set_scen_info', [this.projectID, this.scenSummaries])
         .then( response => {
-          this.$sciris.succeed(this, 'Scenario added')
+          this.$sciris.succeed(this, 'Scenario saved')
         })
         .catch(error => {
-          this.$sciris.fail(this, 'Could not add scenario', error)
+          this.$sciris.fail(this, 'Could not save scenario', error)
         })
     },
-
+    
+    modalAddBudgetYear() {
+      console.log('modalAddBudgetYear() called')
+    
+      var newYear
+      // If the budget years list is non-empty, add a new budget year which is the maximum 
+      // year already there plus 1.
+      if (this.addEditModal.scenSummary.budgetyears.length > 0) {
+        newYear = Math.max(...this.addEditModal.scenSummary.budgetyears) + 1
+      // Otherwise, make the new year the data_end year.
+      } else {
+        newYear = this.spendingBaselines.data_end
+      }
+      this.addEditModal.scenSummary.budgetyears.push(newYear)
+      
+      // For each program, add a null to the end of the list, so we have a blank textbox.
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].budgetvals.push(null)
+      }      
+    },
+    
+    modalRemoveBudgetYear(yearindex) {
+      console.log('modalRemoveBudgetYear() called')
+      
+      // Delete the budget year itself.
+      this.addEditModal.scenSummary.budgetyears.splice(yearindex, 1)
+      
+      // For each program, delete all spending values corresponding to that budget year.
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].budgetvals.splice(yearindex, 1)
+      }      
+    },   
+    
+    modalAddCoverageYear() {
+      console.log('modalAddCoverageYear() called')
+    
+      var newYear
+      // If the coverage years list is non-empty, add a new coverage year which is the maximum 
+      // year already there plus 1.
+      if (this.addEditModal.scenSummary.coverageyears.length > 0) {
+        newYear = Math.max(...this.addEditModal.scenSummary.coverageyears) + 1
+      // Otherwise, make the new year the data_end year.
+      } else {
+        newYear = this.spendingBaselines.data_end
+      }
+      this.addEditModal.scenSummary.coverageyears.push(newYear)
+      
+      // For each program, add a null to the end of the list, so we have a blank textbox.
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].coveragevals.push(null)
+      }      
+    },
+    
+    modalRemoveCoverageYear(yearindex) {
+      console.log('modalRemoveCoverageYear() called')
+      
+      // Delete the coverage year itself.
+      this.addEditModal.scenSummary.coverageyears.splice(yearindex, 1)
+      
+      // For each program, delete all coverage values corresponding to that coverage year.
+      for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+        this.addEditModal.scenSummary.progs[i].coveragevals.splice(yearindex, 1)
+      }      
+    }, 
+    
+    modalAddParamYear() {
+      console.log('modalAddParamYear() called')
+    
+      var newYear
+      // If the parameter years list is non-empty, add a new parameter year which is the maximum 
+      // year already there plus 1.
+      if (this.addEditModal.scenSummary.paramyears.length > 0) {
+        newYear = Math.max(...this.addEditModal.scenSummary.paramyears) + 1
+      // Otherwise, make the new year the data_end year.
+      } else {
+        newYear = this.spendingBaselines.data_end
+      }
+      this.addEditModal.scenSummary.paramyears.push(newYear)
+      
+      // For each parameter overwrite, add a null to the end of the list, so we have a blank textbox.
+      for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        this.addEditModal.scenSummary.paramoverwrites[i].paramvals.push(null)
+      }   
+    },
+    
+    modalRemoveParamYear(yearindex) {
+      console.log('modalRemoveParamYear() called')
+      
+      // Delete the parameter year itself.
+      this.addEditModal.scenSummary.paramyears.splice(yearindex, 1)
+      
+      // For each parameter overwrite, delete all parameter values corresponding to that parameter 
+      // year.
+      for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        this.addEditModal.scenSummary.paramoverwrites[i].paramvals.splice(yearindex, 1)
+      }
+    },
+    
+    modalAddParameter(selectedParamGroup) {
+      console.log('modalAddParameter() called')
+      
+      let paramname = this.paramGroupMembers(selectedParamGroup)[0]
+      let newParamvals = []
+      if (this.addEditModal.scenSummary.paramoverwrites.length > 0) {
+        for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length; i++) {
+          newParamvals.push(null)
+        }
+      }      
+      let newParamOverwrite = {
+        paramname: paramname,
+        paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
+        groupname: selectedParamGroup, 
+        popname: this.paramGroups.popnames[0], 
+        paramvals: newParamvals,
+      }
+      this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
+    },
+    
+    modalDeleteParameter(paramoverwrite) {
+      console.log('modalDeleteParameter() called')
+      for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        if ((this.addEditModal.scenSummary.paramoverwrites[i].paramname === paramoverwrite.paramname) && 
+            (this.addEditModal.scenSummary.paramoverwrites[i].popname === paramoverwrite.popname)) {
+          this.addEditModal.scenSummary.paramoverwrites.splice(i, 1);
+        }
+      }        
+    },
+    
     editScen(scenSummary) {
-      // Open a model dialog for creating a new project
-      console.log('editScen() called');
-      this.defaultBudgetScen = scenSummary
-      console.log('defaultBudgetScen')
-      console.log(this.defaultBudgetScen)
-      this.addEditModal.scenSummary = _.cloneDeep(this.defaultBudgetScen)
+      console.log('editScen() called')
+      this.addEditModal.scenSummary = _.cloneDeep(scenSummary)     
       this.addEditModal.origName = this.addEditModal.scenSummary.name
       this.addEditModal.mode = 'edit'
-      this.$modal.show('add-budget-scen');
+      // Open a model dialog for creating a new project
+      this.$modal.show('add-edit-scen');
     },
 
     copyScen(scenSummary) {
       console.log('copyScen() called')
       this.$sciris.start(this)
-      var newScen = _.cloneDeep(scenSummary);
+      var newScen = _.cloneDeep(scenSummary)
       var otherNames = []
       this.scenSummaries.forEach(scenSum => {
         otherNames.push(scenSum.name)
@@ -223,8 +462,8 @@ var ScenarioMixin = {
     deleteScen(scenSummary) {
       console.log('deleteScen() called')
       this.$sciris.start(this)
-      for(var i = 0; i< this.scenSummaries.length; i++) {
-        if(this.scenSummaries[i].name === scenSummary.name) {
+      for (var i = 0; i< this.scenSummaries.length; i++) {
+        if (this.scenSummaries[i].name === scenSummary.name) {
           this.scenSummaries.splice(i, 1);
         }
       }
@@ -252,7 +491,7 @@ var ScenarioMixin = {
           {
             saveresults: false, 
             tool: this.toolName(),
-            plotyear:this.endYear, 
+            plotyear:this.simEndYear, 
             pops:this.activePop
           })
             .then(response => {

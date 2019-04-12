@@ -13,6 +13,7 @@ import socket
 import psutil
 import numpy as np
 import pylab as pl
+import pandas as pd
 import mpld3
 import re
 import sciris as sc
@@ -1317,14 +1318,16 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
                         if nan_ind>0: # Skip the first point
                             series.vals[nan_ind] = series.vals[nan_ind-1]
                             nans_replaced += 1
-            if nans_replaced: print('Warning: %s nans were replaced' % nans_replaced)
-    
+            if nans_replaced:
+                print('Warning: %s nans were replaced' % nans_replaced)
+
             if calibration:
-               if stacked: figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
-               else:       figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate') # Only plot data if not stacked
+                if stacked: figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
+                else: figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate')  # Only plot data if not stacked
             else:
-               if stacked: figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
-               else:       figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
+                if stacked: figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
+                else: figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
+
             for fig in figs[0:-1]:
                 allfigjsons.append(customize_fig(fig=fig, output=output, plotdata=plotdata, xlims=xlims, figsize=figsize))
                 alllegendjsons.append(customize_fig(fig=figs[-1], output=output, plotdata=plotdata, xlims=xlims, figsize=figsize, is_legend=True))
@@ -1355,21 +1358,35 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
 
-    cascadeoutput,cascadefigs,cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
-    if tool == 'cascade': # For Cascade Tool
-        output = cascadeoutput
-        allfigs = cascadefigs
-        alllegends = cascadelegends
-    else: # For Optima TB
-        if calibration: output, allfigs, alllegends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, calibration=True, stacked=False)
-        else:           output, allfigs, alllegends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, calibration=False)
-        output['table'] = cascadeoutput['table'] # Put this back in -- warning kludgy! -- also not used for Optima TB...
-        for key in ['graphs','legends']:
-            output[key] = cascadeoutput[key] + output[key]
-        allfigs = cascadefigs + allfigs
-        alllegends = cascadelegends + alllegends
-    savefigs(allfigs, username=proj.webapp.username) # WARNING, dosave ignored fornow
-    if outputfigs: return output, allfigs, alllegends
+    output = {'graphs':[],'legends':[]}
+    all_figs = []
+    all_legends = []
+
+    def append_plots(d,figs,legends):
+        nonlocal all_figs, all_legends
+        all_figs += figs
+        all_legends += legends
+        output['graphs'] += d['graphs']
+        output['legends'] += d['legends']
+
+    if plot_budget:
+        # Make program related plots
+        d, figs, legends = get_budget_plots(results=results,year=year)
+        append_plots(d, figs, legends)
+
+        d, figs, legends = get_coverage_plot(results=results)
+        append_plots(d, figs, legends)
+
+    cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
+    append_plots(cascadeoutput,cascadefigs,cascadelegends)
+
+    if tool != 'cascade':
+        if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
+        else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
+        append_plots(d, figs, legends)
+
+    savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
+    if outputfigs: return output, all_figs, all_legends
     else:          return output
 
 
@@ -1417,51 +1434,61 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
     graph_dict = sw.mpld3ify(fig, jsonify=False) # Convert to mpld3
     pl.close(fig)
     return graph_dict
-    
 
-#def get_program_plots(results,year,budget=True,coverage=True):
-#    # Generate program related plots
-#    # INPUTS
-#    # - proj : Project instance
-#    # - results : Result or list of Results
-#    # - year : If making a budget bar plot, it will be displayed for this year
-#    # - budget : True/False flag for whether to include budget bar plot
-#    # - coverage : True/False flag for whether to include program coverage figures
-#
-#    figs = []
-#    if budget:
-#        d = at.PlotData.programs(results, quantity='spending')
-#        d.interpolate(year)
-#        budget_figs = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='horizontal')
-#
-#        ax = budget_figs[0].axes[0]
-#        ax.set_xlabel('Spending ($/year)')
-#
-#        # The legend is too big for the figure -- WARNING, think of a better solution
-#        #        budget_figs[1].set_figheight(8.9)
-#        #        budgetfigs[1].set_figwidth(8.7)
-#
-#        figs += budget_figs
-#        print('Budget plot succeeded')
-#
-#    if coverage:
-#        d = at.PlotData.programs(results,quantity='coverage_fraction')
-#        coverage_figs = at.plot_series(d, axis='results')
-#        for fig,(output_name,output_label) in zip(coverage_figs,d.outputs.items()):
-#            fig.axes[0].set_title(output_label)
-#            series = d[d.results.keys()[0],d.pops.keys()[0],output_name]
-#            fig.axes[0].set_ylabel(series.units.title())
-#        figs += coverage_figs
-#        print('Coverage plots succeeded')
-#
-#    graphs = []
-#    for fig in figs:
-#        graph_dict = mpld3.fig_to_dict(fig)
-#        graph_dict = sc.sanitizejson(graph_dict) # This shouldn't be necessary, but it is...
-#        graphs.append(graph_dict)
-#        pl.close(fig)
-#    output = {'graphs':graphs}
-#    return output, figs
+def get_budget_plots(results, year):
+
+    output = {'graphs': [], 'legends': []}
+    figs = []
+    legends = []
+
+    results = [x for x in results if x.used_programs] # Only include results that used programs
+    results = [x for x in results if not x.model.program_instructions.coverage] # Only include results that did NOT have coverage overwrites
+    if not results:
+        return output, figs, legends
+
+    # Prepare data
+    d = at.PlotData.programs(results, quantity='spending')
+    d.interpolate(year)
+
+    # Budget figure
+    figs = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='vertical')
+    ax = figs[0].axes[0]
+    figs[0].set_size_inches(10, 4)
+    ax.set_position([0.15, 0.2, 0.35, 0.7])
+    ax.set_xlabel('Spending ($/year)')
+
+    # Budget legend
+    legends = [sc.emptyfig()] # Not sure why this is useful
+
+    output = {
+        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+    }
+    return output, figs, legends
+
+def get_coverage_plot(results):
+
+    output = {'graphs': [], 'legends': []}
+    figs = []
+    legends = []
+
+    results = [x for x in results if x.used_programs]  # Only include results that used programs
+    if not results:
+        return output, figs, legends
+
+    # Coverage figures
+    d = at.PlotData.programs(results, quantity='coverage_fraction', nan_outside=True)
+    figs = at.plot_series(d, axis='results')
+
+    # Budget legend
+    legends = len(figs)*[sc.emptyfig()]
+
+    output = {
+        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+    }
+    return output, figs, legends
+
 
 def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plot_budget=False):
     
@@ -1480,23 +1507,6 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
     figs.append(fig)
     legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
-    
-    if plot_budget:
-        d = at.PlotData.programs(results, quantity='spending')
-        d.interpolate(year)
-        budgetfig = at.plot_bars(d, stack_outputs='all', legend_mode='together', outer='times', show_all_labels=False, orientation='vertical')[0]
-        budgetfig.set_size_inches(10, 4)
-        budgetfig.get_axes()[0].set_position([0.15, 0.2, 0.35, 0.7])
-
-        figjsons.append(customize_fig(fig=budgetfig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
-        budgetlegends = [sc.emptyfig()]
-        
-        ax = budgetfig.axes[0]
-        ax.set_xlabel('Spending ($/year)')
-
-        figs.append(budgetfig)
-        legends += budgetlegends
-        print('Budget plot succeeded')
     
     for fig in legends: # Different enough to warrant its own block, although ugly
         try:
@@ -1610,69 +1620,249 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 ### Scenario RPCs
 ##################################################################################
 
-def py_to_js_scen(py_scen, project=None):
-    ''' Convert a Python to JSON representation of a scenario. The Python scenario might be a dictionary or an object. '''
-    js_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname', 'alloc_year']
-    for attr in attrs:
-        if isinstance(py_scen, dict):
-            js_scen[attr] = py_scen[attr] # Copy the attributes directly
-        else:
-            js_scen[attr] = getattr(py_scen, attr) # Copy the attributes into a dictionary
-            
-    js_scen['alloc'] = []
-    if isinstance(py_scen, dict): alloc = py_scen['alloc']
-    else:                         alloc = py_scen.alloc
-    for prog_name,budget in alloc.items():
-        prog_label = project.progset().programs[prog_name].label
-        if sc.isiterable(budget):
-            if len(budget)>1:
-                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
+def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
+    ''' Convert a Python scenario to JSON representation
+
+    '''
+
+    # Start with empty JSON
+    js_scen = dict()
+    js_scen['name'] = scen.name
+    js_scen['active'] = scen.active
+    js_scen['parsetname'] = scen.parsetname if scen.parsetname else 'None'
+    js_scen['progsetname'] = scen.progsetname if scen.progsetname else 'None'
+
+    # Get the scenario type by looking at the type of the Scenario object.
+    if isinstance(scen, at.BudgetScenario):
+        js_scen['scentype'] = 'budget'
+    elif isinstance(scen, at.CoverageScenario):
+        js_scen['scentype'] = 'coverage'
+    elif isinstance(scen, at.ParameterScenario):
+        js_scen['scentype'] = 'parameter'
+    else:
+        js_scen['scentype'] = 'unknown'
+
+    # Handle the special cases for budget scenarios...
+    if js_scen['scentype'] == 'budget':
+        js_scen['progstartyear'] = scen.start_year
+        budgetyears = set()
+        [budgetyears.update(x.t) for x in scen.alloc.values()]
+        js_scen['budgetyears'] = np.array(sorted(budgetyears))
+        js_scen['coverageyears'] = np.array([])
+
+    # Handle the special cases for coverage scenarios...
+    elif js_scen['scentype'] == 'coverage':
+        js_scen['progstartyear'] = scen.start_year
+        coverageyears = set()
+        [coverageyears.update(x.t) for x in scen.coverage.values()]
+        js_scen['coverageyears'] = np.array(sorted(coverageyears))
+        js_scen['budgetyears'] = np.array([])
+
+    # Handle the special cases for parameter scenarios...
+    elif js_scen['scentype'] == 'parameter':
+        js_scen['paramyears'] = np.array([])
+        js_scen['paramoverwrites'] = []
+        scen_values = scen.scenario_values
+        extracted_param_years = False
+        for code_param_name in scen_values.keys():
+            for pop_name in scen_values[code_param_name].keys():
+                paramoverwrite_dict = dict()
+                paramoverwrite_dict['paramname'] = param_code_name_to_param_diaplay_name(code_param_name, proj)
+                paramoverwrite_dict['paramcodename'] = code_param_name
+                paramoverwrite_dict['groupname'] = param_code_name_to_param_group_name(code_param_name, proj)
+                paramoverwrite_dict['popname'] = pop_name
+                paramoverwrite_dict['paramvals'] = scen_values[code_param_name][pop_name]['y']
+                if not extracted_param_years:
+                    js_scen['paramyears'] = scen_values[code_param_name][pop_name]['t']
+                    extracted_param_years = True
+                js_scen['paramoverwrites'].append(paramoverwrite_dict)
+
+    # Set up the programs information.
+    js_scen['progs'] = []
+
+    if not proj.progsets:
+        # If no progsets, we can't retrieve the full names from the short names in the instructions
+        # In that case, we don't show any program overwrite values at all.
+        return js_scen # Abort early if there are no programs to add
+
+    # Otherwise, populate the program values
+    # If user has not selected a progset, then we need to populate the program list somehow
+    # Actually what we SHOULD do is populate the list of programs only when the user selects
+    # the progset, in case the programs differ across progsets. So this step should be skipped
+    # entirely here if the progsetname is 'None' and would instead be called in the callback
+    # when the dropdown is
+
+    format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
+
+    if scen.progsetname:
+        progset = proj.progsets[scen.progsetname]
+    else:
+        progset = proj.progsets[-1] # TODO - move this to dropdown callback - we need to use -1 here so that we get *some* programs in the UI with the current setup
+
+    for prog in progset.programs.values():
+        progdict = dict()
+        progdict['name'] = prog.label
+        progdict['shortname'] = prog.name
+        if js_scen['scentype'] == 'budget':
+            if prog.name in scen.alloc:
+                progdict['budgetvals'] = []
+                for year in js_scen['budgetyears']:
+                    val = scen.alloc[prog.name].get(year)
+                    progdict['budgetvals'].append(format_number(val))
             else:
-                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-        budgetstr = format(int(round(float(budget))), ',')
-        js_scen['alloc'].append([prog_name,budgetstr, prog_label])
+                progdict['budgetvals'] = [None] * len(js_scen['budgetyears'])
+        elif js_scen['scentype'] == 'coverage':
+            if prog.name in scen.coverage:
+                progdict['coveragevals'] = []
+                for year in js_scen['coverageyears']:
+                    val = scen.coverage[prog.name].get(year)
+                    if val is not None:
+                        val *= 100
+                    progdict['coveragevals'].append(format_number(val))
+            else:
+                progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
+
+        js_scen['progs'].append(progdict)
+
+    # Return the dict for the complete JSON.
     return js_scen
 
 
-def js_to_py_scen(js_scen):
-    ''' Convert a Python to JSON representation of a scenario '''
-    py_scen = sc.odict()
-    attrs = ['name', 'active', 'parsetname', 'progsetname']
-    for attr in attrs:
-        py_scen[attr] = js_scen[attr] # Copy the attributes into a dictionary
-    py_scen['alloc_year'] = float(js_scen['alloc_year']) # Convert to number
-    py_scen['start_year'] = py_scen['alloc_year'] # Normally, the start year will be set by the set_scen_info() RPC but this is a fallback to ensure the scenario is still usable even if that step is omitted
-    py_scen['alloc'] = sc.odict()
-    for item in js_scen['alloc']:
-        prog_name = item[0]
-        budget = item[1]
-        if sc.isstring(budget):
-            try:
-                budget = to_float(budget)
-            except Exception as E:
-                raise Exception('Could not convert budget to number: %s' % repr(E))
-        if sc.isiterable(budget):
-            if len(budget)>1:
-                raise Exception('Budget should only have a single element in it, not %s' % len(budget))
-            else:
-                budget = budget[0] # If it's not a scalar, pull out the first element -- WARNING, KLUDGY
-        py_scen['alloc'][prog_name] = to_float(budget)
-    return py_scen
-    
+def js_to_py_scen(js_scen: dict) -> at.Scenario:
+    """
+    Convert JSON content to an Atomica scenario
+
+    :param js_scen: Dictionary representation of FE web form
+    :return: ``at.CombinedScenario`` instance
+
+    """
+
+    name = js_scen['name']
+    active = js_scen['active']
+    parsetname = js_scen['parsetname']
+    progsetname = js_scen['progsetname']
+    scentype = js_scen['scentype']
+    if 'progstartyear' in js_scen:
+        start_year = to_float(js_scen['progstartyear']) if js_scen['progstartyear'] is not None else None
+
+    alloc = sc.odict()
+    coverage = sc.odict()
+    for prog in js_scen['progs']:
+        if scentype == 'budget':
+            if any(prog['budgetvals']):
+                budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
+                alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
+        elif scentype == 'coverage':
+            if any(prog['coveragevals']):
+                coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
+                coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
+
+    # Construct the scenario
+    if scentype == 'budget':
+        scen = at.BudgetScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
+            alloc=alloc, start_year=start_year)
+    elif scentype == 'coverage':
+        scen = at.CoverageScenario(name=name, active=active, parsetname=parsetname, progsetname=progsetname,
+            coverage=coverage, start_year=start_year)
+    elif scentype == 'parameter':
+        scen_values = dict()
+        paramyears = []
+        if 'paramyears' in js_scen:
+            paramyears = js_scen['paramyears']
+        if 'paramoverwrites' in js_scen:
+            for paramoverwrite in js_scen['paramoverwrites']:
+                paramname = paramoverwrite['paramcodename']
+                if paramname not in scen_values:
+                    scen_values[paramname] = dict()
+                popname = paramoverwrite['popname']
+                if popname not in scen_values[paramname]:
+                    scen_values[paramname][popname] = dict()
+                scen_values[paramname][popname]['t'] = paramyears
+                paramvals = paramoverwrite['paramvals']
+                paramvals = [to_float(pval) for pval in paramvals]
+                scen_values[paramname][popname]['y'] = paramvals
+
+        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values)
+
+    return scen
+
+
+@RPC()
+def get_baseline_spending(project_id, verbose=True):
+    print('Getting baseline spending...')
+    proj = load_project(project_id, die=True)
+
+    spending = sc.odict()
+    spending['years'] = sc.odict()
+    spending['vals'] = sc.odict()
+
+    for pset in proj.progsets.values():
+
+        y_min = proj.data.end_year
+        y_max = proj.data.end_year
+        for prog in pset.programs.values():
+            if prog.spend_data.has_time_data:
+                y_min = min(y_min,prog.spend_data.t[0])
+                y_max = max(y_max,prog.spend_data.t[-1])
+        spending['years'][pset.name] = np.arange(np.floor(y_min),np.ceil(y_max)+1)
+        spending['vals'][pset.name] = pset.get_alloc(spending['years'][pset.name])
+        spending['data_start'] = proj.data.start_year
+        spending['data_end'] = proj.data.end_year
+
+    if verbose:
+        print('Baseline spending:')
+        sc.pp(spending)
+
+    return spending
+
+
+@RPC()
+def get_param_groups(project_id, verbose=True):
+    print('Getting parameter groups...')
+    proj = load_project(project_id, die=True)
+
+    # Start with empty JSON
+    param_groups = dict()
+
+    # Get the list of parameter groups from the framework dataframe.
+    param_groups['grouplist'] = pd.unique(proj.framework.pars['scenario'].dropna())
+
+    # Pull out a DataFrame only of the parameters that are in groups.
+    df = proj.framework.pars.loc[:, ['scenario', 'display name']].dropna().reset_index()
+
+    # Pull out arrays for the code names, group names, and display names.
+    param_groups['codenames'] = df['code name'].values
+    param_groups['groupnames'] = df['scenario'].values
+    param_groups['displaynames'] = df['display name'].values
+
+    # Pull out the population names from the first parset.
+    param_groups['popnames'] = proj.parsets[0].pop_names
+
+    if verbose:
+        print('Parameter groups:')
+        sc.pp(param_groups)
+
+    return param_groups
+
+
+def param_code_name_to_param_diaplay_name(code_name, proj):
+    param_diaplay_name = proj.framework.pars.loc[code_name, 'display name']
+    return param_diaplay_name
+
+
+def param_code_name_to_param_group_name(code_name, proj):
+    param_group_name = proj.framework.pars.loc[code_name, 'scenario']
+    return param_group_name
+
 
 @RPC()
 def get_scen_info(project_id, verbose=True):
     print('Getting scenario info...')
     proj = load_project(project_id, die=True)
-    scenario_jsons = []
-    for py_scen in proj.scens.values():
-        js_scen = py_to_js_scen(py_scen, project=proj)
-        scenario_jsons.append(js_scen)
+    scenario_jsons = [py_to_js_scen(scen,proj) for scen in proj.scens.values()]
     if verbose:
         print('JavaScript scenario info:')
         sc.pp(scenario_jsons)
-
     return scenario_jsons
 
 
@@ -1683,25 +1873,151 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
     proj.scens.clear()
     for j,js_scen in enumerate(scenario_jsons):
         print('Setting scenario %s of %s...' % (j+1, len(scenario_jsons)))
-        py_scen = js_to_py_scen(js_scen)
-        py_scen['start_year'] = proj.data.end_year # The scenario program start year is the same as the end year
-        if verbose: 
+        proj.scens.append(js_to_py_scen(js_scen))
+        if verbose:
             print('Python scenario info for scenario %s:' % (j+1))
-            sc.pp(py_scen)
-        proj.make_scenario(which='budget', json=py_scen)
+            sc.pp(proj.scens[-1])
     print('Saving project...')
     save_project(proj)
     return None
 
 
 @RPC()    
-def get_default_budget_scen(project_id):
+def new_scen(project_id, scentype) -> dict:
+    """
+    Instantiate a new temporary scenario and return JS representation
+
+    The workflow is that a basic scenario with the default
+    budget is created, and then converted to JS. The JS conversion needs to
+    handle initialization of extra fields e.g. years that aren't present in the
+    data
+
+    :param project_id: Project ID for database
+    :return: JS representation of scenario (via ``py_to_js_scen``)
+
+    """
+
     print('Creating default scenario...')
     proj = load_project(project_id, die=True)
-    py_scen = proj.demo_scenarios(doadd=False)
-    js_scen = py_to_js_scen(py_scen, project=proj)
+    assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
+    start_year = proj.data.end_year
+
+    alloc = {}
+    print('MAKESCEN')
+    for prog in proj.progsets[-1].programs.values():  # Start with programs in the last progset.
+        print(prog.spend_data)
+        if prog.spend_data.has_time_data:
+            alloc[prog.name] = sc.dcp(prog.spend_data)
+        else:
+            alloc[prog.name] = at.TimeSeries(start_year, prog.spend_data.assumption)
+
+    # Construct the scenario
+    if scentype == 'budget':
+        scen = at.BudgetScenario(name='New budget scenario', active=True, parsetname=proj.parsets[-1].name,
+            progsetname=proj.progsets[-1].name, alloc=alloc, start_year=start_year)
+    elif scentype == 'coverage':
+        scen = at.CoverageScenario(name='New coverage scenario', active=True, parsetname=proj.parsets[-1].name,
+            progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
+    elif scentype == 'parameter':
+        scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,
+            scenario_values=dict())
+
+    # Make the JSON for the scenario
+    js_scen = py_to_js_scen(scen, proj)
+
     print('Created default JavaScript scenario:')
-    sc.pp(js_scen)
+    return js_scen
+
+
+@RPC()
+def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict:
+    py_scen = js_to_py_scen(js_scen)
+    proj = load_project(project_id, die=True)
+
+    old_progset = proj.progsets[py_scen.progsetname]
+    new_progset = proj.progsets[new_progset_name]
+
+    # Handle the budget scenario case...
+    if isinstance(py_scen, at.BudgetScenario):
+        old_alloc = py_scen.alloc
+        alloc = sc.odict()
+
+        # Fuse the allocs
+        # - If the new progset has the same programs, then leave them intact
+        # - If the new progset has a new program, draw values from the progbook
+        for prog in new_progset.programs.values():
+            if prog.name in old_alloc:
+                alloc[prog.name] = sc.dcp(old_alloc[prog.name])
+            else:
+                if prog.spend_data.has_time_data:
+                    alloc[prog.name] = sc.dcp(prog.spend_data)
+                else:
+                    alloc[prog.name] = at.TimeSeries(py_scen.start_year, prog.spend_data.assumption)
+
+        py_scen.alloc = alloc
+
+    # Handle the coverage scenario case...
+    # TODO: We ultimately need something that comes out of actually running the model.
+    elif isinstance(py_scen, at.CoverageScenario):
+        # Create a new coverage scenario with the settings from the old, but with the new progset.
+        py_scen = at.CoverageScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
+            progsetname=new_progset_name, coverage=None, start_year=py_scen.start_year)
+
+        # old_coverage = py_scen.coverage
+        # coverage = sc.odict()
+        #
+        # # Fuse the coverages
+        # # - If the new progset has the same programs, then leave them intact
+        # # - If the new progset has a new program, draw values from the progbook
+        # for prog in new_progset.programs.values():
+        #     if prog.name in old_coverage:
+        #         coverage[prog.name] = sc.dcp(old_coverage[prog.name])
+        #     else:
+        #         if prog.coverage.has_time_data:
+        #             coverage[prog.name] = sc.dcp(prog.coverage)
+        #         else:
+        #             coverage[prog.name] = at.TimeSeries(py_scen.start_year, prog.coverage.assumption)
+        #
+        # py_scen.coverage = coverage
+
+    py_scen.progsetname = new_progset_name
+
+    # Make the JSON for the scenario
+    js_scen = py_to_js_scen(py_scen, proj)
+    return js_scen
+
+
+@RPC()
+def scen_reset_values(js_scen, project_id):
+    py_scen = js_to_py_scen(js_scen)
+    proj = load_project(project_id, die=True)
+
+    # Handle the budget scenario case...
+    if isinstance(py_scen, at.BudgetScenario):
+        alloc = sc.odict()
+        for prog in proj.progsets[py_scen.progsetname].programs.values():
+            print(prog.spend_data)
+            if prog.spend_data.has_time_data:
+                alloc[prog.name] = sc.dcp(prog.spend_data)
+            else:
+                alloc[prog.name] = at.TimeSeries(py_scen.start_year, prog.spend_data.assumption)
+
+        py_scen.alloc = alloc
+
+    # Handle the coverage scenario case...
+    elif isinstance(py_scen, at.CoverageScenario):
+        # Create a new coverage scenario with the settings from the old.
+        py_scen = at.CoverageScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
+            progsetname=py_scen.progsetname, coverage=None, start_year=py_scen.start_year)
+
+    # Handle the parameter scenario case...
+    elif isinstance(py_scen, at.ParameterScenario):
+        # Create a new parameter scenario with the settings from the old.
+        py_scen = at.ParameterScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
+            scenario_values=dict())
+
+    # Make the JSON for the scenario
+    js_scen = py_to_js_scen(py_scen, proj)
     return js_scen
 
 

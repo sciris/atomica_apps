@@ -1,7 +1,7 @@
 <!--
 Calibration Page
 
-Last update: 2018-10-05
+Last update: 2019-03-18
 -->
 
 <template>
@@ -120,7 +120,7 @@ Last update: 2018-10-05
             <div>
 
               <b>Year: &nbsp;</b>
-              <select v-model="endYear" @change="reloadGraphs(true)">
+              <select v-model="simEndYear" @change="reloadGraphs(true)">
                 <option v-for='year in simYears'>
                   {{ year }}
                 </option>

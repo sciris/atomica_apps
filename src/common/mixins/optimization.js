@@ -13,8 +13,8 @@ var OptimizationMixin = {
       showPlotControls: false,
       hasGraphs: false,
       table: null,
-      startYear: 0,
-      endYear: 2018, // TEMP FOR DEMO
+      simStartYear: 0,
+      simEndYear: 2018, // TEMP FOR DEMO
       activePop: "All",
       activeCascade: "",
       popOptions: [],
@@ -61,8 +61,8 @@ var OptimizationMixin = {
       (this.$store.state.activeProject.project.hasData) &&
       (this.$store.state.activeProject.project.hasPrograms)) {
       console.log('created() called')
-      this.startYear = this.simStart
-      this.endYear = this.simEnd
+      this.simStartYear = this.simStart
+      this.simEndYear = this.simEnd
       this.popOptions = this.activePops
       this.activeCascade = this.simCascades[0]
       this.getPlotOptions(this.$store.state.activeProject.project.id)
@@ -332,7 +332,7 @@ var OptimizationMixin = {
       console.log('saveOptim() called')
       this.$modal.hide('add-optim')
       this.$sciris.start(this)
-      this.endYear = this.modalOptim.end_year
+      this.simEndYear = this.modalOptim.end_year
       let newOptim = _.cloneDeep(this.modalOptim) // Get the new optimization summary from the modal.
       let optimNames = [] // Get the list of all of the current optimization names.
       this.optimSummaries.forEach(optimSum => {
@@ -462,7 +462,7 @@ var OptimizationMixin = {
                 'plot_options': this.plotOptions, 
                 'maxtime': maxtime, 
                 'tool': this.toolName(), 
-                'plotyear': this.endYear, 
+                'plotyear': this.simEndYear, 
                 'pops': this.activePop, 
                 'cascade': null
               }

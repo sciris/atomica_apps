@@ -2,8 +2,16 @@
 # Install any missing client modules.
 # Version: 2019jan15
 
-import os
+import os, shutil
 parentfolder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(parentfolder)
-os.system('rm -rf package-lock.json ./dist ./node_modules/')
+for to_delete in ['package-lock.json', 'dist', 'node_modules']:
+    if os.path.exists(to_delete):
+        print('Removing %s' % to_delete)
+        try:
+            os.remove(to_delete)
+        except:
+            shutil.rmtree(to_delete)
+    else:
+        print('Not removing %s, not found' % to_delete)
 os.system('npm install')

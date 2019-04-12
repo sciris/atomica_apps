@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2018-09-09
+Last update: 2019-04-10
 -->
 
 <template>
@@ -35,6 +35,7 @@ Last update: 2018-09-09
           <tr>
             <th>Name</th>
             <th>Active</th>
+            <th>Type</th>
             <th>Actions</th>
           </tr>
           </thead>
@@ -45,6 +46,9 @@ Last update: 2018-09-09
             </td>
             <td style="text-align: center">
               <input type="checkbox" v-model="scenSummary.active"/>
+            </td>
+            <td>
+              {{ scenSummary.scentype }}
             </td>
             <td style="white-space: nowrap">
               <button class="btn btn-icon" @click="editScen(scenSummary)" data-tooltip="Edit scenario"><i class="ti-pencil"></i></button>
@@ -57,7 +61,9 @@ Last update: 2018-09-09
 
         <div>
           <button class="btn __green" :disabled="!scenariosLoaded" @click="runScens()">Run scenarios</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addBudgetScenModal()">Add scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('budget')">Add budget scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('coverage')">Add coverage scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('parameter')">Add parameter scenario</button>          
         </div>
       </div>
       <!-- ### End: scenarios card ### -->
@@ -72,7 +78,7 @@ Last update: 2018-09-09
             <div>
 
               <b>Year: &nbsp;</b>
-              <select v-model="endYear" @change="reloadGraphs(true)">
+              <select v-model="simEndYear" @change="reloadGraphs(true)">
                 <option v-for='year in projectionYears'>
                   {{ year }}
                 </option>
@@ -177,10 +183,10 @@ Last update: 2018-09-09
 
 
     <!-- ### Start: add scenarios modal ### -->
-    <modal name="add-budget-scen"
+    <modal name="add-edit-scen"
            height="auto"
            :scrollable="true"
-           :width="500"
+           :width="1000"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
            :adaptive="true">
@@ -197,50 +203,221 @@ Last update: 2018-09-09
           <input type="text"
                  class="txbox"
                  v-model="addEditModal.scenSummary.name"/><br>
-          <b>Parameter set</b><br>
-          <select v-model="parsetOptions[0]">
-            <option v-for='parset in parsetOptions'>
-              {{ parset }}
-            </option>
-          </select><br><br>
-          <b>Program set</b><br>
-          <select v-model="progsetOptions[0]">
-            <option v-for='progset in progsetOptions'>
-              {{ progset }}
-            </option>
-          </select><br><br>
-          <b>Budget year</b><br>
-          <input type="text"
-                 class="txbox"
-                 v-model="addEditModal.scenSummary.alloc_year"/><br>
-          <table class="table table-bordered table-hover table-striped" style="width: 100%">
-            <thead>
-            <tr>
-              <th>Program</th>
-              <th>Budget</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="item in addEditModal.scenSummary.alloc">
-              <td>
-                {{ item[2] }}
-              </td>
-              <td>
-                <input type="text"
-                       class="txbox"
-                       v-model="item[1]"
-                       style="text-align: right"
-                />
-              </td>
-            </tr>
-            </tbody>
-          </table>
+                      
+          <div style="display:inline-block; padding-right:10px">
+            <b>Parameter set</b><br>
+            <select v-model="addEditModal.scenSummary.parsetname">
+              <option v-for='parset in parsetOptions'>
+                {{ parset }}
+              </option>
+            </select><br><br>
+          </div>
+          <div v-if="addEditModal.scenSummary.scentype != 'parameter'"
+               style="display:inline-block; padding-right:10px">
+            <b>Program set</b><br>
+            <select @change="changeProgset()" v-model="addEditModal.scenSummary.progsetname">
+              <option v-for='progset in progsetOptions'>
+                {{ progset }}
+              </option>
+            </select><br><br>
+          </div>
+          <div v-if="addEditModal.scenSummary.scentype != 'parameter'" 
+               style="display:inline-block; padding-right:10px">
+            <b>Program start year</b><br>
+            <select :disabled="addEditModal.scenSummary.progsetname=='None'"
+                    v-model="addEditModal.scenSummary.progstartyear">
+              <option v-for='year in validProgramStartYears'>
+                {{ year }}
+              </option>
+            </select><br><br>
+          </div>
+          
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
+               style="display:inline-block; padding-right:10px">
+            <b>Parameter group</b><br>
+            <select v-model="addEditModal.selectedParamGroup">
+              <option v-for='group in paramGroups.grouplist'>
+                {{ group }}
+              </option>
+            </select><br><br>
+          </div>   
+          
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
+               style="display:inline-block; padding-right:10px">
+            <button class="btn __blue" @click="modalAddParameter(addEditModal.selectedParamGroup)">
+              Add parameter from group
+            </button><br><br>
+          </div>
+          <br>
+          
+          <div v-if="addEditModal.scenSummary.scentype == 'budget'">
+            <div class="scrolltable" style="max-height: 80vh;">
+              <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <thead>
+                <tr>
+                  <th colspan=100><div class="dialog-header">
+                    Program spending
+                  </div></th>
+                </tr>                
+                <tr>
+                  <th>Program</th>
+                  <th v-for="(val, index) in addEditModal.scenSummary.budgetyears">
+                    <select v-model="addEditModal.scenSummary.budgetyears[index]">
+                      <option v-for='year in validSimYears'>
+                        {{ year }}
+                      </option>
+                    </select> 
+                    <button @click="modalRemoveBudgetYear(index)" class='btn-small' style="display:inline-block">
+                      <i class="ti-trash"></i>
+                    </button>         
+                  </th>                  
+                  <th>
+                    <button @click="modalAddBudgetYear()" class='btn-small' style="display:inline-block">
+                      +
+                    </button>                                    
+                  </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="prog in addEditModal.scenSummary.progs">
+                  <td>
+                    {{ prog.name }}
+                  </td>
+                  <td v-for="(val, index) in prog.budgetvals">
+                    <input type="text"
+                           class="txbox"
+                           style="text-align: right"
+                           v-model="prog.budgetvals[index]"/>
+                  </td>
+                  <td>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div v-if="addEditModal.scenSummary.scentype == 'coverage'">
+            <div class="scrolltable" style="max-height: 80vh;">
+              <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <thead>
+                <tr>
+                  <th colspan=100><div class="dialog-header">
+                    Program coverages (%)
+                  </div></th>
+                </tr>                
+                <tr>
+                  <th>Program</th>
+                  <th v-for="(val, index) in addEditModal.scenSummary.coverageyears">
+                    <select v-model="addEditModal.scenSummary.coverageyears[index]">
+                      <option v-for='year in validSimYears'>
+                        {{ year }}
+                      </option>
+                    </select> 
+                    <button @click="modalRemoveCoverageYear(index)" class='btn_small' style="display:inline-block">
+                      <i class="ti-trash"></i>
+                    </button>         
+                  </th>                  
+                  <th>
+                    <button @click="modalAddCoverageYear()" class='btn_small' style="display:inline-block">
+                      +
+                    </button>                                       
+                  </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="prog in addEditModal.scenSummary.progs">
+                  <td>
+                    {{ prog.name }}
+                  </td>
+                  <td v-for="(val, index) in prog.coveragevals">
+                    <input type="text"
+                           class="txbox"
+                           style="text-align: right"
+                           v-model="prog.coveragevals[index]"/>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
+            <div v-if="addEditModal.scenSummary.paramoverwrites.length > 0" class="scrolltable" style="max-height: 80vh;">        
+              <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <thead>
+                <tr>
+                  <th colspan=100><div class="dialog-header">
+                    Parameter modifications
+                  </div></th>
+                </tr>                
+                <tr>
+                  <th>Parameter</th>
+                  <th>Parameter group</th>
+                  <th>Population</th>
+                  <th v-for="(val, index) in addEditModal.scenSummary.paramyears">
+                    <select v-model="addEditModal.scenSummary.paramyears[index]">
+                      <option v-for='year in validSimYears'>
+                        {{ year }}
+                      </option>
+                    </select> 
+                    <button @click="modalRemoveParamYear(index)" class='btn_small' style="display:inline-block">
+                      <i class="ti-trash"></i>
+                    </button>         
+                  </th>                  
+                  <th>
+                    <button @click="modalAddParamYear()" class='btn_small' style="display:inline-block">
+                      +
+                    </button>                                       
+                  </th>
+                </tr>
+                </thead>
+                <tbody>
+<!--                <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites"> -->
+                <tr v-for="paramoverwrite in sortedParamOverwrites">
+                  <td>
+                    <select v-model="paramoverwrite.paramname">
+                      <option v-for="paramname in paramGroupMembers(paramoverwrite.groupname)">
+                        {{ paramname }}
+                      </option>
+                    </select>
+                  </td>
+                  <td>
+                    {{ paramoverwrite.groupname }}
+                  </td>
+                  <td>
+                    <select v-model="paramoverwrite.popname">
+                      <option v-for="popname in paramGroups.popnames">
+                        {{ popname }}
+                      </option>
+                    </select>
+                  </td>                  
+                  <td v-for="(val, index) in paramoverwrite.paramvals">
+                    <input type="text"
+                           class="txbox"
+                           style="text-align: right"
+                           v-model="paramoverwrite.paramvals[index]"/>
+                  </td>
+                  <td>
+                    <button @click="modalDeleteParameter(paramoverwrite)" class="btn __red">
+                      X
+                    </button>                   
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+             
         </div>
         <div style="text-align:justify">
-          <button @click="addBudgetScen()" class='btn __green' style="display:inline-block">
+          <button @click="modalSave()" class='btn __green' style="display:inline-block">
             Save scenario
           </button>
-          <button @click="$modal.hide('add-budget-scen')" class='btn __red' style="display:inline-block">
+          <button @click="resetToDefaultValues()" class='btn' style="display:inline-block">
+            Reset to default values
+          </button>          
+          <button @click="$modal.hide('add-edit-scen')" class='btn __red' style="display:inline-block">
             Cancel
           </button>
         </div>
