@@ -16,6 +16,7 @@ var CalibrationMixin = {
         simStartYear: 0,
         simEndYear: 2018, // TEMP FOR DEMO
         activePop: "All",
+        activeCascade: "",
         popOptions: [],
         plotOptions: [],
         yearOptions: [],
@@ -46,6 +47,7 @@ var CalibrationMixin = {
       simStart()     { return utils.simStart(this) },
       simEnd()       { return utils.simEnd(this) },
       simYears()     { return utils.simYears(this) },
+      simCascades()  { return utils.simCascades(this) },
       activePops()   { return utils.activePops(this) },
       placeholders() { return this.$sciris.placeholders(this, 1) },
 
@@ -63,6 +65,7 @@ var CalibrationMixin = {
         this.simStartYear = this.simStart
         this.simEndYear = this.simEnd
         this.popOptions = this.activePops
+        this.activeCascade = this.simCascades[0]
         this.serverDatastoreId = this.$store.state.activeProject.project.id + ':calibration'
         this.getPlotOptions(this.$store.state.activeProject.project.id)
           .then(response => {
