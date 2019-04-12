@@ -69,6 +69,14 @@ function simYears(vm) {
   }
 }
 
+function simCascades(vm) {
+  if (vm.$store.state.activeProject.project === undefined) {
+    return ''
+  } else {
+    return vm.$store.state.activeProject.project.cascades
+  }
+}
+
 function dataStart(vm) {
   if (vm.$store.state.activeProject.project === undefined) {
     return ''
@@ -271,8 +279,8 @@ function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration,
     vm.plotOptions
   ], {
     tool: vm.toolName(), 
-    'cascade': null, 
-    plotyear: vm.simEndYear, 
+    cascade: vm.activeCascade,
+    plotyear: vm.simEndYear,
     pops: vm.activePop, 
     calibration: iscalibration, 
     plotbudget: plotbudget
@@ -303,6 +311,7 @@ export default {
   simStart,
   simEnd,
   simYears,
+  simCascades,
   dataStart,
   dataEnd,
   dataYears,
