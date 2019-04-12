@@ -186,7 +186,7 @@ var ScenarioMixin = {
         .then(response => {
           this.paramGroups = response.data // Set the parameter groups to what we received.
           this.addEditModal.selectedParamGroup = this.paramGroups.grouplist[0]
-          this.$sciris.succeed(this, 'Parameter groups loaded')
+          this.$sciris.succeed(this, '')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not get parameter groups', error)
