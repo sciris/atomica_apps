@@ -12,4 +12,6 @@ for to_delete in ['package-lock.json', 'dist', 'node_modules']:
             os.remove(to_delete)
         except:
             shutil.rmtree(to_delete)
+    else:
+        print('Not removing %s, not found' % to_delete)
 os.system('npm install')
