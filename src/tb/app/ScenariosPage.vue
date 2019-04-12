@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-10
+Last update: 2019-04-12
 -->
 
 <template>
@@ -399,8 +399,8 @@ Last update: 2019-04-10
                            v-model="paramoverwrite.paramvals[index]"/>
                   </td>
                   <td>
-                    <button @click="modalDeleteParameter(paramoverwrite)" class="btn __red">
-                      X
+                    <button @click="modalDeleteParameter(paramoverwrite)" class="btn_small">
+                      <i class="ti-trash"></i>
                     </button>                   
                   </td>
                 </tr>
