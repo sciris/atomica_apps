@@ -40,7 +40,9 @@ var ScenarioMixin = {
         scenSummary: {},
         origName: '',
         mode: 'add',  
-        selectedParamGroup: '',        
+        selectedParamGroup: '',   
+        selectedParams: [],
+        selectedPopulations: [],        
       },
     }
   },

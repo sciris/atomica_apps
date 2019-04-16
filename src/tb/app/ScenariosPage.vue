@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-12
+Last update: 2019-04-16
 -->
 
 <template>
@@ -244,8 +244,28 @@ Last update: 2019-04-12
           
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
                style="display:inline-block; padding-right:10px">
+            <b>Parameters</b><br>
+            <select v-model="addEditModal.selectedParams" size="4" multiple>
+              <option v-for="paramname in paramGroupMembers(addEditModal.selectedParamGroup)">
+                {{ paramname }}
+              </option>
+            </select><br><br>
+          </div> 
+
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
+               style="display:inline-block; padding-right:10px">
+            <b>Populations</b><br>
+            <select v-model="addEditModal.selectedPopulations" size="4" multiple>
+              <option v-for="popname in paramGroups.popnames">
+                {{ popname }}
+              </option>
+            </select><br><br>
+          </div> 
+      
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
+               style="display:inline-block; padding-right:10px">
             <button class="btn __blue" @click="modalAddParameter(addEditModal.selectedParamGroup)">
-              Add parameter from group
+              Add parameters...
             </button><br><br>
           </div>
           <br>
