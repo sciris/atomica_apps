@@ -403,7 +403,7 @@ var ScenarioMixin = {
       }
     },
     
-    modalAddParameter(selectedParamGroup) {
+    modalAddParameters(selectedParamGroup, selectedParams, selectedPopulations) {
       console.log('modalAddParameter() called')
       
       let paramname = this.paramGroupMembers(selectedParamGroup)[0]

@@ -262,9 +262,11 @@ Last update: 2019-04-16
             </select><br><br>
           </div> 
       
-          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"     
                style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" @click="modalAddParameter(addEditModal.selectedParamGroup)">
+            <button class="btn __blue"
+                    @click="modalAddParameters(addEditModal.selectedParamGroup, addEditModal.selectedParams, addEditModal.selectedPopulations)"
+                    :disabled="(addEditModal.selectedParams.length == 0) || (addEditModal.selectedPopulations.length == 0)">
               Add parameters...
             </button><br><br>
           </div>
