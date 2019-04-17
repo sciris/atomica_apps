@@ -406,21 +406,39 @@ var ScenarioMixin = {
     modalAddParameters(selectedParamGroup, selectedParams, selectedPopulations) {
       console.log('modalAddParameter() called')
       
-      let paramname = this.paramGroupMembers(selectedParamGroup)[0]
+      var paramname
+      var popname
+      var newParamOverwrite
+      
+      // Create an array of nulls to be used to set the initial parameter values.
       let newParamvals = []
       if (this.addEditModal.scenSummary.paramoverwrites.length > 0) {
         for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length; i++) {
           newParamvals.push(null)
         }
-      }      
-      let newParamOverwrite = {
-        paramname: paramname,
-        paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
-        groupname: selectedParamGroup, 
-        popname: this.paramGroups.popnames[0], 
-        paramvals: newParamvals,
       }
-      this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
+      
+      // Loop over the selected parameters...
+      for (var i = 0; i < selectedParams.length; i++) {
+        paramname = selectedParams[i]
+        
+        // Loop over the selected populations...
+        for (var j = 0; j < selectedPopulations.length; j++) {
+          popname = selectedPopulations[j]
+          
+          // Create the overwrite row.
+          newParamOverwrite = {
+            paramname: paramname,
+            paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
+            groupname: selectedParamGroup, 
+            popname: popname, 
+            paramvals: _.cloneDeep(newParamvals) 
+          }
+          
+          // Push the new overwrite to the table.
+          this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
+        }
+      }
     },
     
     modalDeleteParameter(paramoverwrite) {
