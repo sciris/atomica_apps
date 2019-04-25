@@ -439,6 +439,19 @@ var ScenarioMixin = {
           this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
         }
       }
+      
+      // If we have no year columns yet, add one.
+      if (this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length == 0) {
+        this.modalAddParamYear()
+      }
+      
+      // For each of the rows we just added, add the interpolated parameter value for the 
+      // first year column.
+      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
+        selectedPopulations.length; 
+        i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 1234.5
+      }
     },
     
     modalDeleteParameter(paramoverwrite) {
