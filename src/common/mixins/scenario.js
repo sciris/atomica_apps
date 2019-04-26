@@ -455,14 +455,42 @@ var ScenarioMixin = {
         paramInterpolations.push(1234.5)
       }
       
+      // Do the RPC call.
+      this.$sciris.start(this)
+      this.$sciris.rpc('get_param_interpolations', [this.projectID])
+        .then(response => {
+          let crazyVal = response.data
+          
+          console.log('crazyVal: ', crazyVal)
+            
+          // For each of the rows we just added, add the interpolated parameter value for the 
+          // first year column.
+          for (var i = this.addEditModal.scenSummary.paramoverwrites.length - 
+            selectedParams.length * selectedPopulations.length; 
+            i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+/*            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
+              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length] */
+            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = crazyVal           
+          }
+
+          // Hack to get the Vue display of paramoverwrites to update
+          this.addEditModal.scenSummary.paramoverwrites.push(this.addEditModal.scenSummary.paramoverwrites[0])
+          this.addEditModal.scenSummary.paramoverwrites.pop()
+          
+          this.$sciris.succeed(this, '')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get parameter interpolations', error)
+        })
+        
       // For each of the rows we just added, add the interpolated parameter value for the 
       // first year column.
-      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
+/*      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
         selectedPopulations.length; 
         i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
         this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
           paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]
-      }
+      } */
     },
     
     modalDeleteParameter(paramoverwrite) {
