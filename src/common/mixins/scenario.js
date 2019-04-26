@@ -409,6 +409,7 @@ var ScenarioMixin = {
       var paramname
       var popname
       var newParamOverwrite
+      var paramInterpolations
       
       // Create an array of nulls to be used to set the initial parameter values.
       let newParamvals = []
@@ -445,12 +446,22 @@ var ScenarioMixin = {
         this.modalAddParamYear()
       }
       
+      // Build arguments for an RPC call to get all of the interpolated parameter values 
+      // for the first year column.
+      paramInterpolations = []
+      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
+        selectedPopulations.length; 
+        i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        paramInterpolations.push(1234.5)
+      }
+      
       // For each of the rows we just added, add the interpolated parameter value for the 
       // first year column.
       for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
         selectedPopulations.length; 
         i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
-        this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 1234.5
+        this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
+          paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]
       }
     },
     
