@@ -409,6 +409,8 @@ var ScenarioMixin = {
       var paramname
       var popname
       var newParamOverwrite
+      var paramCodeNames
+      var popNames
       var paramInterpolations
       
       // Create an array of nulls to be used to set the initial parameter values.
@@ -448,29 +450,30 @@ var ScenarioMixin = {
       
       // Build arguments for an RPC call to get all of the interpolated parameter values 
       // for the first year column.
+      paramCodeNames = []
+      popNames = []
       paramInterpolations = []
       for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
         selectedPopulations.length; 
         i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        paramCodeNames.push(this.addEditModal.scenSummary.paramoverwrites[i].paramcodename)
+        popNames.push(this.addEditModal.scenSummary.paramoverwrites[i].popname)
         paramInterpolations.push(1234.5)
       }
       
       // Do the RPC call.
       this.$sciris.start(this)
-      this.$sciris.rpc('get_param_interpolations', [this.projectID])
+      this.$sciris.rpc('get_param_interpolations', [this.projectID, this.addEditModal.scenSummary.parsetname, paramCodeNames, popNames, this.addEditModal.scenSummary.paramyears[0]])
         .then(response => {
-          let crazyVal = response.data
-          
-          console.log('crazyVal: ', crazyVal)
+          paramInterpolations = response.data
             
           // For each of the rows we just added, add the interpolated parameter value for the 
           // first year column.
           for (var i = this.addEditModal.scenSummary.paramoverwrites.length - 
             selectedParams.length * selectedPopulations.length; 
             i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
-/*            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
-              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length] */
-            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = crazyVal           
+            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
+              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]        
           }
 
           // Hack to get the Vue display of paramoverwrites to update
@@ -482,15 +485,6 @@ var ScenarioMixin = {
         .catch(error => {
           this.$sciris.fail(this, 'Could not get parameter interpolations', error)
         })
-        
-      // For each of the rows we just added, add the interpolated parameter value for the 
-      // first year column.
-/*      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
-        selectedPopulations.length; 
-        i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
-        this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
-          paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]
-      } */
     },
     
     modalDeleteParameter(paramoverwrite) {

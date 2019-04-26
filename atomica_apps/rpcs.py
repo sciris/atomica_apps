@@ -1856,10 +1856,14 @@ def param_code_name_to_param_group_name(code_name, proj):
 
 
 @RPC()
-def get_param_interpolations(project_id, verbose=True):
+def get_param_interpolations(project_id, progset_name, param_code_names, pop_names, interp_year, verbose=True):
     print('Getting parameter interpolation values...')
     proj = load_project(project_id, die=True)
-    return 5432.1
+
+    progset = proj.progsets[progset_name]
+
+    num_interps = len(param_code_names)
+    return [5432.1] * num_interps
     # if verbose:
     #     print('JavaScript parameter interpolations:')
     #     sc.pp(scenario_jsons)
