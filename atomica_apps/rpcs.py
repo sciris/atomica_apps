@@ -1244,11 +1244,13 @@ def supported_plots_func(framework):
         Input:  framework :        a ProjectFramework instance
         Output: {name:quantities}: a dict with all of the plot quantities in the framework keyed by name
     '''
-    if 'plots' not in framework.sheets:
+    print('HIIIIII')
+    print(framework.sheets)
+    if 'Plots' not in framework.sheets:
         print('TMP WARNING: "plots" not found as a framework sheet')
         return sc.odict()
     else:
-        df = framework.sheets['plots'][0]
+        df = framework.sheets['Plots'][0]
         plots = sc.odict()
         for name,output in zip(df['name'], df['quantities']):
             plots[name] = at.evaluate_plot_string(output)
