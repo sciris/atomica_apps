@@ -1245,12 +1245,14 @@ def supported_plots_func(framework):
         Output: {name:quantities}: a dict with all of the plot quantities in the framework keyed by name
     '''
     if 'plots' not in framework.sheets:
+        print('TMP WARNING: "plots" not found as a framework sheet')
         return sc.odict()
     else:
         df = framework.sheets['plots'][0]
         plots = sc.odict()
         for name,output in zip(df['name'], df['quantities']):
             plots[name] = at.evaluate_plot_string(output)
+        print('TMP NOTE: found plots %s' % str(plots.keys()))
         return plots
 
 
@@ -1258,6 +1260,8 @@ def supported_plots_func(framework):
 def get_supported_plots(project_id, only_keys=False):
     proj = load_project(project_id, die=True)
     supported_plots = supported_plots_func(proj.framework)
+    print('HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII')
+    print(supported_plots)
     if only_keys:
         plot_names = supported_plots.keys()
         vals = np.ones(len(plot_names))
