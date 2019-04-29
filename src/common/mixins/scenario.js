@@ -346,16 +346,44 @@ var ScenarioMixin = {
       // year already there plus 1.
       if (this.addEditModal.scenSummary.coverageyears.length > 0) {
         newYear = Math.max(...this.addEditModal.scenSummary.coverageyears) + 1
-      // Otherwise, make the new year the data_end year.
+      // Otherwise, make the new year the program start year.
       } else {
-        newYear = this.spendingBaselines.data_end
+        newYear = this.addEditModal.scenSummary.progstartyear
       }
       this.addEditModal.scenSummary.coverageyears.push(newYear)
       
       // For each program, add a null to the end of the list, so we have a blank textbox.
       for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
         this.addEditModal.scenSummary.progs[i].coveragevals.push(null)
-      }      
+      }
+
+      // If we now have just one year column...
+      if (this.addEditModal.scenSummary.coverageyears.length == 1) {
+        // Run the RPC to to pull out the coverages at the program start year.
+        this.$sciris.start(this)
+        this.$sciris.rpc('get_initial_coverages', [this.projectID, this.addEditModal.scenSummary])
+        .then(response => {
+/*          paramInterpolations = response.data
+            
+          // For each of the rows we just added, add the interpolated parameter value for the 
+          // first year column.
+          for (var i = this.addEditModal.scenSummary.paramoverwrites.length - 
+            selectedParams.length * selectedPopulations.length; 
+            i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
+              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]        
+          }
+
+          // Hack to get the Vue display of paramoverwrites to update
+          this.addEditModal.scenSummary.paramoverwrites.push(this.addEditModal.scenSummary.paramoverwrites[0])
+          this.addEditModal.scenSummary.paramoverwrites.pop() */
+          
+          this.$sciris.succeed(this, '')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get initial coverages', error)
+        })
+      }
     },
     
     modalRemoveCoverageYear(yearindex) {

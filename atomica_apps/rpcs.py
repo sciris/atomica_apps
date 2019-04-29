@@ -1817,6 +1817,28 @@ def get_baseline_spending(project_id, verbose=True):
 
 
 @RPC()
+def get_initial_coverages(project_id, js_scen, verbose=True):
+    print('Getting initial program coverage values...')
+    py_scen = js_to_py_scen(js_scen)
+    proj = load_project(project_id, die=True)
+
+    # Run the scenario.
+    result = py_scen.run(project=proj, store_results=False)
+
+    covs = result.get_coverage(quantity='fraction', year=py_scen.start_year)
+
+    # For each of the elements in the arrays passed in, pull out interpolation values.
+    # covs = []
+    # for ind, param_code in enumerate(param_code_names):
+    #     covs.append(parset.pars[param_code].interpolate(interp_year, pop_names[ind])[0])
+
+    if verbose:
+        print('JavaScript initial program coverages:')
+        sc.pp(covs)
+    return covs
+
+
+@RPC()
 def get_param_groups(project_id, verbose=True):
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
