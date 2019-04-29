@@ -342,6 +342,8 @@ var ScenarioMixin = {
       console.log('modalAddCoverageYear() called')
     
       var newYear
+      var startingCovs
+      
       // If the coverage years list is non-empty, add a new coverage year which is the maximum 
       // year already there plus 1.
       if (this.addEditModal.scenSummary.coverageyears.length > 0) {
@@ -363,20 +365,16 @@ var ScenarioMixin = {
         this.$sciris.start(this)
         this.$sciris.rpc('get_initial_coverages', [this.projectID, this.addEditModal.scenSummary])
         .then(response => {
-/*          paramInterpolations = response.data
-            
-          // For each of the rows we just added, add the interpolated parameter value for the 
-          // first year column.
-          for (var i = this.addEditModal.scenSummary.paramoverwrites.length - 
-            selectedParams.length * selectedPopulations.length; 
-            i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
-            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
-              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]        
+          startingCovs = response.data
+          
+          // For each program, copy the RPC coverages over to the values to be in the textboxes.
+          for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+            this.addEditModal.scenSummary.progs[i].coveragevals[0] = startingCovs[i]
           }
-
-          // Hack to get the Vue display of paramoverwrites to update
-          this.addEditModal.scenSummary.paramoverwrites.push(this.addEditModal.scenSummary.paramoverwrites[0])
-          this.addEditModal.scenSummary.paramoverwrites.pop() */
+          
+          // Hack to get the Vue display of progs[x].coveragevals to update
+          this.addEditModal.scenSummary.progs.push(this.addEditModal.scenSummary.progs[0])
+          this.addEditModal.scenSummary.progs.pop()
           
           this.$sciris.succeed(this, '')
         })

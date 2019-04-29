@@ -1825,12 +1825,14 @@ def get_initial_coverages(project_id, js_scen, verbose=True):
     # Run the scenario.
     result = py_scen.run(project=proj, store_results=False)
 
-    covs = result.get_coverage(quantity='fraction', year=py_scen.start_year)
+    # Get all of the coverages at the program start year.
+    raw_covs = result.get_coverage(quantity='fraction', year=py_scen.start_year)
 
-    # For each of the elements in the arrays passed in, pull out interpolation values.
-    # covs = []
-    # for ind, param_code in enumerate(param_code_names):
-    #     covs.append(parset.pars[param_code].interpolate(interp_year, pop_names[ind])[0])
+    # Get the coverages in the order that the programs are in the JSON representation of the scenario, and convert to
+    # percentages.
+    covs = []
+    for js_prog in js_scen['progs']:
+        covs.append(raw_covs[js_prog['shortname']][0] * 100.0)
 
     if verbose:
         print('JavaScript initial program coverages:')
