@@ -156,7 +156,7 @@ Last update: 2018oct04
     <modal name="demo-project"
            height="auto"
            :classes="['v--modal', 'vue-dialog']"
-           :width="400"
+           :width="600"
            :pivot-y="0.3"
            :adaptive="true">
       <div class="dialog-content">

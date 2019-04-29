@@ -1380,10 +1380,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
     append_plots(cascadeoutput,cascadefigs,cascadelegends)
 
-    if tool != 'cascade':
-        if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
-        else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
-        append_plots(d, figs, legends)
+    if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
+    else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
+    append_plots(d, figs, legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
     if outputfigs: return output, all_figs, all_legends
