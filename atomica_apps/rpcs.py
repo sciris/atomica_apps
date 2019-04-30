@@ -1693,7 +1693,6 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # when the dropdown is
 
     budget_format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
-    # coverage_format_number = lambda x: float(x) if x is not None else None
     coverage_format_number = lambda x: round(float(x), 2) if x is not None else None
 
     if scen.progsetname:
