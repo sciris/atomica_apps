@@ -1692,7 +1692,9 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # entirely here if the progsetname is 'None' and would instead be called in the callback
     # when the dropdown is
 
-    format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
+    budget_format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
+    # coverage_format_number = lambda x: float(x) if x is not None else None
+    coverage_format_number = lambda x: round(float(x), 2) if x is not None else None
 
     if scen.progsetname:
         progset = proj.progsets[scen.progsetname]
@@ -1708,7 +1710,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
                 progdict['budgetvals'] = []
                 for year in js_scen['budgetyears']:
                     val = scen.alloc[prog.name].get(year)
-                    progdict['budgetvals'].append(format_number(val))
+                    progdict['budgetvals'].append(budget_format_number(val))
             else:
                 progdict['budgetvals'] = [None] * len(js_scen['budgetyears'])
         elif js_scen['scentype'] == 'coverage':
@@ -1718,7 +1720,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
                     val = scen.coverage[prog.name].get(year)
                     if val is not None:
                         val *= 100
-                    progdict['coveragevals'].append(format_number(val))
+                    progdict['coveragevals'].append(coverage_format_number(val))
             else:
                 progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
 
@@ -1829,10 +1831,10 @@ def get_initial_coverages(project_id, js_scen, verbose=True):
     raw_covs = result.get_coverage(quantity='fraction', year=py_scen.start_year)
 
     # Get the coverages in the order that the programs are in the JSON representation of the scenario, and convert to
-    # percentages.
+    # percentages and round to 2 significant figures.
     covs = []
     for js_prog in js_scen['progs']:
-        covs.append(raw_covs[js_prog['shortname']][0] * 100.0)
+        covs.append(round(raw_covs[js_prog['shortname']][0] * 100.0, 2))
 
     if verbose:
         print('JavaScript initial program coverages:')
