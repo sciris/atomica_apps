@@ -1755,7 +1755,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
                 budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
                 alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
         elif scentype == 'coverage':
-            if any(prog['coveragevals']):
+            if any([val is not None for val in prog['coveragevals']]):
                 coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
                 coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
 
