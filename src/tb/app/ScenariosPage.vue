@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-04-10
+Last update: 2019-04-16
 -->
 
 <template>
@@ -244,8 +244,30 @@ Last update: 2019-04-10
           
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
                style="display:inline-block; padding-right:10px">
-            <button class="btn __blue" @click="modalAddParameter(addEditModal.selectedParamGroup)">
-              Add parameter from group
+            <b>Parameters</b><br>
+            <select v-model="addEditModal.selectedParams" size="4" multiple>
+              <option v-for="paramname in paramGroupMembers(addEditModal.selectedParamGroup)">
+                {{ paramname }}
+              </option>
+            </select><br><br>
+          </div> 
+
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
+               style="display:inline-block; padding-right:10px">
+            <b>Populations</b><br>
+            <select v-model="addEditModal.selectedPopulations" size="4" multiple>
+              <option v-for="popname in paramGroups.popnames">
+                {{ popname }}
+              </option>
+            </select><br><br>
+          </div> 
+      
+          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"     
+               style="display:inline-block; padding-right:10px">
+            <button class="btn __blue"
+                    @click="modalAddParameters(addEditModal.selectedParamGroup, addEditModal.selectedParams, addEditModal.selectedPopulations)"
+                    :disabled="(addEditModal.selectedParams.length == 0) || (addEditModal.selectedPopulations.length == 0)">
+              Add parameters...
             </button><br><br>
           </div>
           <br>
@@ -399,8 +421,8 @@ Last update: 2019-04-10
                            v-model="paramoverwrite.paramvals[index]"/>
                   </td>
                   <td>
-                    <button @click="modalDeleteParameter(paramoverwrite)" class="btn __red">
-                      X
+                    <button @click="modalDeleteParameter(paramoverwrite)" class="btn_small">
+                      <i class="ti-trash"></i>
                     </button>                   
                   </td>
                 </tr>

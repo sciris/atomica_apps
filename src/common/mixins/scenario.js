@@ -40,7 +40,9 @@ var ScenarioMixin = {
         scenSummary: {},
         origName: '',
         mode: 'add',  
-        selectedParamGroup: '',        
+        selectedParamGroup: '',   
+        selectedParams: [],
+        selectedPopulations: [],        
       },
     }
   },
@@ -186,7 +188,7 @@ var ScenarioMixin = {
         .then(response => {
           this.paramGroups = response.data // Set the parameter groups to what we received.
           this.addEditModal.selectedParamGroup = this.paramGroups.grouplist[0]
-          this.$sciris.succeed(this, 'Parameter groups loaded')
+          this.$sciris.succeed(this, '')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not get parameter groups', error)
@@ -340,20 +342,46 @@ var ScenarioMixin = {
       console.log('modalAddCoverageYear() called')
     
       var newYear
+      var startingCovs
+      
       // If the coverage years list is non-empty, add a new coverage year which is the maximum 
       // year already there plus 1.
       if (this.addEditModal.scenSummary.coverageyears.length > 0) {
         newYear = Math.max(...this.addEditModal.scenSummary.coverageyears) + 1
-      // Otherwise, make the new year the data_end year.
+      // Otherwise, make the new year the program start year.
       } else {
-        newYear = this.spendingBaselines.data_end
+        newYear = this.addEditModal.scenSummary.progstartyear
       }
       this.addEditModal.scenSummary.coverageyears.push(newYear)
       
       // For each program, add a null to the end of the list, so we have a blank textbox.
       for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
         this.addEditModal.scenSummary.progs[i].coveragevals.push(null)
-      }      
+      }
+
+      // If we now have just one year column...
+      if (this.addEditModal.scenSummary.coverageyears.length == 1) {
+        // Run the RPC to to pull out the coverages at the program start year.
+        this.$sciris.start(this)
+        this.$sciris.rpc('get_initial_coverages', [this.projectID, this.addEditModal.scenSummary])
+        .then(response => {
+          startingCovs = response.data
+          
+          // For each program, copy the RPC coverages over to the values to be in the textboxes.
+          for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
+            this.addEditModal.scenSummary.progs[i].coveragevals[0] = startingCovs[i]
+          }
+          
+          // Hack to get the Vue display of progs[x].coveragevals to update
+          this.addEditModal.scenSummary.progs.push(this.addEditModal.scenSummary.progs[0])
+          this.addEditModal.scenSummary.progs.pop()
+          
+          this.$sciris.succeed(this, '')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get initial coverages', error)
+        })
+      }
     },
     
     modalRemoveCoverageYear(yearindex) {
@@ -401,24 +429,88 @@ var ScenarioMixin = {
       }
     },
     
-    modalAddParameter(selectedParamGroup) {
+    modalAddParameters(selectedParamGroup, selectedParams, selectedPopulations) {
       console.log('modalAddParameter() called')
       
-      let paramname = this.paramGroupMembers(selectedParamGroup)[0]
+      var paramname
+      var popname
+      var newParamOverwrite
+      var paramCodeNames
+      var popNames
+      var paramInterpolations
+      
+      // Create an array of nulls to be used to set the initial parameter values.
       let newParamvals = []
       if (this.addEditModal.scenSummary.paramoverwrites.length > 0) {
         for (var i = 0; i < this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length; i++) {
           newParamvals.push(null)
         }
-      }      
-      let newParamOverwrite = {
-        paramname: paramname,
-        paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
-        groupname: selectedParamGroup, 
-        popname: this.paramGroups.popnames[0], 
-        paramvals: newParamvals,
       }
-      this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
+      
+      // Loop over the selected parameters...
+      for (var i = 0; i < selectedParams.length; i++) {
+        paramname = selectedParams[i]
+        
+        // Loop over the selected populations...
+        for (var j = 0; j < selectedPopulations.length; j++) {
+          popname = selectedPopulations[j]
+          
+          // Create the overwrite row.
+          newParamOverwrite = {
+            paramname: paramname,
+            paramcodename: this.getParamCodeNameFromDisplayName(paramname), 
+            groupname: selectedParamGroup, 
+            popname: popname, 
+            paramvals: _.cloneDeep(newParamvals) 
+          }
+          
+          // Push the new overwrite to the table.
+          this.addEditModal.scenSummary.paramoverwrites.push(newParamOverwrite)
+        }
+      }
+      
+      // If we have no year columns yet, add one.
+      if (this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length == 0) {
+        this.modalAddParamYear()
+      }
+      
+      // Build arguments for an RPC call to get all of the interpolated parameter values 
+      // for the first year column.
+      paramCodeNames = []
+      popNames = []
+      paramInterpolations = []
+      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
+        selectedPopulations.length; 
+        i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+        paramCodeNames.push(this.addEditModal.scenSummary.paramoverwrites[i].paramcodename)
+        popNames.push(this.addEditModal.scenSummary.paramoverwrites[i].popname)
+        paramInterpolations.push(1234.5)
+      }
+      
+      // Do the RPC call.
+      this.$sciris.start(this)
+      this.$sciris.rpc('get_param_interpolations', [this.projectID, this.addEditModal.scenSummary.parsetname, paramCodeNames, popNames, this.addEditModal.scenSummary.paramyears[0]])
+        .then(response => {
+          paramInterpolations = response.data
+            
+          // For each of the rows we just added, add the interpolated parameter value for the 
+          // first year column.
+          for (var i = this.addEditModal.scenSummary.paramoverwrites.length - 
+            selectedParams.length * selectedPopulations.length; 
+            i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
+            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
+              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]        
+          }
+
+          // Hack to get the Vue display of paramoverwrites to update
+          this.addEditModal.scenSummary.paramoverwrites.push(this.addEditModal.scenSummary.paramoverwrites[0])
+          this.addEditModal.scenSummary.paramoverwrites.pop()
+          
+          this.$sciris.succeed(this, '')
+        })
+        .catch(error => {
+          this.$sciris.fail(this, 'Could not get parameter interpolations', error)
+        })
     },
     
     modalDeleteParameter(paramoverwrite) {

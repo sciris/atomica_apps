@@ -1369,6 +1369,13 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         output['graphs'] += d['graphs']
         output['legends'] += d['legends']
 
+    cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
+    append_plots(cascadeoutput,cascadefigs,cascadelegends)
+
+    if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
+    else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
+    append_plots(d, figs, legends)
+
     if plot_budget:
         # Make program related plots
         d, figs, legends = get_budget_plots(results=results,year=year)
@@ -1376,13 +1383,6 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
 
         d, figs, legends = get_coverage_plot(results=results)
         append_plots(d, figs, legends)
-
-    cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
-    append_plots(cascadeoutput,cascadefigs,cascadelegends)
-
-    if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
-    else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
-    append_plots(d, figs, legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
     if outputfigs: return output, all_figs, all_legends
@@ -1691,7 +1691,8 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     # entirely here if the progsetname is 'None' and would instead be called in the callback
     # when the dropdown is
 
-    format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
+    budget_format_number = lambda x: format(int(round(float(x))), ',') if x is not None else None
+    coverage_format_number = lambda x: round(float(x), 2) if x is not None else None
 
     if scen.progsetname:
         progset = proj.progsets[scen.progsetname]
@@ -1707,7 +1708,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
                 progdict['budgetvals'] = []
                 for year in js_scen['budgetyears']:
                     val = scen.alloc[prog.name].get(year)
-                    progdict['budgetvals'].append(format_number(val))
+                    progdict['budgetvals'].append(budget_format_number(val))
             else:
                 progdict['budgetvals'] = [None] * len(js_scen['budgetyears'])
         elif js_scen['scentype'] == 'coverage':
@@ -1717,7 +1718,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
                     val = scen.coverage[prog.name].get(year)
                     if val is not None:
                         val *= 100
-                    progdict['coveragevals'].append(format_number(val))
+                    progdict['coveragevals'].append(coverage_format_number(val))
             else:
                 progdict['coveragevals'] = [None] * len(js_scen['coverageyears'])
 
@@ -1752,7 +1753,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
                 budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
                 alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
         elif scentype == 'coverage':
-            if any(prog['coveragevals']):
+            if any([val is not None for val in prog['coveragevals']]):
                 coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
                 coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
 
@@ -1816,6 +1817,30 @@ def get_baseline_spending(project_id, verbose=True):
 
 
 @RPC()
+def get_initial_coverages(project_id, js_scen, verbose=True):
+    print('Getting initial program coverage values...')
+    py_scen = js_to_py_scen(js_scen)
+    proj = load_project(project_id, die=True)
+
+    # Run the scenario.
+    result = py_scen.run(project=proj, store_results=False)
+
+    # Get all of the coverages at the program start year.
+    raw_covs = result.get_coverage(quantity='fraction', year=py_scen.start_year)
+
+    # Get the coverages in the order that the programs are in the JSON representation of the scenario, and convert to
+    # percentages and round to 2 significant figures.
+    covs = []
+    for js_prog in js_scen['progs']:
+        covs.append(round(raw_covs[js_prog['shortname']][0] * 100.0, 2))
+
+    if verbose:
+        print('JavaScript initial program coverages:')
+        sc.pp(covs)
+    return covs
+
+
+@RPC()
 def get_param_groups(project_id, verbose=True):
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
@@ -1852,6 +1877,24 @@ def param_code_name_to_param_diaplay_name(code_name, proj):
 def param_code_name_to_param_group_name(code_name, proj):
     param_group_name = proj.framework.pars.loc[code_name, 'scenario']
     return param_group_name
+
+
+@RPC()
+def get_param_interpolations(project_id, parset_name, param_code_names, pop_names, interp_year, verbose=True):
+    print('Getting parameter interpolation values...')
+    proj = load_project(project_id, die=True)
+
+    parset = proj.parsets[parset_name]
+
+    # For each of the elements in the arrays passed in, pull out interpolation values.
+    interps = []
+    for ind, param_code in enumerate(param_code_names):
+        interps.append(parset.pars[param_code].interpolate(interp_year, pop_names[ind])[0])
+
+    if verbose:
+        print('JavaScript parameter interpolations:')
+        sc.pp(interps)
+    return interps
 
 
 @RPC()
