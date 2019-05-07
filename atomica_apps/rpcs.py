@@ -1237,7 +1237,6 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
 ### Plotting RPCs
 ##################################################################################
 
-
 def supported_plots_func(framework):
     '''
     Return a dict of supported plots extracted from the framework.
@@ -1381,7 +1380,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         d, figs, legends = get_budget_plots(results=results,year=year)
         append_plots(d, figs, legends)
 
-        d, figs, legends = get_coverage_plot(results=results)
+        d, figs, legends = get_coverage_plots(results=results)
         append_plots(d, figs, legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
@@ -1389,7 +1388,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     else:          return output
 
 
-def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True):
+def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, popup_legends=False):
 
     # Turn on all the axes - otherwise they don't show in mpld3
     for ax in fig.get_axes(): ax.set_axis_on()
@@ -1427,12 +1426,13 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
         except:
             pass
         mpld3.plugins.connect(fig, CursorPosition())
-        if is_epi:
+        if is_epi or popup_legends:
             for l,line in enumerate(fig.axes[0].lines):
                 mpld3.plugins.connect(fig, LineLabels(line, label=line.get_label()))
     graph_dict = sw.mpld3ify(fig, jsonify=False) # Convert to mpld3
     pl.close(fig)
     return graph_dict
+
 
 def get_budget_plots(results, year):
 
@@ -1465,7 +1465,8 @@ def get_budget_plots(results, year):
     }
     return output, figs, legends
 
-def get_coverage_plot(results):
+
+def get_coverage_plots(results):
 
     output = {'graphs': [], 'legends': []}
     figs = []
@@ -1477,14 +1478,16 @@ def get_coverage_plot(results):
 
     # Coverage figures
     d = at.PlotData.programs(results, quantity='coverage_fraction', nan_outside=True)
-    figs = at.plot_series(d, axis='results')
+    figs = at.plot_series(d, axis='results', legend_mode='separate')
 
-    # Budget legend
+    figs[0].set_size_inches(5, 3)
+
+    # Coverage legend
     legends = len(figs)*[sc.emptyfig()]
 
     output = {
-        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
-        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False, popup_legends=True) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True, popup_legends=True) for x in legends]
     }
     return output, figs, legends
 
