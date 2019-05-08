@@ -1388,7 +1388,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     else:          return output
 
 
-def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, popup_legends=False):
+def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, is_cov_plot=False, popup_legends=False):
 
     # Turn on all the axes - otherwise they don't show in mpld3
     for ax in fig.get_axes(): ax.set_axis_on()
@@ -1398,11 +1398,12 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
     else:
         ax = fig.get_axes()[0]
         ax.set_facecolor('none')
-        if is_epi: 
+        if is_epi or is_cov_plot:
             if figsize is None: figsize = (5,3)
             fig.set_size_inches(figsize)
             ax.set_position([0.25,0.18,0.70,0.72])
-            ax.set_title(list(output.keys())[0]) # This is in a loop over outputs, so there should only be one output present
+            if is_epi:
+                ax.set_title(list(output.keys())[0]) # This is in a loop over outputs, so there should only be one output present
         y_max = ax.get_ylim()[1]
         labelpad = 7
         if y_max < 1e-3: labelpad = 15
@@ -1479,15 +1480,16 @@ def get_coverage_plots(results):
     # Coverage figures
     d = at.PlotData.programs(results, quantity='coverage_fraction', nan_outside=True)
     figs = at.plot_series(d, axis='results', legend_mode='separate')
+    figs = figs[0:-1]  # Delete the appended legend fig.
 
-    figs[0].set_size_inches(5, 3)
+    # figs[0].set_size_inches(5, 3)
 
     # Coverage legend
     legends = len(figs)*[sc.emptyfig()]
 
     output = {
-        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False, popup_legends=True) for x in figs],
-        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True, popup_legends=True) for x in legends]
+        'graphs': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=False, popup_legends=True) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=True, popup_legends=True) for x in legends]
     }
     return output, figs, legends
 
