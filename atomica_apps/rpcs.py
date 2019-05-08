@@ -1416,6 +1416,8 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
             ylabel = plotdata.series[0].units
             if ylabel == 'probability': ylabel = 'Probability'
             if ylabel == '':            ylabel = 'Proportion'
+        elif is_cov_plot:
+            ylabel = 'Proportion covered'
         else:
             ylabel = ax.get_ylabel()
         ax.set_ylabel(ylabel, labelpad=labelpad) # All outputs should have the same units (one output for each pop/result)
@@ -1482,7 +1484,11 @@ def get_coverage_plots(results):
     figs = at.plot_series(d, axis='results', legend_mode='separate')
     figs = figs[0:-1]  # Delete the appended legend fig.
 
-    # figs[0].set_size_inches(5, 3)
+    # Create titles for figs which correspond to the program names.
+    for ind in range(len(d.outputs)):
+        ax = figs[ind].get_axes()[0]
+        ax.set_facecolor('none')
+        ax.set_title(d.outputs[ind])
 
     # Coverage legend
     legends = len(figs)*[sc.emptyfig()]
