@@ -1335,7 +1335,7 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
             print('Plot %s succeeded' % (output))
         except Exception as E:
             print('WARNING: plot %s failed (%s)' % (output, repr(E)))
-    output = {'graphs':allfigjsons, 'legends':alllegendjsons}
+    output = {'graphs':allfigjsons, 'legends':alllegendjsons,'types': ['framework']*len(allfigjsons)}
     return output, allfigs, alllegends
 
 
@@ -1357,7 +1357,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
 
-    output = {'graphs':[],'legends':[]}
+    output = {'graphs':[],'legends':[], 'types':[]}
     all_figs = []
     all_legends = []
 
@@ -1367,6 +1367,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         all_legends += legends
         output['graphs'] += d['graphs']
         output['legends'] += d['legends']
+        output['types'] += d['types']
 
     cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
     append_plots(cascadeoutput,cascadefigs,cascadelegends)
@@ -1464,7 +1465,8 @@ def get_budget_plots(results, year):
 
     output = {
         'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
-        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends],
+        'types': ['budget']*len(figs)
     }
     return output, figs, legends
 
@@ -1495,7 +1497,8 @@ def get_coverage_plots(results):
 
     output = {
         'graphs': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=False, popup_legends=True) for x in figs],
-        'legends': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=True, popup_legends=True) for x in legends]
+        'legends': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=True, popup_legends=True) for x in legends],
+        'types': ['coverage']*len(figs)
     }
     return output, figs, legends
 
@@ -1529,7 +1532,7 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
         pl.close(fig)
     
     jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
-    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors}
+    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
