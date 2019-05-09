@@ -327,7 +327,7 @@ var CalibrationMixin = {
         }) // Go to the server to get the results from the package set.
         .then(response => {
           this.table = response.data.table
-          this.makeGraphs(response.data.graphs)
+          this.makeGraphs(response.data)
           this.$sciris.succeed(this, 'Simulation run, graphs now rendering...')
         })
         .catch(error => {
