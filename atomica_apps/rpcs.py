@@ -1237,7 +1237,6 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
 ### Plotting RPCs
 ##################################################################################
 
-
 def supported_plots_func(framework):
     '''
     Return a dict of supported plots extracted from the framework.
@@ -1336,7 +1335,7 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
             print('Plot %s succeeded' % (output))
         except Exception as E:
             print('WARNING: plot %s failed (%s)' % (output, repr(E)))
-    output = {'graphs':allfigjsons, 'legends':alllegendjsons}
+    output = {'graphs':allfigjsons, 'legends':alllegendjsons,'types': ['framework']*len(allfigjsons)}
     return output, allfigs, alllegends
 
 
@@ -1358,7 +1357,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
 
-    output = {'graphs':[],'legends':[]}
+    output = {'graphs':[],'legends':[], 'types':[]}
     all_figs = []
     all_legends = []
 
@@ -1368,6 +1367,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         all_legends += legends
         output['graphs'] += d['graphs']
         output['legends'] += d['legends']
+        output['types'] += d['types']
 
     cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
     append_plots(cascadeoutput,cascadefigs,cascadelegends)
@@ -1381,7 +1381,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         d, figs, legends = get_budget_plots(results=results,year=year)
         append_plots(d, figs, legends)
 
-        d, figs, legends = get_coverage_plot(results=results)
+        d, figs, legends = get_coverage_plots(results=results)
         append_plots(d, figs, legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
@@ -1389,7 +1389,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     else:          return output
 
 
-def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True):
+def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, is_cov_plot=False, popup_legends=False):
 
     # Turn on all the axes - otherwise they don't show in mpld3
     for ax in fig.get_axes(): ax.set_axis_on()
@@ -1399,11 +1399,12 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
     else:
         ax = fig.get_axes()[0]
         ax.set_facecolor('none')
-        if is_epi: 
+        if is_epi or is_cov_plot:
             if figsize is None: figsize = (5,3)
             fig.set_size_inches(figsize)
             ax.set_position([0.25,0.18,0.70,0.72])
-            ax.set_title(list(output.keys())[0]) # This is in a loop over outputs, so there should only be one output present
+            if is_epi:
+                ax.set_title(list(output.keys())[0]) # This is in a loop over outputs, so there should only be one output present
         y_max = ax.get_ylim()[1]
         labelpad = 7
         if y_max < 1e-3: labelpad = 15
@@ -1416,6 +1417,8 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
             ylabel = plotdata.series[0].units
             if ylabel == 'probability': ylabel = 'Probability'
             if ylabel == '':            ylabel = 'Proportion'
+        elif is_cov_plot:
+            ylabel = 'Proportion covered'
         else:
             ylabel = ax.get_ylabel()
         ax.set_ylabel(ylabel, labelpad=labelpad) # All outputs should have the same units (one output for each pop/result)
@@ -1427,12 +1430,13 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
         except:
             pass
         mpld3.plugins.connect(fig, CursorPosition())
-        if is_epi:
+        if is_epi or popup_legends:
             for l,line in enumerate(fig.axes[0].lines):
                 mpld3.plugins.connect(fig, LineLabels(line, label=line.get_label()))
     graph_dict = sw.mpld3ify(fig, jsonify=False) # Convert to mpld3
     pl.close(fig)
     return graph_dict
+
 
 def get_budget_plots(results, year):
 
@@ -1461,11 +1465,13 @@ def get_budget_plots(results, year):
 
     output = {
         'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
-        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends],
+        'types': ['budget']*len(figs)
     }
     return output, figs, legends
 
-def get_coverage_plot(results):
+
+def get_coverage_plots(results):
 
     output = {'graphs': [], 'legends': []}
     figs = []
@@ -1477,14 +1483,22 @@ def get_coverage_plot(results):
 
     # Coverage figures
     d = at.PlotData.programs(results, quantity='coverage_fraction', nan_outside=True)
-    figs = at.plot_series(d, axis='results')
+    figs = at.plot_series(d, axis='results', legend_mode='separate')
+    figs = figs[0:-1]  # Delete the appended legend fig.
 
-    # Budget legend
+    # Create titles for figs which correspond to the program names.
+    for ind in range(len(d.outputs)):
+        ax = figs[ind].get_axes()[0]
+        ax.set_facecolor('none')
+        ax.set_title(d.outputs[ind])
+
+    # Coverage legend
     legends = len(figs)*[sc.emptyfig()]
 
     output = {
-        'graphs': [customize_fig(fig=x, is_epi=False, is_legend=False) for x in figs],
-        'legends': [customize_fig(fig=x, is_epi=False, is_legend=True) for x in legends]
+        'graphs': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=False, popup_legends=True) for x in figs],
+        'legends': [customize_fig(fig=x, is_epi=False, is_cov_plot=True, is_legend=True, popup_legends=True) for x in legends],
+        'types': ['coverage']*len(figs)
     }
     return output, figs, legends
 
@@ -1518,7 +1532,7 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
         pl.close(fig)
     
     jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
-    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors}
+    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
