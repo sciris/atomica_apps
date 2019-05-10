@@ -309,6 +309,7 @@ function makeGraphs(vm, data, routepath) {
   else { // Proceed...
     let waitingtime = 0.5
     var graphdata = data.graphs
+    var graphtypes = data.types
     // var legenddata = data.legends
     sciris.status.start(vm) // Start indicating progress.
     vm.hasGraphs = true
@@ -355,14 +356,19 @@ function makeGraphs(vm, data, routepath) {
 
           // Draw figures
           try {
-            sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
-              fig.setXTicks(6, function (d) {
-                return d3.format('.0f')(d);
-              });
-              // fig.setYTicks(null, function (d) { // Looks too weird with 500m for 0.5
-              //   return d3.format('.2s')(d);
-              // });
-            }, true);
+            if (graphtypes[index] == "cascade" || graphtypes[index] == "budget") {
+              sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
+                fig.axes[0].axisList[0].props.tickformat_formatter = "index"
+                fig.axes[0].axisList[0].props.tickformat = ["a", "b", "c"]
+                fig.axes[0].axisList[0].props.tickvalues = [0, 1, 2]
+              }, true);
+            } else {
+              sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
+                fig.setXTicks(6, function (d) {
+                  return d3.format('.0f')(d);
+                });
+              }, true);                
+            }
           } catch (error) {
             console.log('Could not plot graph: ' + error.message)
           }
