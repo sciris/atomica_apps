@@ -102,7 +102,8 @@ var ScenarioMixin = {
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
     getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
-    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') },
+/*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') }, */
+    makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/scenarios') },    
     reloadGraphs(showErr)             { 
       utils.validateYears(this);
       // Set to calibration=false, plotbudget=true
