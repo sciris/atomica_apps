@@ -359,19 +359,7 @@ function makeGraphs(vm, data, routepath) {
             // If we are dealing with a cascade or budget figure... 
             if (graphtypes[index] == "cascade" || graphtypes[index] == "budget") {
               sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
-/*                fig.axes[0].axisList[0].props.tickformat_formatter = "index"
-                fig.axes[0].axisList[0].props.tickformat = ["a", "b", "c"]
-                fig.axes[0].axisList[0].props.tickvalues = [0, 1, 2] */
-/*                fig.setXTicks(6, function (d) {
-                  return d3.format('.0f')(d);
-                }); */
-                fig.axes[0].axisList[0].props.tickformat_formatter = "index"
-                console.log('tickformat_formatter:', fig.axes[0].axisList[0].props.tickformat_formatter)
-                console.log('tickformat:', fig.axes[0].axisList[0].props.tickformat)
-                console.log('tickvalues:', fig.axes[0].axisList[0].props.tickvalues)               
-/*                fig.setXTicks(6, function (d) {
-                  return d;
-                }); */          
+                fig.axes[0].axisList[0].props.tickformat_formatter = "fixed"         
               }, true);
               
             // Otherwise (if we are dealing with a framework or coverage figure)...
