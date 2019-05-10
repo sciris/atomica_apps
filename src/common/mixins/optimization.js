@@ -85,8 +85,8 @@ var OptimizationMixin = {
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
     getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
-    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') },
-    reloadGraphs(cache_id, showErr)   { 
+/*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') }, */
+    makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/optimizations') },reloadGraphs(cache_id, showErr)   { 
       // Make sure the start end years are in the right range.
       utils.validateYears(this);
       // Set to calibration=false, plotbudget=True

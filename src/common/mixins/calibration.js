@@ -112,9 +112,12 @@ var CalibrationMixin = {
       getPlotOptions(project_id) { 
         return utils.getPlotOptions(this, project_id) 
       },
-      makeGraphs(graphdata) { 
+/*      makeGraphs(graphdata) { 
         return this.$sciris.makeGraphs(this, graphdata, '/calibration') 
-      },
+      }, */
+      makeGraphs(graphdata) { 
+        return utils.makeGraphs(this, graphdata, '/calibration') 
+      },       
       reloadGraphs(showErr) { 
         // Set to calibration=true
         utils.validateYears(this)  // Make sure the start end years are in the right range.
