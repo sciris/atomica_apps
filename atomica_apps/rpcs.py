@@ -696,7 +696,8 @@ def upload_databook(databook_filename, project_id):
     ''' Upload a databook to a project. '''
     print(">> upload_databook '%s'" % databook_filename)
     proj = load_project(project_id, die=True)
-    proj.load_databook(databook_path=databook_filename) 
+    proj.load_databook(databook_path=databook_filename)
+    clear_cached_results(proj, project_id)
     save_project(proj) # Save the new project in the DataStore.
     return { 'projectID': str(proj.uid) } # Return the new project UID in the return message.
 
@@ -2213,7 +2214,19 @@ def retrieve_results(proj, verbose=True):
             if verbose: print('Retrieved result "%s" from "%s"' % (key, result_key))
     return proj
 
-    
+
+def clear_cached_results(proj, project_id, verbose=True):
+    ''' Clear all cached results from the project '''
+    for key,result_key in proj.results.items():
+        if sc.isstring(result_key):
+            del_result(result_key, project_id)
+            # result = load_result(result_key)
+            # proj.results[key] = result
+            if verbose: print('Deleted result "%s" from "%s"' % (key, result_key))
+    save_project(proj)
+    return proj
+
+
 @RPC() 
 def plot_results(project_id, cache_id, plot_options, tool=None, plotyear=None, pops=None, cascade=None, dosave=True, plotbudget=False, calibration=False):
     print('Plotting cached results...')
