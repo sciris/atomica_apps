@@ -697,7 +697,7 @@ def upload_databook(databook_filename, project_id):
     print(">> upload_databook '%s'" % databook_filename)
     proj = load_project(project_id, die=True)
     proj.load_databook(databook_path=databook_filename)
-    clear_cached_results(proj, project_id)
+    clear_cached_results(proj, project_id, spare_calibration=False)
     save_project(proj) # Save the new project in the DataStore.
     return { 'projectID': str(proj.uid) } # Return the new project UID in the return message.
 
@@ -707,7 +707,8 @@ def upload_progbook(progbook_filename, project_id):
     ''' Upload a program book to a project. '''
     print(">> upload_progbook '%s'" % progbook_filename)
     proj = load_project(project_id, die=True)
-    proj.load_progbook(progbook_path=progbook_filename) 
+    proj.load_progbook(progbook_path=progbook_filename)
+    clear_cached_results(proj, project_id, spare_calibration=True)
     save_project(proj)
     return { 'projectID': str(proj.uid) }
 
@@ -2215,7 +2216,7 @@ def retrieve_results(proj, verbose=True):
     return proj
 
 
-def clear_cached_results(proj, project_id, verbose=True):
+def clear_cached_results(proj, project_id, spare_calibration=False, verbose=True):
     ''' Clear all cached results from the project '''
     for key,result_key in proj.results.items():
         if sc.isstring(result_key):

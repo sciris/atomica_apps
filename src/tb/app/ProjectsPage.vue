@@ -1,7 +1,7 @@
 <!--
 Manage projects page
 
-Last update: 2018oct04
+Last update: 2019may16
 -->
 
 <template>
@@ -97,7 +97,7 @@ Last update: 2018oct04
             <td style="text-align:left">
               <button 
                 class="btn __blue btn-icon" 
-                @click="uploadDatabook(projectSummary.project.id)" 
+                @click="uploadDatabookModal(projectSummary.project.id)" 
                 data-tooltip="Upload">  
                 <i class="ti-upload"></i>
               </button>
@@ -118,7 +118,7 @@ Last update: 2018oct04
               </button>
               <button 
                 class="btn __blue btn-icon" 
-                @click="uploadProgbook(projectSummary.project.id)" 
+                @click="uploadProgbookModal(projectSummary.project.id)" 
                 data-tooltip="Upload">  
                 <i class="ti-upload"></i>
               </button>
