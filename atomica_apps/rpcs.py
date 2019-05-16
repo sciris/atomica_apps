@@ -2220,10 +2220,9 @@ def clear_cached_results(proj, project_id, spare_calibration=False, verbose=True
     ''' Clear all cached results from the project '''
     for key,result_key in proj.results.items():
         if sc.isstring(result_key):
-            del_result(result_key, project_id)
-            # result = load_result(result_key)
-            # proj.results[key] = result
-            if verbose: print('Deleted result "%s" from "%s"' % (key, result_key))
+            if (not spare_calibration) or "calibration" not in result_key:
+                del_result(result_key, project_id)
+                if verbose: print('Deleted result "%s" from "%s"' % (key, result_key))
     save_project(proj)
     return proj
 
