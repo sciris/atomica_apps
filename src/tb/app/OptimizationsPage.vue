@@ -77,7 +77,7 @@ Last update: 2019-05-17
             <div>
               <template v-if="simCascades.length>1">
                 <b>Cascade: &nbsp;</b>
-                <select v-model="activeCascade" @change="reloadGraphs(true)">
+                <select v-model="activeCascade" @change="reloadGraphs(displayResultDatastoreId, true)">
                   <option v-for='cascade in simCascades'>
                     {{ cascade }}
                   </option>
