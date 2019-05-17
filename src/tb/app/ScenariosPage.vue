@@ -115,7 +115,6 @@ Last update: 2019-05-17
             <!-- ### Start: plots ### -->
             <div class="calib-card-body">
               <div class="calib-graphs">
-                <h2>&nbsp;&nbsp;Outcome, Budget, and Coverage Plots</h2>
                 <div class="other-graphs">              
                   <div v-for="index in placeholders">
                     <div :id="'figcontainer'+index" style="display:flex; justify-content:flex-start; padding:5px; border:1px solid #ddd" v-show="showGraphDivs[index]">
@@ -129,8 +128,7 @@ Last update: 2019-05-17
                   </div>
                 </div>
 
-                <!-- ### Start: Cascade plot ### -->
-                <h2>&nbsp;&nbsp;Care Cascades</h2>              
+                <!-- ### Start: Cascade plot ### -->            
                 <div class="featured-graphs">
                   <div :id="'fig0'">
                     <!-- mpld3 content goes here, no legend for it -->

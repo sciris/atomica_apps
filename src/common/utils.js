@@ -394,6 +394,37 @@ function makeGraphs(vm, data, routepath) {
           // }
           vm.showGraphDivs[index] = true;
         } // end of for loop
+        
+        // Add headings after all graphs are up.
+        
+        // Add a the cascade graphs heading.
+        var newItem = document.createElement("H2")
+        var textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
+        newItem.appendChild(textnode)
+        var figdiv = document.getElementById("fig0")
+        figdiv.insertBefore(newItem, figdiv.childNodes[0])
+
+        // Add the outcome graphs heading.
+        newItem = document.createElement("H2")
+        textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
+        newItem.appendChild(textnode)
+        var destdiv = document.getElementById("figcontainer1").parentNode
+        destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        
+        // Add the budget graphs heading.
+        newItem = document.createElement("H2")
+        textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
+        newItem.appendChild(textnode)
+        var destdiv = document.getElementById("figcontainer29").parentNode
+        destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        
+        // Add the outcome graphs heading.
+        newItem = document.createElement("H2")
+        textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
+        newItem.appendChild(textnode)
+        var destdiv = document.getElementById("figcontainer30").parentNode
+        destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        
         sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do
       })
   }
