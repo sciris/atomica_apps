@@ -299,18 +299,24 @@ function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration,
 }
 
 function makeGraphs(vm, data, routepath) {
-  if (typeof d3 === 'undefined'){
+  // Exit if the d3 library is not not included.
+  if (typeof d3 === 'undefined'){ 
     console.log("please include d3 to use the makeGraphs function")
     return false;
   }
-  if (routepath && routepath !== vm.$route.path) { // Don't render graphs if we've changed page
+  
+  // Don't render graphs if we've changed page
+  if (routepath && routepath !== vm.$route.path) { 
     console.log('Not rendering graphs since route changed: ' + routepath + ' vs. ' + vm.$route.path)
   }
-  else { // Proceed...
+  
+  // Otherwise, proceed...
+  else {
     let waitingtime = 0.5
     var graphdata = data.graphs
-    var graphtypes = data.types
     // var legenddata = data.legends
+    var graphtypes = data.types
+    
     sciris.status.start(vm) // Start indicating progress.
     vm.hasGraphs = true
     sciris.utils.sleep(waitingtime * 1000)
@@ -321,6 +327,8 @@ function makeGraphs(vm, data, routepath) {
         // if (n_plots !== n_legends) {
         //   console.log('WARNING: different numbers of plots and legends: ' + n_plots + ' vs. ' + n_legends)
         // }
+        
+        // Loop over all of the plots...
         for (var index = 0; index <= n_plots; index++) {
           console.log('Rendering plot ' + index)
           var figlabel    = 'fig' + index
@@ -360,7 +368,7 @@ function makeGraphs(vm, data, routepath) {
             if (graphtypes[index] == "cascade" || graphtypes[index] == "budget") {
               sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
                 fig.axes[0].axisList[0].props.tickformat_formatter = "fixed"         
-              }, true);
+              }, true)
               
             // Otherwise (if we are dealing with a framework or coverage figure)...
             } else {
@@ -368,7 +376,7 @@ function makeGraphs(vm, data, routepath) {
                 fig.setXTicks(6, function (d) {
                   return d3.format('.0f')(d);
                 });
-              }, true);                
+              }, true)
             }
           } catch (error) {
             console.log('Could not plot graph: ' + error.message)
@@ -385,7 +393,7 @@ function makeGraphs(vm, data, routepath) {
           //
           // }
           vm.showGraphDivs[index] = true;
-        }
+        } // end of for loop
         sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do
       })
   }
