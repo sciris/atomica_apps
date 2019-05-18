@@ -328,8 +328,14 @@ function makeGraphs(vm, data, routepath) {
         //   console.log('WARNING: different numbers of plots and legends: ' + n_plots + ' vs. ' + n_legends)
         // }
         
+        // Initialize the indices for the first occurrences of graph types.
+        let firstOutcomeInd = -1
+        let firstBudgetInd = -1
+        let firstCoverageInd = -1
+        let firstCascadeInd = -1
+        
         // Loop over all of the plots...
-        for (var index = 0; index <= n_plots; index++) {
+        for (var index = 0; index < n_plots; index++) {
           console.log('Rendering plot ' + index)
           var figlabel    = 'fig' + index
           var figdiv  = document.getElementById(figlabel); // CK: Not sure if this is necessary? To ensure the div is clear first
@@ -392,38 +398,64 @@ function makeGraphs(vm, data, routepath) {
           //   }
           //
           // }
+          
+          // Flag the first occurrence of the type if we encounter it.
+          if ((graphtypes[index] == "framework") && (firstOutcomeInd == -1)) {
+            firstOutcomeInd = index
+          }
+          if ((graphtypes[index] == "budget") && (firstBudgetInd == -1)) {
+            firstBudgetInd = index
+          }
+          if ((graphtypes[index] == "coverage") && (firstCoverageInd == -1)) {
+            firstCoverageInd = index
+          }
+          if ((graphtypes[index] == "cascade") && (firstCascadeInd == -1)) {
+            firstCascadeInd = index
+          }          
+              
           vm.showGraphDivs[index] = true;
         } // end of for loop
         
-        // Add headings after all graphs are up.
+        // Add headings after all graphs are up.        
+        var newItem
+        var textnode
+        var destdiv
         
         // Add a the cascade graphs heading.
-        var newItem = document.createElement("H2")
-        var textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
-        newItem.appendChild(textnode)
-        var figdiv = document.getElementById("fig0")
-        figdiv.insertBefore(newItem, figdiv.childNodes[0])
+        if (firstCascadeInd != -1) {
+          newItem = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
+          newItem.appendChild(textnode)
+          var figdiv = document.getElementById("fig" + firstCascadeInd)
+          figdiv.insertBefore(newItem, figdiv.childNodes[0])
+        }
 
         // Add the outcome graphs heading.
-        newItem = document.createElement("H2")
-        textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
-        newItem.appendChild(textnode)
-        var destdiv = document.getElementById("figcontainer1").parentNode
-        destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        if (firstOutcomeInd != -1) {
+          newItem = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
+          newItem.appendChild(textnode)
+          destdiv = document.getElementById("figcontainer" + firstOutcomeInd).parentNode
+          destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        }
         
         // Add the budget graphs heading.
-        newItem = document.createElement("H2")
-        textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
-        newItem.appendChild(textnode)
-        var destdiv = document.getElementById("figcontainer29").parentNode
-        destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        if (firstBudgetInd != -1) {
+          newItem = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
+          newItem.appendChild(textnode)
+          destdiv = document.getElementById("figcontainer" + firstBudgetInd).parentNode
+          destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        }
         
-        // Add the outcome graphs heading.
-        newItem = document.createElement("H2")
-        textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
-        newItem.appendChild(textnode)
-        var destdiv = document.getElementById("figcontainer30").parentNode
-        destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        // Add the coverage graphs heading.
+        if (firstCoverageInd != -1) {
+          newItem = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
+          newItem.appendChild(textnode)
+          destdiv = document.getElementById("figcontainer" + firstCoverageInd).parentNode
+          destdiv.insertBefore(newItem, destdiv.childNodes[0])
+        }
         
         sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do
       })

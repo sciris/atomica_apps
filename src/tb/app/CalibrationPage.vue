@@ -1,7 +1,7 @@
 <!--
 Calibration Page
 
-Last update: 2019-05-17
+Last update: 2019-05-18
 -->
 
 <template>
@@ -155,7 +155,6 @@ Last update: 2019-05-17
             <!-- ### Start: plots ### -->
             <div class="calib-card-body">
               <div class="calib-graphs">
-                <h2>&nbsp;&nbsp;Outcome Calibration Plots</h2>
                 <div class="other-graphs">
                   <div v-for="index in placeholders">
                     <div :id="'figcontainer'+index" class="figcontainer" v-show="showGraphDivs[index]">
@@ -170,7 +169,6 @@ Last update: 2019-05-17
                 </div>
 
                 <!-- ### Start: Cascade plot ### -->
-                <h2>&nbsp;&nbsp;Care Cascades</h2>
                 <div class="featured-graphs">
                   <div :id="'fig0'">
                     <!-- mpld3 content goes here, no legend for it -->
