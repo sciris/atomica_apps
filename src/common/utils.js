@@ -328,6 +328,12 @@ function makeGraphs(vm, data, routepath) {
         //   console.log('WARNING: different numbers of plots and legends: ' + n_plots + ' vs. ' + n_legends)
         // }
         
+        // Remove all existing graph-header (class) elements.
+        var headers = document.getElementsByClassName("graph-header")
+        while (headers[0]) {
+          headers[0].parentNode.removeChild(headers[0])
+        }
+        
         // Initialize the indices for the first occurrences of graph types.
         let firstOutcomeInd = -1
         let firstBudgetInd = -1
@@ -340,15 +346,15 @@ function makeGraphs(vm, data, routepath) {
           var figlabel    = 'fig' + index
           var figdiv  = document.getElementById(figlabel); // CK: Not sure if this is necessary? To ensure the div is clear first
           if (figdiv) {
-            while (figdiv.firstChild) {
+/*            while (figdiv.firstChild) {
               figdiv.removeChild(figdiv.firstChild);
-            }
+            } */
           } else {
             console.log('WARNING: figdiv not found: ' + figlabel)
           }
 
           // Show figure containers
-          if (index>=1 && index<n_plots) {
+          if (index >= 1 && index < n_plots) {
             var figcontainerlabel = 'figcontainer' + index
             var figcontainerdiv = document.getElementById(figcontainerlabel); // CK: Not sure if this is necessary? To ensure the div is clear first
             if (figcontainerdiv) {
@@ -389,7 +395,7 @@ function makeGraphs(vm, data, routepath) {
           }
 
           // Draw legends
-          // if (index>=1 && index<n_plots) {
+          // if (index >= 1 && index < n_plots) {
           //   try {
           //     mpld3.draw_figure(legendlabel, legenddata[index], function (fig, element) {
           //     });
@@ -426,6 +432,7 @@ function makeGraphs(vm, data, routepath) {
           newItem = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
           newItem.appendChild(textnode)
+          newItem.classList.add("graph-header")
           var figdiv = document.getElementById("fig" + firstCascadeInd)
           figdiv.insertBefore(newItem, figdiv.childNodes[0])
         }
@@ -435,6 +442,7 @@ function makeGraphs(vm, data, routepath) {
           newItem = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
           newItem.appendChild(textnode)
+          newItem.classList.add("graph-header")
           destdiv = document.getElementById("figcontainer" + firstOutcomeInd).parentNode
           destdiv.insertBefore(newItem, destdiv.childNodes[0])
         }
@@ -444,6 +452,7 @@ function makeGraphs(vm, data, routepath) {
           newItem = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
           newItem.appendChild(textnode)
+          newItem.classList.add("graph-header")
           destdiv = document.getElementById("figcontainer" + firstBudgetInd).parentNode
           destdiv.insertBefore(newItem, destdiv.childNodes[0])
         }
@@ -453,6 +462,7 @@ function makeGraphs(vm, data, routepath) {
           newItem = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
           newItem.appendChild(textnode)
+          newItem.classList.add("graph-header")
           destdiv = document.getElementById("figcontainer" + firstCoverageInd).parentNode
           destdiv.insertBefore(newItem, destdiv.childNodes[0])
         }
