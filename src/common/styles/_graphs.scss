@@ -42,16 +42,22 @@
   flex-grow: 1;
   max-height: 80vh;
   overflow-y: auto;
-  .featured-graphs {
-
-  }
-  .other-graphs {
+  .outcome-graphs {
     display: flex;
     flex: 1;
     flex-wrap: wrap;
-    .calib-graph {
-      //flex: 0 0 200px; // CK: Not sure why this was here, but it messes things up
-    }
+  }
+  .budget-graphs {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+  .coverage-graphs {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+  .cascade-graphs {
   }
 }
 .figcontainer {

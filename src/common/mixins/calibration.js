@@ -49,7 +49,6 @@ var CalibrationMixin = {
       simYears()     { return utils.simYears(this) },
       simCascades()  { return utils.simCascades(this) },
       activePops()   { return utils.activePops(this) },
-      placeholders() { return this.$sciris.placeholders(this, 1) },
 
       filteredParlist() {
         return this.applyParametersFilter(this.parlist)

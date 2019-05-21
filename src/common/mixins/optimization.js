@@ -51,7 +51,6 @@ var OptimizationMixin = {
     simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
-    placeholders() { return this.$sciris.placeholders(this, 1) },
   },
 
   created() {

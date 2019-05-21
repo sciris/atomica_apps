@@ -313,9 +313,9 @@ function makeGraphs(vm, data, routepath) {
   // Otherwise, proceed...
   else {
     let waitingtime = 0.5
-    var graphdata = data.graphs
-    // var legenddata = data.legends
-    var graphtypes = data.types
+    let graphdata = data.graphs
+    // let legenddata = data.legends
+    let graphtypes = data.types
     
     sciris.status.start(vm) // Start indicating progress.
     vm.hasGraphs = true
@@ -328,8 +328,34 @@ function makeGraphs(vm, data, routepath) {
         //   console.log('WARNING: different numbers of plots and legends: ' + n_plots + ' vs. ' + n_legends)
         // }
         
+        // Remove all existing plots for all of the graph types.
+        let outcomeGraphsDivs = document.getElementsByClassName("outcome-graphs")
+        if (outcomeGraphsDivs) {
+          while (outcomeGraphsDivs[0].children[0]) {
+            outcomeGraphsDivs[0].removeChild(outcomeGraphsDivs[0].children[0])
+          }
+        }
+        let budgetGraphsDivs = document.getElementsByClassName("budget-graphs")
+        if (budgetGraphsDivs) {
+          while (budgetGraphsDivs[0].children[0]) {
+            budgetGraphsDivs[0].removeChild(budgetGraphsDivs[0].children[0])
+          }
+        }        
+        let coverageGraphsDivs = document.getElementsByClassName("coverage-graphs")
+        if (coverageGraphsDivs) {
+          while (coverageGraphsDivs[0].children[0]) {
+            coverageGraphsDivs[0].removeChild(coverageGraphsDivs[0].children[0])
+          }
+        }        
+        let cascadeGraphsDivs = document.getElementsByClassName("cascade-graphs")
+        if (cascadeGraphsDivs) {
+          while (cascadeGraphsDivs[0].children[0]) {
+            cascadeGraphsDivs[0].removeChild(cascadeGraphsDivs[0].children[0])
+          }
+        }
+        
         // Remove all existing graph-header (class) elements.
-        var headers = document.getElementsByClassName("graph-header")
+        let headers = document.getElementsByClassName("graph-header")
         while (headers[0]) {
           headers[0].parentNode.removeChild(headers[0])
         }
@@ -342,39 +368,61 @@ function makeGraphs(vm, data, routepath) {
         
         // Loop over all of the plots...
         for (var index = 0; index < n_plots; index++) {
-          console.log('Rendering plot ' + index)
-          var figlabel    = 'fig' + index
-          var figdiv  = document.getElementById(figlabel); // CK: Not sure if this is necessary? To ensure the div is clear first
-          if (figdiv) {
-/*            while (figdiv.firstChild) {
-              figdiv.removeChild(figdiv.firstChild);
-            } */
-          } else {
-            console.log('WARNING: figdiv not found: ' + figlabel)
+          console.log('Rendering plot ' + index + '. Type is ' + graphtypes[index])
+          var figlabel = 'fig' + index
+          var newfigdiv
+          var figcontainerlabel = 'figcontainer' + index
+          var newfigcontdiv
+          
+          if ((graphtypes[index] == "framework") && (outcomeGraphsDivs)) {
+            // Create the figure container and put it in the outcome graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            outcomeGraphsDivs[0].appendChild(newfigcontdiv)
+            
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "budget") && (budgetGraphsDivs)) {
+            // Create the figure container and put it in the budget graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            budgetGraphsDivs[0].appendChild(newfigcontdiv)
+            
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "coverage") && (coverageGraphsDivs)) {
+            // Create the figure container and put it in the coverage graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            coverageGraphsDivs[0].appendChild(newfigcontdiv)
+            
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "cascade") && (cascadeGraphsDivs)) {
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            cascadeGraphsDivs[0].appendChild(newfigdiv)           
           }
 
-          // Show figure containers
-          if (index >= 1 && index < n_plots) {
-            var figcontainerlabel = 'figcontainer' + index
-            var figcontainerdiv = document.getElementById(figcontainerlabel); // CK: Not sure if this is necessary? To ensure the div is clear first
-            if (figcontainerdiv) {
-              figcontainerdiv.style.display = 'flex'
-            } else {
-              console.log('WARNING: figcontainerdiv not found: ' + figcontainerlabel)
-            }
-
-            // var legendlabel = 'legend' + index
-            // var legenddiv  = document.getElementById(legendlabel);
-            // if (legenddiv) {
-            //   while (legenddiv.firstChild) {
-            //     legenddiv.removeChild(legenddiv.firstChild);
-            //   }
-            // } else {
-            //   console.log('WARNING: legenddiv not found: ' + legendlabel)
-            // }
-          }
-
-          // Draw the figure
+          // Draw the mpld3 figure into the figN div where it belongs.
           try {
             // If we are dealing with a cascade or budget figure... 
             if (graphtypes[index] == "cascade" || graphtypes[index] == "budget") {
@@ -427,24 +475,14 @@ function makeGraphs(vm, data, routepath) {
         var textnode
         var destdiv
         
-        // Add a the cascade graphs heading.
-        if (firstCascadeInd != -1) {
-          newItem = document.createElement("H2")
-          textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
-          newItem.appendChild(textnode)
-          newItem.classList.add("graph-header")
-          var figdiv = document.getElementById("fig" + firstCascadeInd)
-          figdiv.insertBefore(newItem, figdiv.childNodes[0])
-        }
-
         // Add the outcome graphs heading.
         if (firstOutcomeInd != -1) {
           newItem = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
           newItem.appendChild(textnode)
           newItem.classList.add("graph-header")
-          destdiv = document.getElementById("figcontainer" + firstOutcomeInd).parentNode
-          destdiv.insertBefore(newItem, destdiv.childNodes[0])
+          destdiv = outcomeGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, outcomeGraphsDivs[0])
         }
         
         // Add the budget graphs heading.
@@ -453,8 +491,8 @@ function makeGraphs(vm, data, routepath) {
           textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
           newItem.appendChild(textnode)
           newItem.classList.add("graph-header")
-          destdiv = document.getElementById("figcontainer" + firstBudgetInd).parentNode
-          destdiv.insertBefore(newItem, destdiv.childNodes[0])
+          destdiv = budgetGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, budgetGraphsDivs[0])
         }
         
         // Add the coverage graphs heading.
@@ -463,8 +501,18 @@ function makeGraphs(vm, data, routepath) {
           textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
           newItem.appendChild(textnode)
           newItem.classList.add("graph-header")
-          destdiv = document.getElementById("figcontainer" + firstCoverageInd).parentNode
-          destdiv.insertBefore(newItem, destdiv.childNodes[0])
+          destdiv = coverageGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, coverageGraphsDivs[0])
+        }
+        
+        // Add a the cascade graphs heading.
+        if (firstCascadeInd != -1) {
+          newItem = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
+          newItem.appendChild(textnode)
+          newItem.classList.add("graph-header")
+          destdiv = cascadeGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, cascadeGraphsDivs[0])
         }
         
         sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do

@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-05-17
+Last update: 2019-05-21
 -->
 
 <template>
@@ -115,27 +115,18 @@ Last update: 2019-05-17
             <!-- ### Start: plots ### -->
             <div class="calib-card-body">
               <div class="calib-graphs">
-                <div class="other-graphs">              
-                  <div v-for="index in placeholders">
-                    <div :id="'figcontainer'+index" style="display:flex; justify-content:flex-start; padding:5px; border:1px solid #ddd" v-show="showGraphDivs[index]">
-                      <div :id="'fig'+index" class="calib-graph">
-                        <!--mpld3 content goes here-->
-                      </div>
-                      <!--<div style="display:inline-block">-->
-                      <!--<button class="btn __bw btn-icon" @click="maximize(index)" data-tooltip="Show legend"><i class="ti-menu-alt"></i></button>-->
-                      <!--</div>-->
-                    </div>
-                  </div>
+                <div class="outcome-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>               
+                <div class="budget-graphs">
+                  <!-- multiple figs may be inserted here -->
                 </div>
-
-                <!-- ### Start: Cascade plot ### -->            
-                <div class="featured-graphs">
-                  <div :id="'fig0'">
-                    <!-- mpld3 content goes here, no legend for it -->
-                  </div>
+                <div class="coverage-graphs">
+                  <!-- multiple figs may be inserted here -->
                 </div>
-                <!-- ### End: Cascade plot ### -->
-
+                <div class="cascade-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
               </div> <!-- ### End: calib-graphs ### -->
             </div>
             <!-- ### End: plots ### -->
