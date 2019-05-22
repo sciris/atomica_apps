@@ -1,7 +1,7 @@
 <!--
 Optimizations Page
 
-Last update: 2019-05-21
+Last update: 2019-05-22
 -->
 
 <template>
@@ -100,6 +100,9 @@ Last update: 2019-05-21
               <button class="btn btn-icon" @click="scaleFigs(0.9)" data-tooltip="Zoom out">&ndash;</button>
               <button class="btn btn-icon" @click="scaleFigs(1.0)" data-tooltip="Reset zoom"><i class="ti-zoom-in"></i></button>
               <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
+              <button class="btn" @click="reloadGraphs(displayResultDatastoreId, true)">Refresh</button>
+              <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true">Show plot selection</button>
+              <button v-else class="btn" @click="showPlotControls = false">Hide plot selection</button>              
               <button class="btn" @click="exportGraphs()">Export graphs</button>
               <button class="btn" @click="exportResults(displayResultDatastoreId)">Export data</button>
               <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="this.$globaltool=='tb'" -->
