@@ -1258,14 +1258,20 @@ def supported_plots_func(framework):
 @RPC()    
 def get_supported_plots(project_id, only_keys=False):
     proj = load_project(project_id, die=True)
-    supported_plots = supported_plots_func(proj.framework)
+    supported_plots = supported_plots_func(proj.framework)  # Get the framework plots
     if only_keys:
         plot_names = supported_plots.keys()
         vals = np.ones(len(plot_names))
         output = []
-        for plot_name,val in zip(plot_names,vals):
+        for plot_name,val in zip(plot_names,vals):  # Pull out the framework plots.
             this = {'plot_name':plot_name, 'active':val}
             output.append(this)
+        this = {'plot_name': 'Program spending plots', 'active': 1}
+        output.append(this)
+        this = {'plot_name': 'Program coverage plots', 'active': 1}
+        output.append(this)
+        this = {'plot_name': 'Care cascade plots', 'active': 1}
+        output.append(this)
         return output
     else:
         return supported_plots
@@ -1302,7 +1308,7 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
             plot_names = supported_plots.keys()
     plot_names = sc.promotetolist(plot_names)
     if outputs is None:
-        outputs = [{plot_name:supported_plots[plot_name]} for plot_name in plot_names] # Warning, implicit dict definition
+        outputs = [{plot_name:supported_plots[plot_name]} for plot_name in plot_names if plot_name in supported_plots] # Warning, implicit dict definition
     allfigs = []
     alllegends = []
     allfigjsons = []
@@ -1363,6 +1369,14 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     all_figs = []
     all_legends = []
 
+    for item in plot_options:
+        if item['plot_name'] == 'Program spending plots':
+            showbudgetplots = item['active']
+        if item['plot_name'] == 'Program coverage plots':
+            showcoverageplots = item['active']
+        if item['plot_name'] == 'Care cascade plots':
+            showcascadeplots = item['active']
+
     def append_plots(d,figs,legends):
         nonlocal all_figs, all_legends
         all_figs += figs
@@ -1371,8 +1385,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         output['legends'] += d['legends']
         output['types'] += d['types']
 
-    cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
-    append_plots(cascadeoutput,cascadefigs,cascadelegends)
+    if showcascadeplots:
+        cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
+        append_plots(cascadeoutput,cascadefigs,cascadelegends)
 
     if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
     else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
@@ -1380,11 +1395,13 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
 
     if plot_budget:
         # Make program related plots
-        d, figs, legends = get_budget_plots(results=results,year=year)
-        append_plots(d, figs, legends)
+        if showbudgetplots:
+            d, figs, legends = get_budget_plots(results=results,year=year)
+            append_plots(d, figs, legends)
 
-        d, figs, legends = get_coverage_plots(results=results)
-        append_plots(d, figs, legends)
+        if showcoverageplots:
+            d, figs, legends = get_coverage_plots(results=results)
+            append_plots(d, figs, legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
     if outputfigs: return output, all_figs, all_legends

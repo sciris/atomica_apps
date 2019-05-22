@@ -11,7 +11,7 @@ var ScenarioMixin = {
       progsetOptions: [],   
 
       // Plotting data
-      showPlotControls: false,
+      showPlotControls: true,
       hasGraphs: false,
       table: null,
       simStartYear: 0,
