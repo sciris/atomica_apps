@@ -471,48 +471,56 @@ function makeGraphs(vm, data, routepath) {
         } // end of for loop
         
         // Add headings after all graphs are up.        
-        var newItem
+        var newItem, newItem2
         var textnode
         var destdiv
         
         // Add the outcome graphs heading.
         if (firstOutcomeInd != -1) {
-          newItem = document.createElement("H2")
+          newItem = document.createElement("BR")
+          newItem2 = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
-          newItem.appendChild(textnode)
-          newItem.classList.add("graph-header")
+          newItem2.appendChild(textnode)
+          newItem2.classList.add("graph-header")
           destdiv = outcomeGraphsDivs[0].parentNode         
           destdiv.insertBefore(newItem, outcomeGraphsDivs[0])
+          destdiv.insertBefore(newItem2, outcomeGraphsDivs[0])
         }
         
         // Add the budget graphs heading.
         if (firstBudgetInd != -1) {
-          newItem = document.createElement("H2")
+          newItem = document.createElement("BR")
+          newItem2 = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
-          newItem.appendChild(textnode)
-          newItem.classList.add("graph-header")
+          newItem2.appendChild(textnode)
+          newItem2.classList.add("graph-header")
           destdiv = budgetGraphsDivs[0].parentNode         
           destdiv.insertBefore(newItem, budgetGraphsDivs[0])
+          destdiv.insertBefore(newItem2, budgetGraphsDivs[0])
         }
         
         // Add the coverage graphs heading.
         if (firstCoverageInd != -1) {
-          newItem = document.createElement("H2")
+          newItem = document.createElement("BR")
+          newItem2 = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
-          newItem.appendChild(textnode)
-          newItem.classList.add("graph-header")
+          newItem2.appendChild(textnode)
+          newItem2.classList.add("graph-header")
           destdiv = coverageGraphsDivs[0].parentNode         
           destdiv.insertBefore(newItem, coverageGraphsDivs[0])
+          destdiv.insertBefore(newItem2, coverageGraphsDivs[0])
         }
         
         // Add a the cascade graphs heading.
         if (firstCascadeInd != -1) {
-          newItem = document.createElement("H2")
+          newItem = document.createElement("BR")
+          newItem2 = document.createElement("H2")
           textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
-          newItem.appendChild(textnode)
-          newItem.classList.add("graph-header")
+          newItem2.appendChild(textnode)
+          newItem2.classList.add("graph-header")
           destdiv = cascadeGraphsDivs[0].parentNode         
           destdiv.insertBefore(newItem, cascadeGraphsDivs[0])
+          destdiv.insertBefore(newItem2, cascadeGraphsDivs[0])
         }
         
         sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do
