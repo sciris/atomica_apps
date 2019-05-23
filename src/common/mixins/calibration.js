@@ -120,6 +120,10 @@ var CalibrationMixin = {
       reloadGraphs(showErr) { 
         // Set to calibration=true
         utils.validateYears(this)  // Make sure the start end years are in the right range.
+        if (this.showPlotControls) {
+          this.scaleFigs(1.0)
+          this.showPlotControls = false
+        }        
         return utils.reloadGraphs(
           this, 
           this.projectID, 

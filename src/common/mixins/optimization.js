@@ -88,6 +88,10 @@ var OptimizationMixin = {
     makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/optimizations') },reloadGraphs(cache_id, showErr)   { 
       // Make sure the start end years are in the right range.
       utils.validateYears(this);
+      if (this.showPlotControls) {
+        this.scaleFigs(1.0)
+        this.showPlotControls = false
+      }      
       // Set to calibration=false, plotbudget=True
       return utils.reloadGraphs(this, this.projectID, cache_id, showErr, false, true); 
     }, 

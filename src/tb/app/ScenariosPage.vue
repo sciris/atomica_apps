@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-05-22
+Last update: 2019-05-23
 -->
 
 <template>
@@ -102,8 +102,8 @@ Last update: 2019-05-22
               <button class="btn btn-icon" @click="scaleFigs(1.0)" data-tooltip="Reset zoom"><i class="ti-zoom-in"></i></button>
               <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
               <button class="btn" @click="reloadGraphs(true)">Refresh</button>
-              <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true">Show plot selection</button>
-              <button v-else class="btn" @click="showPlotControls = false">Hide plot selection</button>              
+              <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true; scaleFigs(0.8)">Show plot selection</button>
+              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>              
               <button class="btn" @click="exportGraphs()">Export graphs</button>
               <button class="btn" @click="exportResults(serverDatastoreId)">Export data</button>
               <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="$globaltool=='tb'" -->

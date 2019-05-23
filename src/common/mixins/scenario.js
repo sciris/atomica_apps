@@ -105,6 +105,10 @@ var ScenarioMixin = {
     makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/scenarios') },    
     reloadGraphs(showErr)             { 
       utils.validateYears(this);
+      if (this.showPlotControls) {
+        this.scaleFigs(1.0)
+        this.showPlotControls = false
+      }
       // Set to calibration=false, plotbudget=true
       return utils.reloadGraphs(
         this,
