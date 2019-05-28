@@ -51,7 +51,6 @@ var OptimizationMixin = {
     simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
-    placeholders() { return this.$sciris.placeholders(this, 1) },
   },
 
   created() {
@@ -85,10 +84,14 @@ var OptimizationMixin = {
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
     getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
-    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') },
-    reloadGraphs(cache_id, showErr)   { 
+/*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') }, */
+    makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/optimizations') },reloadGraphs(cache_id, showErr)   { 
       // Make sure the start end years are in the right range.
       utils.validateYears(this);
+      if (this.showPlotControls) {
+        this.scaleFigs(1.0)
+        this.showPlotControls = false
+      }      
       // Set to calibration=false, plotbudget=True
       return utils.reloadGraphs(this, this.projectID, cache_id, showErr, false, true); 
     }, 

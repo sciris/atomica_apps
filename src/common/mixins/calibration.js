@@ -49,7 +49,6 @@ var CalibrationMixin = {
       simYears()     { return utils.simYears(this) },
       simCascades()  { return utils.simCascades(this) },
       activePops()   { return utils.activePops(this) },
-      placeholders() { return this.$sciris.placeholders(this, 1) },
 
       filteredParlist() {
         return this.applyParametersFilter(this.parlist)
@@ -112,12 +111,19 @@ var CalibrationMixin = {
       getPlotOptions(project_id) { 
         return utils.getPlotOptions(this, project_id) 
       },
-      makeGraphs(graphdata) { 
+/*      makeGraphs(graphdata) { 
         return this.$sciris.makeGraphs(this, graphdata, '/calibration') 
-      },
+      }, */
+      makeGraphs(graphdata) { 
+        return utils.makeGraphs(this, graphdata, '/calibration') 
+      },       
       reloadGraphs(showErr) { 
         // Set to calibration=true
         utils.validateYears(this)  // Make sure the start end years are in the right range.
+        if (this.showPlotControls) {
+          this.scaleFigs(1.0)
+          this.showPlotControls = false
+        }        
         return utils.reloadGraphs(
           this, 
           this.projectID, 
@@ -327,7 +333,7 @@ var CalibrationMixin = {
         }) // Go to the server to get the results from the package set.
         .then(response => {
           this.table = response.data.table
-          this.makeGraphs(response.data.graphs)
+          this.makeGraphs(response.data)
           this.$sciris.succeed(this, 'Simulation run, graphs now rendering...')
         })
         .catch(error => {

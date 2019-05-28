@@ -21,6 +21,7 @@ var ProjectMixin = {
       defaultPrograms: [],
       progStartYear: [],
       progEndYear: [],
+      simplertModalUid: '',
     }
   },
 
@@ -453,8 +454,21 @@ var ProjectMixin = {
           this.$sciris.fail(this, 'Could not create program book', error)
         })
     },
-
-    uploadDatabook(uid) {
+    
+    uploadDatabookModal(uid) {
+      this.simplertModalUid = uid
+      var obj = { // Alert object data
+        message: 'This will clear any results in this project, including the results of any optimizations.  Are you sure you want to proceed?',
+        useConfirmBtn: true,
+        customConfirmBtnClass: 'btn __red',
+        customCloseBtnClass: 'btn',
+        onConfirm: this.uploadDatabook
+      }
+      this.$Simplert.open(obj)
+    },
+    
+    uploadDatabook() {
+      let uid = this.simplertModalUid
       console.log('uploadDatabook() called')
       this.$sciris.upload('upload_databook', [uid], {}, '.xlsx')
         .then(response => {
@@ -467,8 +481,21 @@ var ProjectMixin = {
           this.$sciris.fail(this, 'Could not upload databook', error)
         })
     },
-
-    uploadProgbook(uid) {
+    
+    uploadProgbookModal(uid) {
+      this.simplertModalUid = uid
+      var obj = { // Alert object data
+        message: 'This will delete any cached scenario and optimization results.  Are you sure you want to proceed?',
+        useConfirmBtn: true,
+        customConfirmBtnClass: 'btn __red',
+        customCloseBtnClass: 'btn',
+        onConfirm: this.uploadProgbook
+      }
+      this.$Simplert.open(obj)
+    },
+    
+    uploadProgbook() {
+      let uid = this.simplertModalUid
       // Find the project that matches the UID passed in.
       console.log('uploadProgbook() called')
       this.$sciris.upload('upload_progbook', [uid], {}, '.xlsx')

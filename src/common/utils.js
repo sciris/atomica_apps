@@ -298,6 +298,244 @@ function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration,
   })
 }
 
+function makeGraphs(vm, data, routepath) {
+  // Exit if the d3 library is not not included.
+  if (typeof d3 === 'undefined'){ 
+    console.log("please include d3 to use the makeGraphs function")
+    return false;
+  }
+  
+  // Don't render graphs if we've changed page
+  if (routepath && routepath !== vm.$route.path) { 
+    console.log('Not rendering graphs since route changed: ' + routepath + ' vs. ' + vm.$route.path)
+  }
+  
+  // Otherwise, proceed...
+  else {
+    let waitingtime = 0.5
+    let graphdata = data.graphs
+    // let legenddata = data.legends
+    let graphtypes = data.types
+    
+    sciris.status.start(vm) // Start indicating progress.
+    vm.hasGraphs = true
+    sciris.utils.sleep(waitingtime * 1000)
+      .then(response => {
+        let n_plots = graphdata.length
+        // let n_legends = legenddata.length
+        console.log('Rendering ' + n_plots + ' graphs')
+        // if (n_plots !== n_legends) {
+        //   console.log('WARNING: different numbers of plots and legends: ' + n_plots + ' vs. ' + n_legends)
+        // }
+        
+        // Remove all existing plots for all of the graph types.
+        let outcomeGraphsDivs = document.getElementsByClassName("outcome-graphs")
+        if (outcomeGraphsDivs) {
+          while (outcomeGraphsDivs[0].children[0]) {
+            outcomeGraphsDivs[0].removeChild(outcomeGraphsDivs[0].children[0])
+          }
+        }
+        let budgetGraphsDivs = document.getElementsByClassName("budget-graphs")
+        if (budgetGraphsDivs) {
+          while (budgetGraphsDivs[0].children[0]) {
+            budgetGraphsDivs[0].removeChild(budgetGraphsDivs[0].children[0])
+          }
+        }        
+        let coverageGraphsDivs = document.getElementsByClassName("coverage-graphs")
+        if (coverageGraphsDivs) {
+          while (coverageGraphsDivs[0].children[0]) {
+            coverageGraphsDivs[0].removeChild(coverageGraphsDivs[0].children[0])
+          }
+        }        
+        let cascadeGraphsDivs = document.getElementsByClassName("cascade-graphs")
+        if (cascadeGraphsDivs) {
+          while (cascadeGraphsDivs[0].children[0]) {
+            cascadeGraphsDivs[0].removeChild(cascadeGraphsDivs[0].children[0])
+          }
+        }
+        
+        // Remove all existing graph-header (class) elements.
+        let headers = document.getElementsByClassName("graph-header")
+        while (headers[0]) {
+          headers[0].parentNode.removeChild(headers[0])
+        }
+        
+        // Initialize the indices for the first occurrences of graph types.
+        let firstOutcomeInd = -1
+        let firstBudgetInd = -1
+        let firstCoverageInd = -1
+        let firstCascadeInd = -1
+        
+        // Loop over all of the plots...
+        for (var index = 0; index < n_plots; index++) {
+          console.log('Rendering plot ' + index + '. Type is ' + graphtypes[index])
+          var figlabel = 'fig' + index
+          var newfigdiv
+          var figcontainerlabel = 'figcontainer' + index
+          var newfigcontdiv
+          
+          if ((graphtypes[index] == "framework") && (outcomeGraphsDivs)) {
+            // Create the figure container and put it in the outcome graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            outcomeGraphsDivs[0].appendChild(newfigcontdiv)
+            
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "budget") && (budgetGraphsDivs)) {
+            // Create the figure container and put it in the budget graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            budgetGraphsDivs[0].appendChild(newfigcontdiv)
+            
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "coverage") && (coverageGraphsDivs)) {
+            // Create the figure container and put it in the coverage graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            coverageGraphsDivs[0].appendChild(newfigcontdiv)
+            
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "cascade") && (cascadeGraphsDivs)) {
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            cascadeGraphsDivs[0].appendChild(newfigdiv)           
+          }
+
+          // Draw the mpld3 figure into the figN div where it belongs.
+          try {
+            // If we are dealing with a cascade or budget figure... 
+            if (graphtypes[index] == "cascade" || graphtypes[index] == "budget") {
+              sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
+                fig.axes[0].axisList[0].props.tickformat_formatter = "fixed"         
+              }, true)
+              
+            // Otherwise (if we are dealing with a framework or coverage figure)...
+            } else {
+              sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
+                fig.setXTicks(6, function (d) {
+                  return d3.format('.0f')(d);
+                });
+              }, true)
+            }
+          } catch (error) {
+            console.log('Could not plot graph: ' + error.message)
+          }
+
+          // Draw legends
+          // if (index >= 1 && index < n_plots) {
+          //   try {
+          //     mpld3.draw_figure(legendlabel, legenddata[index], function (fig, element) {
+          //     });
+          //   } catch (error) {
+          //     console.log(error)
+          //   }
+          //
+          // }
+          
+          // Flag the first occurrence of the type if we encounter it.
+          if ((graphtypes[index] == "framework") && (firstOutcomeInd == -1)) {
+            firstOutcomeInd = index
+          }
+          if ((graphtypes[index] == "budget") && (firstBudgetInd == -1)) {
+            firstBudgetInd = index
+          }
+          if ((graphtypes[index] == "coverage") && (firstCoverageInd == -1)) {
+            firstCoverageInd = index
+          }
+          if ((graphtypes[index] == "cascade") && (firstCascadeInd == -1)) {
+            firstCascadeInd = index
+          }          
+              
+          vm.showGraphDivs[index] = true;
+        } // end of for loop
+        
+        // Add headings after all graphs are up.        
+        var newItem, newItem2
+        var textnode
+        var destdiv
+        
+        // Add the outcome graphs heading.
+        if (firstOutcomeInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")          
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)      
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Outcome Plots")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = outcomeGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, outcomeGraphsDivs[0])
+        }
+        
+        // Add the budget graphs heading.
+        if (firstBudgetInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")       
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)        
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Program Spending Plots")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = budgetGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, budgetGraphsDivs[0])
+        }
+        
+        // Add the coverage graphs heading.
+        if (firstCoverageInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")   
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Program Coverage Plots")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = coverageGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, coverageGraphsDivs[0])
+        }
+        
+        // Add a the cascade graphs heading.
+        if (firstCascadeInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")   
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0Care Cascades")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = cascadeGraphsDivs[0].parentNode         
+          destdiv.insertBefore(newItem, cascadeGraphsDivs[0])
+        }
+        
+        sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do
+      })
+  }
+}
+
 export default {
   updateSets,
   updateDatasets,
@@ -322,4 +560,6 @@ export default {
   reloadGraphs,
   togglePlotControls,
   getPlotOptions,
+  
+  makeGraphs,
 }

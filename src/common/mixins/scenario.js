@@ -56,7 +56,6 @@ var ScenarioMixin = {
     simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
-    placeholders() { return this.$sciris.placeholders(this, 1) },
     sortedParamOverwrites() {
       return this.applyParamOverwriteSorting(this.addEditModal.scenSummary.paramoverwrites)
     },
@@ -102,9 +101,14 @@ var ScenarioMixin = {
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
     getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
-    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') },
+/*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') }, */
+    makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/scenarios') },    
     reloadGraphs(showErr)             { 
       utils.validateYears(this);
+      if (this.showPlotControls) {
+        this.scaleFigs(1.0)
+        this.showPlotControls = false
+      }
       // Set to calibration=false, plotbudget=true
       return utils.reloadGraphs(
         this,

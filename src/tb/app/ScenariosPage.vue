@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-05-08
+Last update: 2019-05-23
 -->
 
 <template>
@@ -76,7 +76,15 @@ Last update: 2019-05-08
           <div class="calib-title">
             <help reflink="results-plots" label="Results"></help>
             <div>
-
+              <template v-if="simCascades.length>1">
+                <b>Cascade: &nbsp;</b>
+                <select v-model="activeCascade" @change="reloadGraphs(true)">
+                  <option v-for='cascade in simCascades'>
+                    {{ cascade }}
+                  </option>
+                </select>
+              </template>
+              &nbsp;&nbsp;&nbsp;
               <b>Year: &nbsp;</b>
               <select v-model="simEndYear" @change="reloadGraphs(true)">
                 <option v-for='year in projectionYears'>
@@ -93,6 +101,9 @@ Last update: 2019-05-08
               <button class="btn btn-icon" @click="scaleFigs(0.9)" data-tooltip="Zoom out">&ndash;</button>
               <button class="btn btn-icon" @click="scaleFigs(1.0)" data-tooltip="Reset zoom"><i class="ti-zoom-in"></i></button>
               <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
+              <button class="btn" @click="reloadGraphs(true)">Refresh</button>
+              <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true; scaleFigs(0.8)">Show plot selection</button>
+              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>              
               <button class="btn" @click="exportGraphs()">Export graphs</button>
               <button class="btn" @click="exportResults(serverDatastoreId)">Export data</button>
               <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="$globaltool=='tb'" -->
@@ -107,29 +118,18 @@ Last update: 2019-05-08
             <!-- ### Start: plots ### -->
             <div class="calib-card-body">
               <div class="calib-graphs">
-                <h2>&nbsp;&nbsp;Outcome, Budget, and Coverage Plots</h2>
-                <div class="other-graphs">              
-                  <div v-for="index in placeholders">
-                    <div :id="'figcontainer'+index" style="display:flex; justify-content:flex-start; padding:5px; border:1px solid #ddd" v-show="showGraphDivs[index]">
-                      <div :id="'fig'+index" class="calib-graph">
-                        <!--mpld3 content goes here-->
-                      </div>
-                      <!--<div style="display:inline-block">-->
-                      <!--<button class="btn __bw btn-icon" @click="maximize(index)" data-tooltip="Show legend"><i class="ti-menu-alt"></i></button>-->
-                      <!--</div>-->
-                    </div>
-                  </div>
+                <div class="outcome-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>               
+                <div class="budget-graphs">
+                  <!-- multiple figs may be inserted here -->
                 </div>
-
-                <!-- ### Start: Cascade plot ### -->
-                <h2>&nbsp;&nbsp;Care Cascades</h2>              
-                <div class="featured-graphs">
-                  <div :id="'fig0'">
-                    <!-- mpld3 content goes here, no legend for it -->
-                  </div>
+                <div class="coverage-graphs">
+                  <!-- multiple figs may be inserted here -->
                 </div>
-                <!-- ### End: Cascade plot ### -->
-
+                <div class="cascade-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
               </div> <!-- ### End: calib-graphs ### -->
             </div>
             <!-- ### End: plots ### -->
