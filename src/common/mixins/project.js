@@ -458,7 +458,7 @@ var ProjectMixin = {
     uploadDatabookModal(uid) {
       this.simplertModalUid = uid
       var obj = { // Alert object data
-        message: 'This will delete any cached results, including for optimizations.  Are you sure you want to proceed?',
+        message: 'This will clear any results in this project, including the results of any optimizations.  Are you sure you want to proceed?',
         useConfirmBtn: true,
         customConfirmBtnClass: 'btn __red',
         customCloseBtnClass: 'btn',
