@@ -158,14 +158,14 @@ Last update: 2019-05-30
                 <table class="table table-bordered table-hover table-striped" style="width: 100%">
                   <thead>
                   <tr>
-                    <th>Plot</th>
+                    <th>Plot group</th>
                     <th>Active</th>
                   </tr>
                   </thead>
                   <tbody>
-                  <tr v-for="item in plotOptions.plots">
+                  <tr v-for="item in plotOptions.plotgroups">
                     <td>
-                      {{ item.plot_name }}
+                      {{ item.group_name }}
                     </td>
                     <td style="text-align: center">
                       <input type="checkbox" v-model="item.active"/>
