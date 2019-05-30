@@ -100,7 +100,7 @@ var ScenarioMixin = {
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
-    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
+    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id, false) },
 /*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') }, */
     makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/scenarios') },    
     reloadGraphs(showErr)             { 

@@ -109,7 +109,7 @@ var CalibrationMixin = {
         return utils.togglePlotControls(this) 
       },
       getPlotOptions(project_id) { 
-        return utils.getPlotOptions(this, project_id) 
+        return utils.getPlotOptions(this, project_id, true) 
       },
 /*      makeGraphs(graphdata) { 
         return this.$sciris.makeGraphs(this, graphdata, '/calibration') 

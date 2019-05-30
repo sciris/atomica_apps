@@ -1,7 +1,7 @@
 '''
 Atomica remote procedure calls (RPCs)
     
-Last update: 2018sep25
+Last update: 2019may30
 '''
 
 ###############################################################
@@ -1239,7 +1239,7 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
 ### Plotting RPCs
 ##################################################################################
 
-def supported_plots_func(framework):
+def supported_framework_plots_func(framework):
     '''
     Return a dict of supported plots extracted from the framework.
         Input:  framework :        a ProjectFramework instance
@@ -1250,28 +1250,37 @@ def supported_plots_func(framework):
     else:
         df = framework.sheets['plots'][0]
         plots = sc.odict()
-        for name,output in zip(df['name'], df['quantities']):
+        plot_groups = sc.odict()
+        for name, output, plotgroup in zip(df['name'], df['quantities'], df['plot group']):
             plots[name] = at.evaluate_plot_string(output)
-        return plots
+            plot_groups[name] = plotgroup
+        return plots, plot_groups
 
 
 @RPC()    
-def get_supported_plots(project_id, only_keys=False):
+def get_supported_plots(project_id, calibration_page=False, only_keys=False):
     proj = load_project(project_id, die=True)
-    supported_plots = supported_plots_func(proj.framework)  # Get the framework plots
+    supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)  # Get the framework plots
     if only_keys:
         plot_names = supported_plots.keys()
+        plot_groups = supported_plot_groups.values()
         vals = np.ones(len(plot_names))
-        output = []
-        for plot_name,val in zip(plot_names,vals):  # Pull out the framework plots.
-            this = {'plot_name':plot_name, 'active':val}
-            output.append(this)
-        this = {'plot_name': 'Program spending plots', 'active': 1}
-        output.append(this)
-        this = {'plot_name': 'Program coverage plots', 'active': 1}
-        output.append(this)
-        this = {'plot_name': 'Care cascade plots', 'active': 1}
-        output.append(this)
+        output = {}
+        output['plots'] = []
+        output['plotgroups'] = []
+        for plot_name, plot_group, val in zip(plot_names, plot_groups, vals):  # Pull out the framework plots.
+            this = {'plot_name': plot_name, 'plot_group': plot_group, 'active': val}
+            output['plots'].append(this)
+        for plot_group in np.unique(np.array(plot_groups)):
+            this = {'group_name': plot_group, 'active': 1}
+            output['plotgroups'].append(this)
+        if not calibration_page:
+            this = {'group_name': 'Program spending plots', 'active': 1}
+            output['plotgroups'].append(this)
+            this = {'group_name': 'Program coverage plots', 'active': 1}
+            output['plotgroups'].append(this)
+        this = {'group_name': 'Cascades', 'active': 1}
+        output['plotgroups'].append(this)
         return output
     else:
         return supported_plots
@@ -1298,17 +1307,18 @@ def download_graphs(username):
 
 def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, pops='all', outputs=None, do_plot_data=None, replace_nans=True, stacked=False, xlims=None, figsize=None, calibration=False):
     results = sc.promotetolist(results)
-    supported_plots = supported_plots_func(proj.framework)
+    supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)
     if plot_names is None: 
         if plot_options is not None:
             plot_names = []
-            for item in plot_options:
-                if item['active']: plot_names.append(item['plot_name'])
+            for item in plot_options['plots']:
+                if item['active']:
+                    plot_names.append(item['plot_name'])
         else:
             plot_names = supported_plots.keys()
     plot_names = sc.promotetolist(plot_names)
     if outputs is None:
-        outputs = [{plot_name:supported_plots[plot_name]} for plot_name in plot_names if plot_name in supported_plots] # Warning, implicit dict definition
+        outputs = [{plot_name: supported_plots[plot_name]} for plot_name in plot_names if plot_name in supported_plots] # Warning, implicit dict definition
     allfigs = []
     alllegends = []
     allfigjsons = []
@@ -1322,18 +1332,22 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
                 if replace_nans and any(np.isnan(series.vals)):
                     nan_inds = sc.findinds(np.isnan(series.vals))
                     for nan_ind in nan_inds:
-                        if nan_ind>0: # Skip the first point
+                        if nan_ind > 0: # Skip the first point
                             series.vals[nan_ind] = series.vals[nan_ind-1]
                             nans_replaced += 1
             if nans_replaced:
                 print('Warning: %s nans were replaced' % nans_replaced)
 
             if calibration:
-                if stacked: figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
-                else: figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate')  # Only plot data if not stacked
+                if stacked:
+                    figs = at.plot_series(plotdata, axis='pops', plot_type='stacked', legend_mode='separate')
+                else:
+                    figs = at.plot_series(plotdata, axis='pops', data=proj.data, legend_mode='separate')  # Only plot data if not stacked
             else:
-                if stacked: figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
-                else: figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
+                if stacked:
+                    figs = at.plot_series(plotdata, axis='pops', data=data, plot_type='stacked', legend_mode='separate')
+                else:
+                    figs = at.plot_series(plotdata, axis='results', data=data, legend_mode='separate')
 
             for fig in figs[0:-1]:
                 allfigjsons.append(customize_fig(fig=fig, output=output, plotdata=plotdata, xlims=xlims, figsize=figsize))
@@ -1350,8 +1364,10 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
 def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plot_options=None, dosave=True, calibration=False, plot_budget=False, outputfigs=False):
     
     # Handle inputs
-    if sc.isstring(year): year = float(year)
-    if pops is None:      pops = 'all'
+    if sc.isstring(year):
+        year = float(year)
+    if pops is None:
+        pops = 'all'
     results = sc.promotetolist(results)
 
     # Decide what to do
@@ -1369,12 +1385,12 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     all_figs = []
     all_legends = []
 
-    for item in plot_options:
-        if item['plot_name'] == 'Program spending plots':
+    for item in plot_options['plotgroups']:
+        if item['group_name'] == 'Program spending plots':
             showbudgetplots = item['active']
-        if item['plot_name'] == 'Program coverage plots':
+        if item['group_name'] == 'Program coverage plots':
             showcoverageplots = item['active']
-        if item['plot_name'] == 'Care cascade plots':
+        if item['group_name'] == 'Cascades':
             showcascadeplots = item['active']
 
     def append_plots(d,figs,legends):
@@ -1389,14 +1405,16 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
         append_plots(cascadeoutput,cascadefigs,cascadelegends)
 
-    if calibration: d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
-    else:           d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
+    if calibration:
+        d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
+    else:
+        d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
     append_plots(d, figs, legends)
 
     if plot_budget:
         # Make program related plots
         if showbudgetplots:
-            d, figs, legends = get_budget_plots(results=results,year=year)
+            d, figs, legends = get_budget_plots(results=results, year=year)
             append_plots(d, figs, legends)
 
         if showcoverageplots:
@@ -1404,8 +1422,10 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
             append_plots(d, figs, legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
-    if outputfigs: return output, all_figs, all_legends
-    else:          return output
+    if outputfigs:
+        return output, all_figs, all_legends
+    else:
+        return output
 
 
 def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, is_cov_plot=False, popup_legends=False):

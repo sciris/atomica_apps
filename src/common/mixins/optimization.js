@@ -83,7 +83,7 @@ var OptimizationMixin = {
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
-    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
+    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id, false) },
 /*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') }, */
     makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/optimizations') },reloadGraphs(cache_id, showErr)   { 
       // Make sure the start end years are in the right range.

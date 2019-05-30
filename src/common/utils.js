@@ -249,11 +249,11 @@ function updateDatasets(vm) {
   })
 }
 
-function getPlotOptions(vm, project_id) {
+function getPlotOptions(vm, project_id, calibration_page) {
   return new Promise((resolve, reject) => {
     console.log('getPlotOptions() called')
     sciris.status.start(vm) // Start indicating progress.
-    sciris.rpcs.rpc('get_supported_plots', [project_id, true])
+    sciris.rpcs.rpc('get_supported_plots', [project_id, calibration_page, true])
       .then(response => {
         vm.plotOptions = response.data // Get the parameter values
         sciris.status.succeed(vm, '')

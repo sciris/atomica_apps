@@ -1,7 +1,7 @@
 <!--
 Calibration Page
 
-Last update: 2019-05-23
+Last update: 2019-05-30
 -->
 
 <template>
@@ -203,7 +203,7 @@ Last update: 2019-05-23
                   </tr>
                   </thead>
                   <tbody>
-                  <tr v-for="item in plotOptions">
+                  <tr v-for="item in plotOptions.plots">
                     <td>
                       {{ item.plot_name }}
                     </td>
