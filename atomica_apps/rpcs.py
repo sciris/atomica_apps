@@ -1385,6 +1385,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     all_figs = []
     all_legends = []
 
+    showbudgetplots = False
+    showcoverageplots = False
+    showcascadeplots = False
     for item in plot_options['plotgroups']:
         if item['group_name'] == 'Program spending plots':
             showbudgetplots = item['active']
