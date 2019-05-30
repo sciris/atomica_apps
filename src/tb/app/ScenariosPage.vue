@@ -168,7 +168,7 @@ Last update: 2019-05-30
                       {{ item.group_name }}
                     </td>
                     <td style="text-align: center">
-                      <input type="checkbox" v-model="item.active"/>
+                      <input type="checkbox" @click="plotGroupToggle(item.group_name, item.active)" v-model="item.active"/>
                     </td>
                   </tr>
                   </tbody>

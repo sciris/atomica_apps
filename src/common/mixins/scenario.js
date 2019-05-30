@@ -121,6 +121,15 @@ var ScenarioMixin = {
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
     
+    plotGroupToggle(groupname, active) {
+      console.log('plotGroupToggle() called for plot group: ', groupname, ' changing from: ', active)
+      for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+        if (this.plotOptions.plots[ind].plot_group == groupname) {
+          this.plotOptions.plots[ind].active = !active
+        }
+      }
+    },
+    
     paramGroupMembers(groupname) { 
       let members = []
       for (var ind = 0; ind < this.paramGroups.codenames.length; ind++) {
