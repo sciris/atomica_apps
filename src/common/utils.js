@@ -256,6 +256,10 @@ function getPlotOptions(vm, project_id, calibration_page) {
     sciris.rpcs.rpc('get_supported_plots', [project_id, calibration_page, true])
       .then(response => {
         vm.plotOptions = response.data // Get the parameter values
+        vm.plotGroupsListCollapsed = []
+        for (var ind = 0; ind < vm.plotOptions.plotgroups.length; ind++) {
+          vm.plotGroupsListCollapsed.push(true)
+        }
         sciris.status.succeed(vm, '')
         resolve(response)
       })

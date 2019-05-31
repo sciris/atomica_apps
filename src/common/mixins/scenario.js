@@ -20,6 +20,7 @@ var ScenarioMixin = {
       activeCascade: "",
       popOptions: [],
       plotOptions: [],
+      plotGroupsListCollapsed: [],
       yearOptions: [],
       serverDatastoreId: '',
       openDialogs: [],
@@ -121,13 +122,21 @@ var ScenarioMixin = {
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
     
-    plotGroupToggle(groupname, active) {
-      console.log('plotGroupToggle() called for plot group: ', groupname, ' changing from: ', active)
+    plotGroupActiveToggle(groupname, active) {
+      console.log('plotGroupActiveToggle() called for plot group: ', groupname, ' changing from: ', active)
       for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
         if (this.plotOptions.plots[ind].plot_group == groupname) {
           this.plotOptions.plots[ind].active = !active
         }
       }
+    },
+    
+    plotGroupListCollapseToggle(index) {
+      console.log('plotGroupListCollapseToggle() called for plot index: ', index)
+      this.plotGroupsListCollapsed[index] = !this.plotGroupsListCollapsed[index]
+      // Stupid hack required to update Vue with this data...
+      this.plotGroupsListCollapsed.push(false)
+      this.plotGroupsListCollapsed.pop()
     },
     
     getPlotsFromPlotGroup(groupname) {
