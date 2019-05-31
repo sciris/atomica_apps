@@ -16,6 +16,7 @@ var ScenarioMixin = {
       table: null,
       simStartYear: 0,
       simEndYear: 2035,
+      dataEndYear: 0,
       activePop: "All",
       activeCascade: "",
       popOptions: [],
@@ -66,8 +67,7 @@ var ScenarioMixin = {
     this.$sciris.addListener(this)
     this.$sciris.createDialogs(this)
     if ((this.$store.state.activeProject.project !== undefined) &&
-      (this.$store.state.activeProject.project.hasData) &&
-      (this.$store.state.activeProject.project.hasPrograms)) {
+      (this.$store.state.activeProject.project.hasData)) {
       console.log('created() called')
       this.simStartYear = this.simStart
       this.simEndYear = this.simEnd
@@ -83,6 +83,7 @@ var ScenarioMixin = {
           this.updateSets()
             .then(response2 => {
               // The order of execution / completion of these doesn't matter.
+              this.getDataEndYear()
               this.getScenSummaries()
               this.getSpendingBaselines()
               this.getParamGroups()
@@ -166,7 +167,16 @@ var ScenarioMixin = {
         }
       }          
     },
-    
+
+    async getDataEndYear() {
+      try {
+        let response = await this.$sciris.rpc('get_data_end_year', [this.projectID]);
+        this.dataEndYear = response.data;
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not get scenarios', error);
+      }
+    },
+
     getScenSummaries() {
       console.log('getScenSummaries() called')
       this.$sciris.start(this)
@@ -438,7 +448,8 @@ var ScenarioMixin = {
         newYear = Math.max(...this.addEditModal.scenSummary.paramyears) + 1
       // Otherwise, make the new year the data_end year.
       } else {
-        newYear = this.spendingBaselines.data_end
+        console.log('Using data end year')
+        newYear = this.dataEndYear
       }
       this.addEditModal.scenSummary.paramyears.push(newYear)
       

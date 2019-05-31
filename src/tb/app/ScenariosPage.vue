@@ -19,11 +19,11 @@ Last update: 2019-05-31
       </div>
     </div>
 
-    <div v-else-if="!hasPrograms">
-      <div style="font-style:italic">
-        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>
-      </div>
-    </div>
+<!--    <div v-else-if="!hasPrograms">-->
+<!--      <div style="font-style:italic">-->
+<!--        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>-->
+<!--      </div>-->
+<!--    </div>-->
 
     <div v-else>
 

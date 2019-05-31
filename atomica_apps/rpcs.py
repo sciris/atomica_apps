@@ -1400,7 +1400,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         # But for scenarios and optimizations, 'all' pops means aggregated over all pops
         pops = all_pops(proj.data)
     elif pops.lower() == 'all':
-        pops = [{'Total': all_pops(proj.data)}]
+        pops = {'Total': all_pops(proj.data)}
     else:
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
@@ -1438,6 +1438,8 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
     append_plots(d, figs, legends)
 
+    # Only make the budget plot if at least one result has programs
+    plot_budget = plot_budget and any([x.used_programs for x in results])
     if plot_budget:
         # Make program related plots
         if showbudgetplots:
@@ -1699,6 +1701,11 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 ##################################################################################
 ### Scenario RPCs
 ##################################################################################
+
+@RPC()
+def get_data_end_year(project_id):
+    proj = load_project(project_id, die=True)
+    return proj.data.end_year
 
 def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     ''' Convert a Python scenario to JSON representation
@@ -2022,28 +2029,29 @@ def new_scen(project_id, scentype) -> dict:
 
     print('Creating default scenario...')
     proj = load_project(project_id, die=True)
-    assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
     start_year = proj.data.end_year
 
     alloc = {}
     print('MAKESCEN')
-    for prog in proj.progsets[-1].programs.values():  # Start with programs in the last progset.
-        print(prog.spend_data)
-        if prog.spend_data.has_time_data:
-            alloc[prog.name] = sc.dcp(prog.spend_data)
-        else:
-            alloc[prog.name] = at.TimeSeries(start_year, prog.spend_data.assumption)
 
-    # Construct the scenario
-    if scentype == 'budget':
-        scen = at.BudgetScenario(name='New budget scenario', active=True, parsetname=proj.parsets[-1].name,
-            progsetname=proj.progsets[-1].name, alloc=alloc, start_year=start_year)
-    elif scentype == 'coverage':
-        scen = at.CoverageScenario(name='New coverage scenario', active=True, parsetname=proj.parsets[-1].name,
-            progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
-    elif scentype == 'parameter':
-        scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,
-            scenario_values=dict())
+    if scentype == 'parameter':
+        scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,scenario_values=dict())
+    else:
+        assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
+        for prog in proj.progsets[-1].programs.values():  # Start with programs in the last progset.
+            print(prog.spend_data)
+            if prog.spend_data.has_time_data:
+                alloc[prog.name] = sc.dcp(prog.spend_data)
+            else:
+                alloc[prog.name] = at.TimeSeries(start_year, prog.spend_data.assumption)
+
+        # Construct the scenario
+        if scentype == 'budget':
+            scen = at.BudgetScenario(name='New budget scenario', active=True, parsetname=proj.parsets[-1].name,
+                progsetname=proj.progsets[-1].name, alloc=alloc, start_year=start_year)
+        elif scentype == 'coverage':
+            scen = at.CoverageScenario(name='New coverage scenario', active=True, parsetname=proj.parsets[-1].name,
+                progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(scen, proj)
