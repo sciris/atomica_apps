@@ -130,6 +130,16 @@ var ScenarioMixin = {
       }
     },
     
+    getPlotsFromPlotGroup(groupname) {
+      let members = []
+      for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+        if (this.plotOptions.plots[ind].plot_group == groupname) {
+          members.push(this.plotOptions.plots[ind].plot_name)
+        }
+      }
+      return members      
+    },
+    
     paramGroupMembers(groupname) { 
       let members = []
       for (var ind = 0; ind < this.paramGroups.codenames.length; ind++) {

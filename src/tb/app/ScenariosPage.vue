@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-05-30
+Last update: 2019-05-31
 -->
 
 <template>
@@ -155,7 +155,34 @@ Last update: 2019-05-30
             <!-- ### Start: plot selectors ### -->
             <div class="plotopts-main" :class="{'plotopts-main--full': !showPlotControls}" v-if="showPlotControls">
               <div class="plotopts-params">
-                <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <table class="table table-bordered table-hover table-striped" style="width: 100%" v-for="item in plotOptions.plotgroups">
+                  <thead>
+                  <tr>
+                    <th>
+                      {{ item.group_name }}
+                      &nbsp;&nbsp;
+                      <input type="checkbox" @click="plotGroupToggle(item.group_name, item.active)" v-model="item.active"/>                    
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="name in getPlotsFromPlotGroup(item.group_name)">
+                      <td>
+                        {{ name }}
+                      </td>
+                    </tr>
+<!--                  <tr v-for="item in plotOptions.plotgroups">
+                    <td>
+                      {{ item.group_name }}
+                    </td>
+                    <td style="text-align: center">
+                      <input type="checkbox" @click="plotGroupToggle(item.group_name, item.active)" v-model="item.active"/>
+                    </td>
+                  </tr> -->
+                  </tbody>
+                </table>
+                
+<!--                <table class="table table-bordered table-hover table-striped" style="width: 100%">
                   <thead>
                   <tr>
                     <th>Plot group</th>
@@ -172,7 +199,7 @@ Last update: 2019-05-30
                     </td>
                   </tr>
                   </tbody>
-                </table>
+                </table> -->
               </div>
             </div>
             <!-- ### End: plot selectors ### -->
