@@ -22,6 +22,9 @@ import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
 
+ROOTDIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '')
+print(ROOTDIR)
+
 pl.rc('font', size=14)
 
 # Globals
@@ -534,7 +537,8 @@ def add_demo_project(username, model, tool):
     """
 
     if tool == 'tb':
-        proj = at.demo(which=model, do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
+        proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5)
+        proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
     proj.name = 'Demo project'
@@ -1360,6 +1364,26 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
     output = {'graphs':allfigjsons, 'legends':alllegendjsons,'types': ['framework']*len(allfigjsons)}
     return output, allfigs, alllegends
 
+def all_pops(data) -> list:
+    """
+    Return non-environment population names
+
+    This function iterates over the populations and filters out
+    and that have population type 'env'
+
+    This function is a placeholder in lieu of fully implementing
+    population type support in the FE (to be completed later)
+
+    :param data: a ProjectData instance
+    :return: A list of population code names
+
+    """
+
+    pops = []
+    for name, spec in data.pops.items():
+        if spec['type'] != 'env':
+            pops.append(name)
+    return pops
 
 def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plot_options=None, dosave=True, calibration=False, plot_budget=False, outputfigs=False):
     
@@ -1374,9 +1398,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
     if calibration and pops.lower() == 'all':
         # For calibration plot, 'all' pops means that they should all be disaggregated and visible
         # But for scenarios and optimizations, 'all' pops means aggregated over all pops
-        pops = 'all'  # pops=None means aggregate all pops in get_cascade_plot, and plots all pops _without_ aggregating in calibration
+        pops = all_pops(proj.data)
     elif pops.lower() == 'all':
-        pops = 'total' # make sure it's lowercase
+        pops = [{'Total': all_pops(proj.data)}]
     else:
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
@@ -1573,8 +1597,9 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
         legendjsons.append(graph_dict)
         pl.close(fig)
     
-    jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
-    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
+    # jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
+    # output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
+    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'types':['cascade']*len(figjsons)}
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
