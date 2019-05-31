@@ -1381,7 +1381,7 @@ def all_pops(data) -> list:
 
     pops = []
     for name, spec in data.pops.items():
-        if spec['type'] != 'env':
+        if ('type' not in spec) or spec['type'] != 'env':
             pops.append(name)
     return pops
 

@@ -61,8 +61,8 @@ Last update: 2019-05-31
 
         <div>
           <button class="btn __green" :disabled="!scenariosLoaded" @click="runScens()">Run scenarios</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('budget')">Add budget scenario</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('coverage')">Add coverage scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded || !hasPrograms" @click="addScenModal('budget')">Add budget scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded || !hasPrograms" @click="addScenModal('coverage')">Add coverage scenario</button>
           <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('parameter')">Add parameter scenario</button>          
         </div>
       </div>
