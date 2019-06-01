@@ -1405,7 +1405,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         output['types'] += d['types']
 
     if showcascadeplots:
-        cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
+        cascadeoutput, cascadefigs, cascadelegends = get_cascade_plots(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
         append_plots(cascadeoutput,cascadefigs,cascadelegends)
 
     if calibration:
@@ -1545,10 +1545,12 @@ def get_coverage_plots(results):
     return output, figs, legends
 
 
-def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plot_budget=False):
+def get_cascade_plots(proj, results=None, pops=None, year=None, cascade=None, plot_budget=False):
     
-    if results is None: results = proj.results[-1]
-    if year    is None: year    = proj.settings.sim_end # Needed for plot_budget
+    if results is None:
+        results = proj.results[-1]
+    if year    is None:
+        year    = proj.settings.sim_end
     
     figs = []
     legends = []
@@ -1558,10 +1560,11 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     for y in range(len(years)):
         years[y] = float(years[y]) # Ensure it's a float
 
-    fig,table = at.plot_cascade(results, cascade=cascade, pops=pops, year=years, data=proj.data, show_table=False)
-    figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
-    figs.append(fig)
-    legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
+    for thecascade in proj.framework.cascades.keys():
+        fig, table = at.plot_cascade(results, cascade=thecascade, pops=pops, year=years, data=proj.data, show_table=False)
+        figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
+        figs.append(fig)
+        legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
     
     for fig in legends: # Different enough to warrant its own block, although ugly
         try:
@@ -1573,13 +1576,20 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
         legendjsons.append(graph_dict)
         pl.close(fig)
     
-    jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
-    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
+    jsondata, jsoncolors = get_json_cascade(results=results, data=proj.data)
+    output = {
+        'graphs': figjsons,
+        'legends': legendjsons,
+        'table': table,
+        'jsondata': jsondata,
+        'jsoncolors': jsoncolors,
+        'types': ['cascade']*len(figjsons)
+    }
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
 
-def get_json_cascade(results,data):
+def get_json_cascade(results, data):
     '''
     Return all data to render cascade in FE, for multiple results
    
@@ -1646,7 +1656,7 @@ def get_json_cascade(results,data):
     jsondata = sc.sanitizejson(cascade_data)
     ncolors = len(result.pop_names)
     jsoncolors = sc.gridcolors(ncolors, ashex=True)
-    return jsondata,jsoncolors
+    return jsondata, jsoncolors
 
 
 @RPC()  
