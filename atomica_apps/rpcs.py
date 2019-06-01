@@ -1271,6 +1271,9 @@ def get_supported_plots(project_id, calibration_page=False, only_keys=False):
         for plot_name, plot_group, val in zip(plot_names, plot_groups, vals):  # Pull out the framework plots.
             this = {'plot_name': plot_name, 'plot_group': plot_group, 'active': val}
             output['plots'].append(this)
+        for plot_name in proj.framework.cascades.keys():
+            this = {'plot_name': plot_name, 'plot_group': 'Cascades', 'active': 1}
+            output['plots'].append(this)
         for plot_group in np.unique(np.array(plot_groups)):
             this = {'group_name': plot_group, 'active': 1}
             output['plotgroups'].append(this)
