@@ -1565,6 +1565,7 @@ def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=Fals
 
     for cascade in proj.framework.cascades.keys():
         fig, table = at.plot_cascade(results, cascade=cascade, pops=pops, year=years, data=proj.data, show_table=False)
+        pl.title(cascade)
         figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
         figs.append(fig)
         legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
