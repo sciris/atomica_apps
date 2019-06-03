@@ -1246,7 +1246,7 @@ def supported_framework_plots_func(framework):
         Output: {name:quantities}: a dict with all of the plot quantities in the framework keyed by name
     '''
     if 'plots' not in framework.sheets:
-        return sc.odict()
+        return (sc.odict(), sc.odict())
     else:
         df = framework.sheets['plots'][0]
         plots = sc.odict()

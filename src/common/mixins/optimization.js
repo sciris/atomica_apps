@@ -48,7 +48,6 @@ var OptimizationMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
-    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
   },
@@ -493,7 +492,6 @@ var OptimizationMixin = {
                 'tool': this.toolName(), 
                 'plotyear': this.simEndYear, 
                 'pops': this.activePop, 
-                'cascade': null
               }
             ])  // should this last be null?
             .then(response => {

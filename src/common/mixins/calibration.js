@@ -47,7 +47,6 @@ var CalibrationMixin = {
       simStart()     { return utils.simStart(this) },
       simEnd()       { return utils.simEnd(this) },
       simYears()     { return utils.simYears(this) },
-      simCascades()  { return utils.simCascades(this) },
       activePops()   { return utils.activePops(this) },
 
       filteredParlist() {
@@ -323,7 +322,6 @@ var CalibrationMixin = {
           'plotyear':this.simEndYear, 
           'pops':this.activePop, 
           'tool': this.toolName(), 
-          'cascade':null
         }) // Go to the server to get the results
         .then(response => {
           this.makeGraphs(response.data)
@@ -355,7 +353,6 @@ var CalibrationMixin = {
           'plotyear': this.simEndYear, 
           'pops': this.activePop, 
           'tool': this.toolName(), 
-          'cascade':null
         }) // Go to the server to get the results from the package set.
         .then(response => {
           this.table = response.data.table

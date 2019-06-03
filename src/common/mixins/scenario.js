@@ -53,7 +53,6 @@ var ScenarioMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
-    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     sortedParamOverwrites() {
