@@ -17,7 +17,6 @@ var ScenarioMixin = {
       simStartYear: 0,
       simEndYear: 2035,
       activePop: "All",
-      activeCascade: "",
       popOptions: [],
       plotOptions: [],
       plotGroupsListCollapsed: [],
@@ -76,7 +75,6 @@ var ScenarioMixin = {
         this.validSimYears.push(year)
       }      
       this.popOptions = this.activePops
-      this.activeCascade = this.simCascades[0]
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {

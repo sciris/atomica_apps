@@ -16,7 +16,6 @@ var OptimizationMixin = {
       simStartYear: 0,
       simEndYear: 2018, // TEMP FOR DEMO
       activePop: "All",
-      activeCascade: "",
       popOptions: [],
       plotOptions: [],
       plotGroupsListCollapsed: [],
@@ -64,7 +63,6 @@ var OptimizationMixin = {
       this.simStartYear = this.simStart
       this.simEndYear = this.simEnd
       this.popOptions = this.activePops
-      this.activeCascade = this.simCascades[0]
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {
           this.updateSets()

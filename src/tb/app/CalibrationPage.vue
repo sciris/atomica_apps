@@ -1,7 +1,7 @@
 <!--
 Calibration Page
 
-Last update: 2019-06-01
+Last update: 2019-06-03
 -->
 
 <template>
@@ -118,14 +118,6 @@ Last update: 2019-06-01
           <div class="calib-title">
             <help reflink="bl-results" label="Results"></help>
             <div>
-              <template v-if="simCascades.length>1">
-                <b>Cascade: &nbsp;</b>
-                <select v-model="activeCascade" @change="reloadGraphs(true)">
-                  <option v-for='cascade in simCascades'>
-                    {{ cascade }}
-                  </option>
-                </select>
-              </template>
               &nbsp;&nbsp;&nbsp;
               <b>Year: &nbsp;</b>
               <select v-model="simEndYear" @change="reloadGraphs(true)">
