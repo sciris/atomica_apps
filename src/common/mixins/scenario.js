@@ -17,9 +17,9 @@ var ScenarioMixin = {
       simStartYear: 0,
       simEndYear: 2035,
       activePop: "All",
-      activeCascade: "",
       popOptions: [],
       plotOptions: [],
+      plotGroupsListCollapsed: [],
       yearOptions: [],
       serverDatastoreId: '',
       openDialogs: [],
@@ -53,7 +53,6 @@ var ScenarioMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
-    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     sortedParamOverwrites() {
@@ -75,7 +74,6 @@ var ScenarioMixin = {
         this.validSimYears.push(year)
       }      
       this.popOptions = this.activePops
-      this.activeCascade = this.simCascades[0]
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {
@@ -100,7 +98,7 @@ var ScenarioMixin = {
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
-    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
+    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id, false) },
 /*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/scenarios') }, */
     makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/scenarios') },    
     reloadGraphs(showErr)             { 
@@ -120,6 +118,33 @@ var ScenarioMixin = {
     }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
+    
+    plotGroupActiveToggle(groupname, active) {
+      console.log('plotGroupActiveToggle() called for plot group: ', groupname, ' changing from: ', active)
+      for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+        if (this.plotOptions.plots[ind].plot_group == groupname) {
+          this.plotOptions.plots[ind].active = !active
+        }
+      }
+    },
+    
+    plotGroupListCollapseToggle(index) {
+      console.log('plotGroupListCollapseToggle() called for plot index: ', index)
+      this.plotGroupsListCollapsed[index] = !this.plotGroupsListCollapsed[index]
+      // Stupid hack required to update Vue with this data...
+      this.plotGroupsListCollapsed.push(false)
+      this.plotGroupsListCollapsed.pop()
+    },
+    
+    getPlotsFromPlotGroup(groupname) {
+      let members = []
+      for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+        if (this.plotOptions.plots[ind].plot_group == groupname) {
+          members.push(this.plotOptions.plots[ind].plot_name)
+        }
+      }
+      return members      
+    },
     
     paramGroupMembers(groupname) { 
       let members = []

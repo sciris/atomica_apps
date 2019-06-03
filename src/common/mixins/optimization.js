@@ -16,9 +16,9 @@ var OptimizationMixin = {
       simStartYear: 0,
       simEndYear: 2018, // TEMP FOR DEMO
       activePop: "All",
-      activeCascade: "",
       popOptions: [],
       plotOptions: [],
+      plotGroupsListCollapsed: [],
       yearOptions: [],
       serverDatastoreId: '',
       openDialogs: [],
@@ -48,7 +48,6 @@ var OptimizationMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
-    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
   },
@@ -63,7 +62,6 @@ var OptimizationMixin = {
       this.simStartYear = this.simStart
       this.simEndYear = this.simEnd
       this.popOptions = this.activePops
-      this.activeCascade = this.simCascades[0]
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {
           this.updateSets()
@@ -83,7 +81,7 @@ var OptimizationMixin = {
     scaleFigs(frac)                   { return this.$sciris.scaleFigs(this, frac)},
     clearGraphs()                     { return this.$sciris.clearGraphs(this) },
     togglePlotControls()              { return utils.togglePlotControls(this) },
-    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id) },
+    getPlotOptions(project_id)        { return utils.getPlotOptions(this, project_id, false) },
 /*    makeGraphs(graphdata)             { return this.$sciris.makeGraphs(this, graphdata, '/optimizations') }, */
     makeGraphs(graphdata)             { return utils.makeGraphs(this, graphdata, '/optimizations') },reloadGraphs(cache_id, showErr)   { 
       // Make sure the start end years are in the right range.
@@ -97,7 +95,34 @@ var OptimizationMixin = {
     }, 
     maximize(legend_id)               { return this.$sciris.maximize(this, legend_id) },
     minimize(legend_id)               { return this.$sciris.minimize(this, legend_id) },
-
+    
+    plotGroupActiveToggle(groupname, active) {
+      console.log('plotGroupActiveToggle() called for plot group: ', groupname, ' changing from: ', active)
+      for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+        if (this.plotOptions.plots[ind].plot_group == groupname) {
+          this.plotOptions.plots[ind].active = !active
+        }
+      }
+    },
+    
+    plotGroupListCollapseToggle(index) {
+      console.log('plotGroupListCollapseToggle() called for plot index: ', index)
+      this.plotGroupsListCollapsed[index] = !this.plotGroupsListCollapsed[index]
+      // Stupid hack required to update Vue with this data...
+      this.plotGroupsListCollapsed.push(false)
+      this.plotGroupsListCollapsed.pop()
+    },
+    
+    getPlotsFromPlotGroup(groupname) {
+      let members = []
+      for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+        if (this.plotOptions.plots[ind].plot_group == groupname) {
+          members.push(this.plotOptions.plots[ind].plot_name)
+        }
+      }
+      return members      
+    },
+    
     statusFormatStr(optimSummary) {
       if      (optimSummary.status === 'not started') {return ''}
       else if (optimSummary.status === 'queued')      {return 'Initializing... '} // + this.timeFormatStr(optimSummary.pendingTime)
@@ -467,7 +492,6 @@ var OptimizationMixin = {
                 'tool': this.toolName(), 
                 'plotyear': this.simEndYear, 
                 'pops': this.activePop, 
-                'cascade': null
               }
             ])  // should this last be null?
             .then(response => {

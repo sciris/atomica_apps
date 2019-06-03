@@ -249,13 +249,17 @@ function updateDatasets(vm) {
   })
 }
 
-function getPlotOptions(vm, project_id) {
+function getPlotOptions(vm, project_id, calibration_page) {
   return new Promise((resolve, reject) => {
     console.log('getPlotOptions() called')
     sciris.status.start(vm) // Start indicating progress.
-    sciris.rpcs.rpc('get_supported_plots', [project_id, true])
+    sciris.rpcs.rpc('get_supported_plots', [project_id, calibration_page, true])
       .then(response => {
         vm.plotOptions = response.data // Get the parameter values
+        vm.plotGroupsListCollapsed = []
+        for (var ind = 0; ind < vm.plotOptions.plotgroups.length; ind++) {
+          vm.plotGroupsListCollapsed.push(true)
+        }
         sciris.status.succeed(vm, '')
         resolve(response)
       })
@@ -278,8 +282,7 @@ function reloadGraphs(vm, project_id, cache_id, showNoCacheError, iscalibration,
     cache_id, 
     vm.plotOptions
   ], {
-    tool: vm.toolName(), 
-    cascade: vm.activeCascade,
+    tool: vm.toolName(),
     plotyear: vm.simEndYear,
     pops: vm.activePop, 
     calibration: iscalibration, 
