@@ -1,7 +1,7 @@
 <!--
 Scenarios page
 
-Last update: 2019-06-03
+Last update: 2019-06-04
 -->
 
 <template>
@@ -240,7 +240,7 @@ Last update: 2019-06-03
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
                style="display:inline-block; padding-right:10px">
             <b>Parameters</b><br>
-            <select v-model="addEditModal.selectedParams" size="5" multiple>
+            <select v-model="addEditModal.selectedParams" :size="paramGroupMembers(addEditModal.selectedParamGroup).length" multiple>
               <option v-for="paramname in paramGroupMembers(addEditModal.selectedParamGroup)">
                 {{ paramname }}
               </option>
@@ -250,7 +250,7 @@ Last update: 2019-06-03
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
                style="display:inline-block; padding-right:10px">
             <b>Populations</b><br>
-            <select v-model="addEditModal.selectedPopulations" size="5" multiple>
+            <select v-model="addEditModal.selectedPopulations" :size="paramGroups.popnames.length" multiple>
               <option v-for="popname in paramGroups.popnames">
                 {{ popname }}
               </option>
