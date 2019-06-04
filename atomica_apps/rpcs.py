@@ -538,7 +538,7 @@ def add_demo_project(username, model, tool):
 
     if tool == 'tb':
         proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5)
-        proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
+        # proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
         # TODO - Add selection of default scenarios here
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
@@ -1453,6 +1453,10 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
         if showcoverageplots:
             d, figs, legends = get_coverage_plots(results=results)
             append_plots(d, figs, legends)
+
+    if tool=='tb':
+        tb_output, tb_figs, tb_legends = tb_key_calibration_plots(proj, results, pops=pops)
+        append_plots(tb_output, tb_figs, tb_legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
     if outputfigs:
@@ -2460,10 +2464,13 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
 #        'types': ['tb']
 #    }
     outputs['graphs'].append(customize_fig(fig=fig, is_epi=False))
-    outputs['legends'].append(legend)
+    outputs['legends'].append(customize_fig(fig=legend,is_legend=True))
     outputs['types'].append('tb')
     figs.append(fig)
     legends.append(legend)
+
+    print('TB standard plot %s succeeded' % (title))
+
     return outputs, figs, legends
 
 def tb_indpops(P):
