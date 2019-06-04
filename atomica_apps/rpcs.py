@@ -553,34 +553,43 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
     '''
     Create a new project.
     '''
+
     if tool == 'tb':
         sim_dt = 0.5
     elif tool == 'cascade':
         sim_dt = 1.0
     else:
         sim_dt = None
+
     if tool is None or tool == 'cascade': # Optionally select by tool rather than frame
         frame = load_framework(framework_id, die=True) # Get the Framework object for the framework to be copied.
     elif tool == 'tb': # Or get a pre-existing one by the tool name
-        frame = at.demo(kind='framework', which='tb')
+        frame = at.ProjectFramework(ROOTDIR+'optima_tb_framework.xlsx')
+
+    proj = at.Project(framework=frame, name=proj_name, sim_dt=sim_dt) # Create the project, loading in the desired spreadsheets.
+
+    data_dt = 1.0
+    data_tvec = np.arange(int(data_start), int(data_end) + data_dt, data_dt)
 
     if tool == 'tb':
-        new_pops = sc.odict()
-        for i in range(0, num_pops):
-            new_pops['pop_%d' % (i)] = {'label':'Population %d'%(i),'type':'ind'}
+        pops = sc.odict()
+        transfers = sc.odict()
+        for i in range(1, 1+int(num_pops)):
+            pops['pop_%d' % (i)] = {'label':'Population %d' % (i),'type':'ind'}
         for env in ['best', 'low', 'high']:
-            new_pops['Total (%s)'%(env)] = {'label':'Total population (%s)'%(env), 'type':'env'}
-        args = {"pops":new_pops, "data_start":int(data_start), "data_end":int(data_end), "num_transfers":1}
-    else:            args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end)}
-    proj = at.Project(framework=frame, name=proj_name, sim_dt=sim_dt) # Create the project, loading in the desired spreadsheets.
-    print(">> create_new_project %s" % (proj.name))
+            pops['Total (%s)' % (env)] = {'label':'Total population (%s)' % (env), 'type':'env'}
+        for i in range(1, 1+1):
+            transfers['transfer %d' % (i)] = {'label':'Transfer %d' % (i),'type':'ind'}
+    else:
+        pops = int(num_pops)
+        transfers = None
+
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=username) # Generate the full file name with path.
-    data = proj.create_databook(databook_path=full_file_name, **args) # Return the databook
+    data = at.ProjectData.new(frame, data_tvec, pops, transfers) # Return the databook
     proj.databook = data.to_spreadsheet()
     save_new_project(proj, username) # Save the new project in the DataStore.
-    print(">> download_databook %s" % (full_file_name))
-    return full_file_name # Return the filename
+
+    return proj.databook.tofile(), file_name
 
 
 @RPC()
