@@ -16,9 +16,9 @@ var CalibrationMixin = {
         simStartYear: 0,
         simEndYear: 2018, // TEMP FOR DEMO
         activePop: "All",
-        activeCascade: "",
         popOptions: [],
         plotOptions: [],
+        plotGroupsListCollapsed: [],
         yearOptions: [],
         serverDatastoreId: '',
         openDialogs: [],
@@ -47,7 +47,6 @@ var CalibrationMixin = {
       simStart()     { return utils.simStart(this) },
       simEnd()       { return utils.simEnd(this) },
       simYears()     { return utils.simYears(this) },
-      simCascades()  { return utils.simCascades(this) },
       activePops()   { return utils.activePops(this) },
 
       filteredParlist() {
@@ -64,7 +63,6 @@ var CalibrationMixin = {
         this.simStartYear = this.simStart
         this.simEndYear = this.simEnd
         this.popOptions = this.activePops
-        this.activeCascade = this.simCascades[0]
         this.serverDatastoreId = this.$store.state.activeProject.project.id + ':calibration'
         this.getPlotOptions(this.$store.state.activeProject.project.id)
           .then(response => {
@@ -138,7 +136,34 @@ var CalibrationMixin = {
       minimize(legend_id) { 
         return this.$sciris.minimize(this, legend_id) 
       },
-
+      
+      plotGroupActiveToggle(groupname, active) {
+        console.log('plotGroupActiveToggle() called for plot group: ', groupname, ' changing from: ', active)
+        for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+          if (this.plotOptions.plots[ind].plot_group == groupname) {
+            this.plotOptions.plots[ind].active = !active
+          }
+        }
+      },
+    
+      plotGroupListCollapseToggle(index) {
+        console.log('plotGroupListCollapseToggle() called for plot index: ', index)
+        this.plotGroupsListCollapsed[index] = !this.plotGroupsListCollapsed[index]
+        // Stupid hack required to update Vue with this data...
+        this.plotGroupsListCollapsed.push(false)
+        this.plotGroupsListCollapsed.pop()
+      },
+      
+      getPlotsFromPlotGroup(groupname) {
+        let members = []
+        for (var ind = 0; ind < this.plotOptions.plots.length; ind++) {
+          if (this.plotOptions.plots[ind].plot_group == groupname) {
+            members.push(this.plotOptions.plots[ind].plot_name)
+          }
+        }
+        return members      
+      },
+    
       toggleParams() {
         this.showParameters = !this.showParameters
       },
@@ -297,7 +322,6 @@ var CalibrationMixin = {
           'plotyear':this.simEndYear, 
           'pops':this.activePop, 
           'tool': this.toolName(), 
-          'cascade':null
         }) // Go to the server to get the results
         .then(response => {
           this.makeGraphs(response.data)
@@ -329,7 +353,6 @@ var CalibrationMixin = {
           'plotyear': this.simEndYear, 
           'pops': this.activePop, 
           'tool': this.toolName(), 
-          'cascade':null
         }) // Go to the server to get the results from the package set.
         .then(response => {
           this.table = response.data.table

@@ -1,7 +1,7 @@
 <!--
 Calibration Page
 
-Last update: 2019-05-30
+Last update: 2019-06-03
 -->
 
 <template>
@@ -118,14 +118,6 @@ Last update: 2019-05-30
           <div class="calib-title">
             <help reflink="bl-results" label="Results"></help>
             <div>
-              <template v-if="simCascades.length>1">
-                <b>Cascade: &nbsp;</b>
-                <select v-model="activeCascade" @change="reloadGraphs(true)">
-                  <option v-for='cascade in simCascades'>
-                    {{ cascade }}
-                  </option>
-                </select>
-              </template>
               &nbsp;&nbsp;&nbsp;
               <b>Year: &nbsp;</b>
               <select v-model="simEndYear" @change="reloadGraphs(true)">
@@ -195,22 +187,24 @@ Last update: 2019-05-30
             <!-- ### Start: plot selectors ### -->
             <div class="plotopts-main" :class="{'plotopts-main--full': !showPlotControls}" v-if="showPlotControls">
               <div class="plotopts-params">
-                <table class="table table-bordered table-hover table-striped" style="width: 100%">
+                <table class="table table-bordered table-hover table-striped" style="width: 100%" v-for="(item, index) in plotOptions.plotgroups">
                   <thead>
                   <tr>
-                    <th>Plot</th>
-                    <th>Active</th>
+                    <th>
+                      <span @click="plotGroupListCollapseToggle(index)">
+                      {{ item.group_name }}
+                      </span>
+                      &nbsp;&nbsp;
+                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>                    
+                    </th>
                   </tr>
                   </thead>
                   <tbody>
-                  <tr v-for="item in plotOptions.plots">
-                    <td>
-                      {{ item.plot_name }}
-                    </td>
-                    <td style="text-align: center">
-                      <input type="checkbox" v-model="item.active"/>
-                    </td>
-                  </tr>
+                    <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
+                      <td>
+                        {{ name }}
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

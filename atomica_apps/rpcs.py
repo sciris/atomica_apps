@@ -1251,7 +1251,7 @@ def supported_framework_plots_func(framework):
         Output: {name:quantities}: a dict with all of the plot quantities in the framework keyed by name
     '''
     if 'plots' not in framework.sheets:
-        return sc.odict()
+        return (sc.odict(), sc.odict())
     else:
         df = framework.sheets['plots'][0]
         plots = sc.odict()
@@ -1275,6 +1275,9 @@ def get_supported_plots(project_id, calibration_page=False, only_keys=False):
         output['plotgroups'] = []
         for plot_name, plot_group, val in zip(plot_names, plot_groups, vals):  # Pull out the framework plots.
             this = {'plot_name': plot_name, 'plot_group': plot_group, 'active': val}
+            output['plots'].append(this)
+        for plot_name in proj.framework.cascades.keys():
+            this = {'plot_name': plot_name, 'plot_group': 'Cascades', 'active': 1}
             output['plots'].append(this)
         for plot_group in np.unique(np.array(plot_groups)):
             this = {'group_name': plot_group, 'active': 1}
@@ -1386,7 +1389,7 @@ def all_pops(data) -> list:
             pops.append(name)
     return pops
 
-def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plot_options=None, dosave=True, calibration=False, plot_budget=False, outputfigs=False):
+def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None, dosave=True, calibration=False, plot_budget=False, outputfigs=False):
     
     # Handle inputs
     if sc.isstring(year):
@@ -1421,7 +1424,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         if item['group_name'] == 'Cascades':
             showcascadeplots = item['active']
 
-    def append_plots(d,figs,legends):
+    def append_plots(d, figs, legends):
         nonlocal all_figs, all_legends
         all_figs += figs
         all_legends += legends
@@ -1430,8 +1433,8 @@ def make_plots(proj, results, tool=None, year=None, pops=None, cascade=None, plo
         output['types'] += d['types']
 
     if showcascadeplots:
-        cascadeoutput, cascadefigs, cascadelegends = get_cascade_plot(proj, results, year=year, pops=pops, cascade=cascade, plot_budget=plot_budget)
-        append_plots(cascadeoutput,cascadefigs,cascadelegends)
+        cascadeoutput, cascadefigs, cascadelegends = get_cascade_plots(proj, results, year=year, pops=pops, plot_budget=plot_budget)
+        append_plots(cascadeoutput, cascadefigs, cascadelegends)
 
     if calibration:
         d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options, stacked=False, calibration=True)
@@ -1572,10 +1575,12 @@ def get_coverage_plots(results):
     return output, figs, legends
 
 
-def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plot_budget=False):
+def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=False):
     
-    if results is None: results = proj.results[-1]
-    if year    is None: year    = proj.settings.sim_end # Needed for plot_budget
+    if results is None:
+        results = proj.results[-1]
+    if year    is None:
+        year    = proj.settings.sim_end
     
     figs = []
     legends = []
@@ -1585,10 +1590,12 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     for y in range(len(years)):
         years[y] = float(years[y]) # Ensure it's a float
 
-    fig,table = at.plot_cascade(results, cascade=cascade, pops=pops, year=years, data=proj.data, show_table=False)
-    figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
-    figs.append(fig)
-    legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
+    for cascade in proj.framework.cascades.keys():
+        fig, table = at.plot_cascade(results, cascade=cascade, pops=pops, year=years, data=proj.data, show_table=False)
+        pl.title(cascade)
+        figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
+        figs.append(fig)
+        legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
     
     for fig in legends: # Different enough to warrant its own block, although ugly
         try:
@@ -1603,11 +1610,12 @@ def get_cascade_plot(proj, results=None, pops=None, year=None, cascade=None, plo
     # jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
     # output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
     output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'types':['cascade']*len(figjsons)}
+
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
 
-def get_json_cascade(results,data):
+def get_json_cascade(results, data):
     '''
     Return all data to render cascade in FE, for multiple results
    
@@ -1674,27 +1682,27 @@ def get_json_cascade(results,data):
     jsondata = sc.sanitizejson(cascade_data)
     ncolors = len(result.pop_names)
     jsoncolors = sc.gridcolors(ncolors, ashex=True)
-    return jsondata,jsoncolors
+    return jsondata, jsoncolors
 
 
 @RPC()  
-def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, plotyear=None, pops=None, tool=None, cascade=None, dosave=True):
+def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, plotyear=None, pops=None, tool=None, dosave=True):
     print('Running "manual calibration"...')
     proj = load_project(project_id, die=True)
     result = proj.run_sim(parset=parsetname, store_results=False)
     cache_result(proj, result, cache_id)
-    output = make_plots(proj, result, tool=tool, year=plotyear, pops=pops, cascade=cascade, plot_options=plot_options, dosave=dosave, calibration=True)
+    output = make_plots(proj, result, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, calibration=True)
     return output
 
 
 @RPC()    
-def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, saveresults=True, plot_options=None, tool=None, plotyear=None, pops=None,cascade=None, dosave=True):
+def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, saveresults=True, plot_options=None, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running automatic calibration for parset %s...' % parsetname)
     proj = load_project(project_id, die=True)
     proj.calibrate(parset=parsetname, max_time=float(max_time)) # WARNING, add kwargs!
     result = proj.run_sim(parset=parsetname, store_results=False)
     cache_result(proj, result, cache_id)
-    output = make_plots(proj, result, tool=tool, year=plotyear, pops=pops, cascade=cascade, plot_options=plot_options, dosave=dosave, calibration=True)
+    output = make_plots(proj, result, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, calibration=True)
     return output
 
 
@@ -2154,14 +2162,14 @@ def scen_reset_values(js_scen, project_id):
 
 
 @RPC()    
-def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=None, plotyear=None, pops=None,cascade=None, dosave=True):
+def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running scenarios...')
     proj = load_project(project_id, die=True)
     results = proj.run_scenarios(store_results=False)
     if len(results) < 1:  # Fail if we have no results (user didn't pick a scenario)
         return {'error': 'No scenario selected'}
     cache_result(proj, results, cache_id)
-    output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, cascade=cascade, plot_options=plot_options, dosave=dosave, calibration=False, plot_budget=True)
+    output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, calibration=False, plot_budget=True)
     print('Saving project...')
     save_project(proj)
     return output
@@ -2238,15 +2246,15 @@ def set_optim_info(project_id, optim_jsons, verbose=False):
 
 # This is the function we should use on occasions when we can't use Celery.
 @RPC()
-def run_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
+def run_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running Cascade optimization...')
-    sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'cascade', 'dosave'], color='blue')
+    sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'dosave'], color='blue')
     proj = load_project(project_id, die=True)
         
     # Actually run the optimization and get its results (list of baseline and optimized Result objects).
     results = proj.run_optimization(optim_name, maxtime=float(maxtime), store_results=False)
     cache_result(proj, results, cache_id)
-    output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, cascade=cascade, plot_options=plot_options, dosave=dosave, plot_budget=True) # Plot the results.   
+    output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, plot_budget=True) # Plot the results.
     save_project(proj)
     return output
 
@@ -2302,13 +2310,13 @@ def clear_cached_results(proj, project_id, spare_calibration=False, verbose=True
 
 
 @RPC() 
-def plot_results(project_id, cache_id, plot_options, tool=None, plotyear=None, pops=None, cascade=None, dosave=True, plotbudget=False, calibration=False):
+def plot_results(project_id, cache_id, plot_options, tool=None, plotyear=None, pops=None, dosave=True, plotbudget=False, calibration=False):
     print('Plotting cached results...')
     proj = load_project(project_id, die=True)
     results = load_result(cache_id) # Load the results from the cache and check if we got a result.
     if results is None:
         return { 'error': 'Failed to load plot results from cache' }
-    output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, cascade=cascade, plot_options=plot_options, dosave=dosave, plot_budget=plotbudget, calibration=calibration)
+    output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, plot_budget=plotbudget, calibration=calibration)
     return output
     
 

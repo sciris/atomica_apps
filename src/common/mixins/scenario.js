@@ -18,7 +18,6 @@ var ScenarioMixin = {
       simEndYear: 2035,
       dataEndYear: 0,
       activePop: "All",
-      activeCascade: "",
       popOptions: [],
       plotOptions: [],
       plotGroupsListCollapsed: [],
@@ -55,7 +54,6 @@ var ScenarioMixin = {
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },
     simEnd()       { return utils.simEnd(this) },
-    simCascades()  { return utils.simCascades(this) },
     projectionYears()     { return utils.projectionYears(this) },
     activePops()   { return utils.activePops(this) },
     sortedParamOverwrites() {
@@ -76,7 +74,6 @@ var ScenarioMixin = {
         this.validSimYears.push(year)
       }      
       this.popOptions = this.activePops
-      this.activeCascade = this.simCascades[0]
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
       this.getPlotOptions(this.$store.state.activeProject.project.id)
         .then(response => {
