@@ -1278,7 +1278,7 @@ def supported_framework_plots_func(framework):
 
 
 @RPC()    
-def get_supported_plots(project_id, calibration_page=False, only_keys=False):
+def get_supported_plots(project_id, tool, calibration_page=False, only_keys=False):
     proj = load_project(project_id, die=True)
     supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)  # Get the framework plots
     if only_keys:
