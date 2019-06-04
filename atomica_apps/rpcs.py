@@ -539,7 +539,7 @@ def add_demo_project(username, model, tool):
     if tool == 'tb':
         proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5, do_run=False)
         proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
-        # TODO - Add a selection of default scenarios here
+        proj.demo_scenarios()  # Add example scenarios
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
     proj.name = 'Demo project'
@@ -1303,7 +1303,7 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
             this = {'group_name': 'Program coverage plots', 'active': 1}
             output['plotgroups'].append(this)
 
-        if tool == 'tb' and calibration_page:
+        if tool == 'tb' and calibration_page and proj.data.pops[0]['type']=='ind':
             this = {'group_name': 'TB calibration', 'active': 1}
             output['plotgroups'].append(this)
             this = {'group_name': 'TB probabilistic cascades', 'active': 1}
@@ -1491,7 +1491,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             d, figs, legends = get_coverage_plots(results=results)
             append_plots(d, figs, legends)
 
-    if calibration and tool=='tb': # Don't do advanced TB plots on scenarios, they are only expected to work with single results for now
+    if calibration and tool=='tb' and proj.data.pops[0]['type']=='ind': # Don't do advanced TB plots on scenarios, they are only expected to work with single results for now
         if show_tb_calibration:
             tb_output, tb_figs, tb_legends = tb_key_calibration_plots(proj, results, pops=pops)
             append_plots(tb_output, tb_figs, tb_legends)
@@ -2514,7 +2514,7 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
     return outputs, figs, legends
 
 def tb_indpops(P):
-    return [key for key, details in P.data.pops.items() if details['type']=='ind']
+    return [key for key, details in P.data.pops.items() if details['type']=='ind' or details['type']=='default']
 
 def tb_natpops(P):
     return [key for key, details in P.data.pops.items() if details['type']=='env']
