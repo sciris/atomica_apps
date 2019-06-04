@@ -133,7 +133,7 @@ if 'make_plots' in torun:
 
     # Run
     results = proj.run_sim()
-    output, figs, legends = rpcs.make_plots(proj, results=results, calibration=calibration, outputfigs=True)
+    output = rpcs.make_plots(proj, results=results, calibration=calibration)
 
     # Output
     print('Output:')

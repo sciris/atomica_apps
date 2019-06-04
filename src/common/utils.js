@@ -356,7 +356,28 @@ function makeGraphs(vm, data, routepath) {
             cascadeGraphsDivs[0].removeChild(cascadeGraphsDivs[0].children[0])
           }
         }
-        
+
+        // if (vm.toolName() === 'tb') {
+          let tbCalibrationDivs = document.getElementsByClassName("tb-calibration-graphs")
+          if (tbCalibrationDivs) {
+            while (tbCalibrationDivs[0].children[0]) {
+              tbCalibrationDivs[0].removeChild(tbCalibrationDivs[0].children[0])
+            }
+          }
+          let tbCascadeDivs = document.getElementsByClassName("tb-cascade-graphs")
+          if (tbCascadeDivs) {
+            while (tbCascadeDivs[0].children[0]) {
+              tbCascadeDivs[0].removeChild(tbCascadeDivs[0].children[0])
+            }
+          }
+          let tbAdvancedDivs = document.getElementsByClassName("tb-advanced-graphs")
+          if (tbAdvancedDivs) {
+            while (tbAdvancedDivs[0].children[0]) {
+              tbAdvancedDivs[0].removeChild(tbAdvancedDivs[0].children[0])
+            }
+          }
+        // }
+
         // Remove all existing graph-header (class) elements.
         let headers = document.getElementsByClassName("graph-header")
         while (headers[0]) {
@@ -368,7 +389,10 @@ function makeGraphs(vm, data, routepath) {
         let firstBudgetInd = -1
         let firstCoverageInd = -1
         let firstCascadeInd = -1
-        
+        let firstTBCalibrationInd = -1
+        let firstTBCascadeInd = -1
+        let firstTBAdvancedInd = -1
+
         // Loop over all of the plots...
         for (var index = 0; index < n_plots; index++) {
           console.log('Rendering plot ' + index + '. Type is ' + graphtypes[index])
@@ -423,6 +447,48 @@ function makeGraphs(vm, data, routepath) {
             newfigdiv = document.createElement("DIV")
             newfigdiv.id = figlabel
             cascadeGraphsDivs[0].appendChild(newfigdiv)           
+          } else if ((graphtypes[index] == "tb-calibration") && (tbCalibrationDivs)) {
+            // Create the figure container and put it in the coverage graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            tbCalibrationDivs[0].appendChild(newfigcontdiv)
+
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)
+          } else if ((graphtypes[index] == "tb-advanced") && (tbAdvancedDivs)) {
+            // Create the figure container and put it in the coverage graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            tbAdvancedDivs[0].appendChild(newfigcontdiv)
+
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)
+          } else if ((graphtypes[index] == "tb-cascade") && (tbCascadeDivs)) {
+            // Create the figure container and put it in the budget graphs div.
+            newfigcontdiv = document.createElement("DIV")
+            newfigcontdiv.id = figcontainerlabel
+            newfigcontdiv.style.display = 'flex'
+            newfigcontdiv.style.justifyContent = 'flex-start'
+            newfigcontdiv.style.padding = '5px'
+            newfigcontdiv.style.border = '1px solid #ddd'
+            tbCascadeDivs[0].appendChild(newfigcontdiv)
+
+            // Create a new figure and put it in that fig container.
+            newfigdiv = document.createElement("DIV")
+            newfigdiv.id = figlabel
+            newfigcontdiv.appendChild(newfigdiv)
           }
 
           // Draw the mpld3 figure into the figN div where it belongs.
@@ -469,7 +535,15 @@ function makeGraphs(vm, data, routepath) {
           if ((graphtypes[index] == "cascade") && (firstCascadeInd == -1)) {
             firstCascadeInd = index
           }          
-              
+          if ((graphtypes[index] == "tb-calibration") && (firstTBCalibrationInd == -1)) {
+            firstTBCalibrationInd = index
+          }
+          if ((graphtypes[index] == "tb-advanced") && (firstTBAdvancedInd == -1)) {
+            firstTBAdvancedInd = index
+          }
+          if ((graphtypes[index] == "tb-cascade") && (firstTBCascadeInd == -1)) {
+            firstTBCascadeInd = index
+          }
           vm.showGraphDivs[index] = true;
         } // end of for loop
         
@@ -533,7 +607,46 @@ function makeGraphs(vm, data, routepath) {
           destdiv = cascadeGraphsDivs[0].parentNode         
           destdiv.insertBefore(newItem, cascadeGraphsDivs[0])
         }
-        
+
+        if (firstTBCalibrationInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0TB Calibration")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = tbCalibrationDivs[0].parentNode
+          destdiv.insertBefore(newItem, tbCalibrationDivs[0])
+        }
+
+        if (firstTBCascadeInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0TB Probabilistic Cascades")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = tbCascadeDivs[0].parentNode
+          destdiv.insertBefore(newItem, tbCascadeDivs[0])
+        }
+
+        if (firstTBAdvancedInd != -1) {
+          newItem = document.createElement("DIV")
+          newItem.classList.add("graph-header")
+          newItem2 = document.createElement("BR")
+          newItem.appendChild(newItem2)
+          newItem2 = document.createElement("H2")
+          textnode = document.createTextNode("\u00A0\u00A0TB Advanced")
+          newItem2.appendChild(textnode)
+          newItem.appendChild(newItem2)
+          destdiv = tbAdvancedDivs[0].parentNode
+          destdiv.insertBefore(newItem, tbAdvancedDivs[0])
+        }
+
         sciris.status.succeed(vm, 'Graphs created') // CK: This should be a promise, otherwise this appears before the graphs do
       })
   }

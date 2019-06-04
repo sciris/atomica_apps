@@ -122,6 +122,15 @@ Last update: 2019-06-03
                 <div class="cascade-graphs">
                   <!-- multiple figs may be inserted here -->
                 </div>
+                <div class="tb-calibration-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
+                <div class="tb-cascade-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
+                <div class="tb-advanced-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
               </div> <!-- ### End: calib-graphs ### -->
             </div>
             <!-- ### End: plots ### -->

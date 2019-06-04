@@ -457,7 +457,7 @@ def jsonify_project(project_id, verbose=False):
         framework_name = 'N/A'
     try:
         n_pops = len(proj.data.pops)
-        pop_pairs = [[key, val['label']] for key, val in proj.data.pops.items()]  # Pull out population keys and names
+        pop_pairs = [[key, val['label']] for key, val in proj.data.pops.items() if val['type'] != 'env']  # Pull out population keys and names. # TODO - deal with pop types properly
     except: 
         print('Could not load populations for project')
         n_pops = 'N/A'
@@ -1302,6 +1302,15 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
             output['plotgroups'].append(this)
             this = {'group_name': 'Program coverage plots', 'active': 1}
             output['plotgroups'].append(this)
+
+        if tool == 'tb' and calibration_page:
+            this = {'group_name': 'TB calibration', 'active': 1}
+            output['plotgroups'].append(this)
+            this = {'group_name': 'TB Probabilistic cascades', 'active': 1}
+            output['plotgroups'].append(this)
+            this = {'group_name': 'TB Advanced', 'active': 1}
+            output['plotgroups'].append(this)
+
         this = {'group_name': 'Cascades', 'active': 1}
         output['plotgroups'].append(this)
         return output
@@ -1404,8 +1413,8 @@ def all_pops(data) -> list:
             pops.append(name)
     return pops
 
-def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None, dosave=True, calibration=False, plot_budget=False, outputfigs=False):
-    
+def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None, dosave=True, calibration=False, plot_budget=False):
+
     # Handle inputs
     if sc.isstring(year):
         year = float(year)
@@ -1417,7 +1426,10 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
     if calibration and pops.lower() == 'all':
         # For calibration plot, 'all' pops means that they should all be disaggregated and visible
         # But for scenarios and optimizations, 'all' pops means aggregated over all pops
-        pops = all_pops(proj.data)
+        if tool == 'tb':
+            pops = tb_indpops(proj)
+        else:
+            pops = all_pops(proj.data)
     elif pops.lower() == 'all':
         pops = {'Total': all_pops(proj.data)}
     else:
@@ -1431,6 +1443,10 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
     showbudgetplots = False
     showcoverageplots = False
     showcascadeplots = False
+    show_tb_calibration = False
+    show_tb_advanced = False
+    show_tb_cascade = False
+
     for item in plot_options['plotgroups']:
         if item['group_name'] == 'Program spending plots':
             showbudgetplots = item['active']
@@ -1438,6 +1454,12 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             showcoverageplots = item['active']
         if item['group_name'] == 'Cascades':
             showcascadeplots = item['active']
+        if item['group_name'] == 'TB calibration':
+            show_tb_calibration = item['active']
+        if item['group_name'] == 'TB Probabilistic cascades':
+            show_tb_advanced = item['active']
+        if item['group_name'] == 'TB Advanced':
+            show_tb_cascade = item['active']
 
     def append_plots(d, figs, legends):
         nonlocal all_figs, all_legends
@@ -1469,15 +1491,25 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             d, figs, legends = get_coverage_plots(results=results)
             append_plots(d, figs, legends)
 
-    if tool=='tb':
-        tb_output, tb_figs, tb_legends = tb_key_calibration_plots(proj, results, pops=pops)
-        append_plots(tb_output, tb_figs, tb_legends)
+    if calibration and tool=='tb': # Don't do advanced TB plots on scenarios, they are only expected to work with single results for now
+        if show_tb_calibration:
+            tb_output, tb_figs, tb_legends = tb_key_calibration_plots(proj, results, pops=pops)
+            append_plots(tb_output, tb_figs, tb_legends)
+
+        if show_tb_advanced:
+            tb_output, tb_figs, tb_legends = tb_advanced_plots(proj, results, pops=pops)
+            append_plots(tb_output, tb_figs, tb_legends)
+
+        if show_tb_cascade:
+            tb_output, tb_figs, tb_legends = tb_probabilistic_cascade(proj, results, pops=pops, year=year)
+            append_plots(tb_output, tb_figs, tb_legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
-    if outputfigs:
-        return output, all_figs, all_legends
-    else:
-        return output
+    for fig in all_figs:
+        pl.close(fig)
+    for legend in all_legends:
+        pl.close(legend)
+    return output
 
 
 def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, is_cov_plot=False, popup_legends=False):
@@ -1494,7 +1526,7 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
             if figsize is None: figsize = (5,3)
             fig.set_size_inches(figsize)
             ax.set_position([0.25,0.18,0.70,0.72])
-            if is_epi:
+            if is_epi and output is not None:
                 ax.set_title(list(output.keys())[0]) # This is in a loop over outputs, so there should only be one output present
         y_max = ax.get_ylim()[1]
         labelpad = 7
@@ -1504,7 +1536,7 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
         if y_max > 1e7:  labelpad = 30
         if y_max > 1e8:  labelpad = 35
         if y_max > 1e9:  labelpad = 40
-        if is_epi:
+        if is_epi and plotdata is not None:
             ylabel = plotdata.series[0].units
             if ylabel == 'probability': ylabel = 'Probability'
             if ylabel == '':            ylabel = 'Proportion'
@@ -2473,15 +2505,12 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
     
     legend = sc.emptyfig()
 
-    outputs['graphs'].append(customize_fig(fig=fig, is_epi=False))
+    outputs['graphs'].append(customize_fig(fig=fig, is_epi=True))
     outputs['legends'].append(customize_fig(fig=legend,is_legend=True))
-    outputs['types'].append('tb')
     figs.append(fig)
     legends.append(legend)
 
     print('TB standard plot %s succeeded' % (title))
-    print(len(outputs['graphs']))
-    print(figs)
     return outputs, figs, legends
 
 def tb_indpops(P):
@@ -2585,17 +2614,16 @@ def tb_key_calibration_plots(proj, results=None, pops='all', xlims=None):
                               title='Number of %s notifications (including extrapulmonary notifications and excluding unreported diagnoses) - %s'%(ss_mapping[ss], pop), 
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
 
+    outputs['types'] = len(outputs['graphs'])*['tb-calibration']
     return outputs, figs, legends
 
 """TODO OUTPUTS FIGS LEGENDS"""
-def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None):
-    allpops = tb_indpops(P)
-    
-    outputs = { 'graphs': [], 'legends': [], 'types': []}
-    figs = []
-    legends = []
-    
-    if pops=='all':pops=[{'Total':allpops}]
+def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018):
+
+    pops = sc.promotetolist(pops)
+    allfigs = []
+    if len(pops) > 1:
+        pops=[{'Total':pops}]
     
     result=results #TODO if this is a list should be a loop for result in results:?
     #cascade (probabilistic outcomes)
@@ -2613,7 +2641,6 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None):
 #    if save_figs:
 #        at.save_figs(fig, path=results_folder, prefix='cascade_probable_')
     
-    year = 2018
     ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR', 'all':'Active TB'}
     
     for ss in ['pd', 'nd', 'pm', 'nm', 'px', 'nx']:
@@ -2627,15 +2654,17 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None):
             d.set_colors('#00267a', pops=pop, outputs=['New active cases', 'Diagnosed', 'Initiate treatment', 'Treatment success'])
             d.set_colors('#aaaaaa', pops=pop, outputs=['Undiagnosed recovery', 'Diagnosed recovery', 'Treatment fail/LTFU'])
             d.set_colors('#aa2626', pops=pop, outputs=['Undiagnosed death', 'Diagnosed death', 'Treatment death'])
-        figs = at.plot_bars(d, outer='results', stack_outputs=[['New active cases'],
+        fig = at.plot_bars(d, outer='results', stack_pops='all', stack_outputs=[['New active cases'],
                                                                ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
                                                                ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
-                                                               ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']])
-        for fig in figs:
-            fig.axes[0].set_title(ss_mapping[ss], fontsize=20) #+' treatment probabilistic outcomes')
-            fig.axes[0].set_ylabel('New active TB cases '+str(year))
-            fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success'])
-            fig.axes[0].get_legend().remove()
+                                                               ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='none')[0]
+        fig.axes[0].set_title(ss_mapping[ss], fontsize=20) #+' treatment probabilistic outcomes')
+        fig.axes[0].set_ylabel('New active TB cases '+str(year))
+        fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success'])
+        # fig.set_size_inches((5, 3))
+
+        # fig.axes[0].get_legend().remove()
+        allfigs.append(fig)
 #            fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU)'])
 #        if save_figs:
 #            at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
@@ -2651,29 +2680,34 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None):
             d.set_colors('#00267a', pops=pop, outputs=['New active cases', 'Diagnosed', 'Initiate treatment', 'Treatment success', 'Recovery clear'])
             d.set_colors('#aaaaaa', pops=pop, outputs=['Undiagnosed recovery', 'Diagnosed recovery', 'Treatment fail/LTFU', 'Recovery relapse'])
             d.set_colors('#aa2626', pops=pop, outputs=['Undiagnosed death', 'Diagnosed death', 'Treatment death'])
-    figs = at.plot_bars(d, outer='results', stack_outputs=[['New active cases'],
+    fig = at.plot_bars(d, outer='results', stack_pops='all', stack_outputs=[['New active cases'],
                                                            ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
                                                            ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
                                                            ['Treatment success', 'Treatment fail/LTFU', 'Treatment death'],
-                                                           ['Recovery clear', 'Recovery relapse']])
-    for fig in figs:
-        fig.axes[0].set_title(ss_mapping[ss]+' treatment probabilistic outcomes')
-        fig.axes[0].set_ylabel('New active TB cases '+str(year))
-        fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success', 'No relapse'])
-#        fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU, relapse)'])
-#    if save_figs:
-#        at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
-        
-    return outputs, figs, legends
+                                                           ['Recovery clear', 'Recovery relapse']],legend_mode='together')[0]
+    fig.axes[0].set_title(ss_mapping[ss]+' treatment probabilistic outcomes')
+    fig.axes[0].set_ylabel('New active TB cases '+str(year))
+    fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success', 'No relapse'])
+    # fig.set_size_inches((5, 3))
+    allfigs.append(fig)
+    #        fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU, relapse)'])
+    #    if save_figs:
+    #        at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
+
+    outputs = {}
+    outputs['graphs'] = [customize_fig(fig=fig,is_epi=False) for fig in allfigs]
+    outputs['legends'] = []
+    outputs['types'] = ['tb-cascade']*len(allfigs)
+    alllegends = len(allfigs)*[sc.emptyfig()]
+    return outputs, allfigs, alllegends
 
 """TODO OUTPUTS FIGS LEGENDS"""    
 def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, results_folder, save_figs, plot_years, **kwargs):
     allpops = tb_indpops(P)
 #    blhpops  = natpops(P)
     
-    outputs = { 'graphs': [], 'legends': [], 'types': []}
-    figs = []
-    legends = []
+    allfigs = []
+    alllegends = []
     
     if pops=='all':pops=[{'Total':allpops}]
 
@@ -2690,54 +2724,66 @@ def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, res
              }], pop_aggregation='sum')
     for pop in d.pops:
         d.set_colors('Greys', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs',data=P.data)
-    for fig in figs:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',data=P.data,legend_mode='separate')
+    for fig in figs[0:-1]:
 #        fig.axes[0].legend(['Model mortality'], **legendsettings)
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','TB-related deaths by source - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
-#    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_source_')
+    allfigs += figs[0:-1]
+    alllegends.append(figs[-1])
 
+#    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_source_')
     #deaths by populaion
     d = at.PlotData(result, pops=allpops, outputs=[
             {'Model deaths': [':ddis']
              }], pop_aggregation='sum')
     for out in d.outputs:
         d.set_colors('Reds', pops=d.pops, outputs=out)
-    figs = at.plot_series(d, plot_type='stacked', axis='pops',data=P.data)
-    for fig in figs:
+    figs = at.plot_series(d, plot_type='stacked', axis='pops',data=P.data,legend_mode='separate')
+    for fig in figs[0:-1]:
 #        fig.axes[0].legend(['Model mortality'], **legendsettings)
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default','TB-related deaths by population'))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_pops_')
-    
+    allfigs += figs[0:-1]
+    alllegends.append(figs[-1])
+
     #Source of latent infections
     d = at.PlotData(result, pops=pops, outputs=[{'New latent infections': ['sus:lteu'], 'New latent infections (vaccinated)': ['vac:ltex'], 'Reinfection': ['susx:ltex']}])
     for pop in d.pops:
         d.set_colors('Greens', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs')
-    for fig in figs:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='separate')
+    for fig in figs[0:-1]:
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Source of latent infections - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='lt_inf_source_')
-    
+    allfigs += figs[0:-1]
+    alllegends.append(figs[-1])
+
     #Ever infected
     d = at.PlotData(result, pops=pops, outputs=[{'Latent TB':['lt_inf'], 'Recovered or treated more than two years previously':['ltx_inf'],'Recovered or treated within last two years':['acr'], 'Active TB':['ac_inf']}])
     for pop in d.pops:
         d.set_colors('PuRd', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs', data=P.data)
-    for fig in figs:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs', data=P.data,legend_mode='separate')
+    for fig in figs[0:-1]:
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Ever infected - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='everinfected_')
-    
+    allfigs += figs[0:-1]
+    alllegends.append(figs[-1])
+
     #Source of active infections
     d = at.PlotData(result, pops=pops, outputs=[{'Latent early (exposed within the last five years)': ['lteu:acj', 'ltex:acj'], 'Latent late (exposed more than five years previously)': ['ltlu:acj', 'ltlx:acj'], 'Relapse (recovered within the previous two years)': ['acr:acj']}])
     for pop in d.pops:
         d.set_colors('Blues', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs')
-    for fig in figs:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='separate')
+    for fig in figs[0:-1]:
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Source of new active cases - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='inf_source_')
-    
-    return outputs, figs, legends
+    allfigs += figs[0:-1]
+    alllegends.append(figs[-1])
+
+    outputs = { 'graphs': [customize_fig(fig,is_epi=True) for fig in allfigs], 'legends': [customize_fig(fig,is_legend=True) for fig in alllegends], 'types': len(allfigs)*['tb-advanced']}
+
+    return outputs, allfigs, alllegends
