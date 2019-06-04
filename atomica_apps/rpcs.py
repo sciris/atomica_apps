@@ -564,7 +564,13 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
     elif tool == 'tb': # Or get a pre-existing one by the tool name
         frame = at.demo(kind='framework', which='tb')
 
-    if tool == 'tb': args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end), "num_transfers":1}
+    if tool == 'tb':
+        new_pops = sc.odict()
+        for i in range(0, num_pops):
+            new_pops['pop_%d' % (i)] = {'label':'Population %d'%(i),'type':'ind'}
+        for env in ['best', 'low', 'high']:
+            new_pops['Total (%s)'%(env)] = {'label':'Total population (%s)'%(env), 'type':'env'}
+        args = {"pops":new_pops, "data_start":int(data_start), "data_end":int(data_end), "num_transfers":1}
     else:            args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end)}
     proj = at.Project(framework=frame, name=proj_name, sim_dt=sim_dt) # Create the project, loading in the desired spreadsheets.
     print(">> create_new_project %s" % (proj.name))
