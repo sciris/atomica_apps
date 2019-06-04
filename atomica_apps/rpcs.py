@@ -1306,9 +1306,9 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
         if tool == 'tb' and calibration_page:
             this = {'group_name': 'TB calibration', 'active': 1}
             output['plotgroups'].append(this)
-            this = {'group_name': 'TB Probabilistic cascades', 'active': 1}
+            this = {'group_name': 'TB probabilistic cascades', 'active': 1}
             output['plotgroups'].append(this)
-            this = {'group_name': 'TB Advanced', 'active': 1}
+            this = {'group_name': 'TB advanced', 'active': 1}
             output['plotgroups'].append(this)
 
         this = {'group_name': 'Cascades', 'active': 1}
@@ -1456,9 +1456,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             showcascadeplots = item['active']
         if item['group_name'] == 'TB calibration':
             show_tb_calibration = item['active']
-        if item['group_name'] == 'TB Probabilistic cascades':
+        if item['group_name'] == 'TB probabilistic cascades':
             show_tb_advanced = item['active']
-        if item['group_name'] == 'TB Advanced':
+        if item['group_name'] == 'TB advanced':
             show_tb_cascade = item['active']
 
     def append_plots(d, figs, legends):
@@ -2531,7 +2531,7 @@ def tb_key_calibration_plots(proj, results=None, pops='all', xlims=None):
     result = results #TODO if this is a list should be a loop for result in results:? or better still pass as results and make standard_plot plot multiple results gracefully for scenario use?
     
     
-    if pops=='all':
+    if pops==allpops:
         pops = allpops
         
         #active incidence
@@ -2709,7 +2709,8 @@ def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, res
     allfigs = []
     alllegends = []
     
-    if pops=='all':pops=[{'Total':allpops}]
+    if pops==allpops:
+        pops=[{'Total':allpops}]
 
     result=results #TODO if this is a list should be a loop for result in results:?
 
@@ -2724,13 +2725,12 @@ def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, res
              }], pop_aggregation='sum')
     for pop in d.pops:
         d.set_colors('Greys', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs',data=P.data,legend_mode='separate')
-    for fig in figs[0:-1]:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',data=P.data,legend_mode='together')
+    for fig in figs:
 #        fig.axes[0].legend(['Model mortality'], **legendsettings)
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','TB-related deaths by source - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
-    allfigs += figs[0:-1]
-    alllegends.append(figs[-1])
+    allfigs += figs
 
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_source_')
     #deaths by populaion
@@ -2739,51 +2739,47 @@ def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, res
              }], pop_aggregation='sum')
     for out in d.outputs:
         d.set_colors('Reds', pops=d.pops, outputs=out)
-    figs = at.plot_series(d, plot_type='stacked', axis='pops',data=P.data,legend_mode='separate')
-    for fig in figs[0:-1]:
+    figs = at.plot_series(d, plot_type='stacked', axis='pops',data=P.data,legend_mode='together')
+    for fig in figs:
 #        fig.axes[0].legend(['Model mortality'], **legendsettings)
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default','TB-related deaths by population'))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_pops_')
-    allfigs += figs[0:-1]
-    alllegends.append(figs[-1])
+    allfigs += figs
 
     #Source of latent infections
     d = at.PlotData(result, pops=pops, outputs=[{'New latent infections': ['sus:lteu'], 'New latent infections (vaccinated)': ['vac:ltex'], 'Reinfection': ['susx:ltex']}])
     for pop in d.pops:
         d.set_colors('Greens', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='separate')
-    for fig in figs[0:-1]:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='together')
+    for fig in figs:
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Source of latent infections - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='lt_inf_source_')
-    allfigs += figs[0:-1]
-    alllegends.append(figs[-1])
+    allfigs += figs
 
     #Ever infected
     d = at.PlotData(result, pops=pops, outputs=[{'Latent TB':['lt_inf'], 'Recovered or treated more than two years previously':['ltx_inf'],'Recovered or treated within last two years':['acr'], 'Active TB':['ac_inf']}])
     for pop in d.pops:
         d.set_colors('PuRd', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs', data=P.data,legend_mode='separate')
-    for fig in figs[0:-1]:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs', data=P.data,legend_mode='together')
+    for fig in figs:
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Ever infected - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='everinfected_')
-    allfigs += figs[0:-1]
-    alllegends.append(figs[-1])
+    allfigs += figs
 
     #Source of active infections
     d = at.PlotData(result, pops=pops, outputs=[{'Latent early (exposed within the last five years)': ['lteu:acj', 'ltex:acj'], 'Latent late (exposed more than five years previously)': ['ltlu:acj', 'ltlx:acj'], 'Relapse (recovered within the previous two years)': ['acr:acj']}])
     for pop in d.pops:
         d.set_colors('Blues', pops=pop, outputs=d.outputs)
-    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='separate')
-    for fig in figs[0:-1]:
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='together')
+    for fig in figs:
         fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Source of new active cases - '))
         if not xlims is None: fig.axes[0].set_xlim(xlims)
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='inf_source_')
-    allfigs += figs[0:-1]
-    alllegends.append(figs[-1])
+    allfigs += figs
 
-    outputs = { 'graphs': [customize_fig(fig,is_epi=True) for fig in allfigs], 'legends': [customize_fig(fig,is_legend=True) for fig in alllegends], 'types': len(allfigs)*['tb-advanced']}
+    outputs = { 'graphs': [customize_fig(fig,is_epi=True) for fig in allfigs], 'legends': [], 'types': len(allfigs)*['tb-advanced']}
 
     return outputs, allfigs, alllegends
