@@ -1281,21 +1281,30 @@ def supported_framework_plots_func(framework):
 def get_supported_plots(project_id, tool, calibration_page=False, only_keys=False):
     proj = load_project(project_id, die=True)
     supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)  # Get the framework plots
+
+    if tool == 'tb':
+        disable_by_default = ['TB diagnosis','TB progression','TB smear/strain','TB treatment']
+        show_cascades_by_default = 0
+    else:
+        disable_by_default = []
+        show_cascades_by_default = 1
+
     if only_keys:
         plot_names = supported_plots.keys()
         plot_groups = supported_plot_groups.values()
-        vals = np.ones(len(plot_names))
         output = {}
         output['plots'] = []
         output['plotgroups'] = []
-        for plot_name, plot_group, val in zip(plot_names, plot_groups, vals):  # Pull out the framework plots.
+        for plot_name, plot_group in zip(plot_names, plot_groups):  # Pull out the framework plots.
+            val = 0 if plot_group in disable_by_default else 1
             this = {'plot_name': plot_name, 'plot_group': plot_group, 'active': val}
             output['plots'].append(this)
         for plot_name in proj.framework.cascades.keys():
-            this = {'plot_name': plot_name, 'plot_group': 'Cascades', 'active': 1}
+            this = {'plot_name': plot_name, 'plot_group': 'Cascades', 'active': show_cascades_by_default}
             output['plots'].append(this)
         for plot_group in np.unique(np.array(plot_groups)):
-            this = {'group_name': plot_group, 'active': 1}
+            val = 0 if plot_group in disable_by_default else 1
+            this = {'group_name': plot_group, 'active': val}
             output['plotgroups'].append(this)
         if not calibration_page:
             this = {'group_name': 'Program spending plots', 'active': 1}
@@ -1306,12 +1315,13 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
         if tool == 'tb' and calibration_page and proj.data.pops[0]['type']=='ind':
             this = {'group_name': 'TB calibration', 'active': 1}
             output['plotgroups'].append(this)
-            this = {'group_name': 'TB probabilistic cascades', 'active': 1}
+            this = {'group_name': 'TB probabilistic cascades', 'active': 0}
             output['plotgroups'].append(this)
-            this = {'group_name': 'TB advanced', 'active': 1}
+            this = {'group_name': 'TB advanced', 'active': 0}
             output['plotgroups'].append(this)
 
-        this = {'group_name': 'Cascades', 'active': 1}
+
+        this = {'group_name': 'Cascades', 'active': show_cascades_by_default}
         output['plotgroups'].append(this)
         return output
     else:
