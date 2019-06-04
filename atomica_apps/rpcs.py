@@ -1296,14 +1296,14 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
         output['plots'] = []
         output['plotgroups'] = []
         for plot_name, plot_group in zip(plot_names, plot_groups):  # Pull out the framework plots.
-            val = 0 if plot_group in disable_by_default else 1
+            val = 0 if plot_group in disable_by_default and calibration_page else 1
             this = {'plot_name': plot_name, 'plot_group': plot_group, 'active': val}
             output['plots'].append(this)
         for plot_name in proj.framework.cascades.keys():
             this = {'plot_name': plot_name, 'plot_group': 'Cascades', 'active': show_cascades_by_default}
             output['plots'].append(this)
         for plot_group in np.unique(np.array(plot_groups)):
-            val = 0 if plot_group in disable_by_default else 1
+            val = 0 if plot_group in disable_by_default and calibration_page  else 1
             this = {'group_name': plot_group, 'active': val}
             output['plotgroups'].append(this)
         if not calibration_page:
