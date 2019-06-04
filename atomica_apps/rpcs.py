@@ -2409,7 +2409,7 @@ def tb_add_confidence(P, fig, labels_to_use=[], pops=None, datapars=None):
     return fig
 
 def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='sum', res_pops=None, data_pops=None, title=None,
-                  ylabel=None, results_folder=None, save_figs=False, sampled_results = None,
+                  ylabel=None, results_folder=None, sampled_results = None,
                   outputs = None, figs=None, legends=None, xlims=None):
     """
     Standard TB plot covering most situations and including both model and input uncertainty
@@ -2444,9 +2444,8 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
         fig = ensemble.plot_series()
     else:  #just use the best result and plot as lines
         d = at.PlotData(result, outputs=plot_outputs, pops=plot_pops, pop_aggregation=pop_aggregation)
-        figs = at.plot_series(d, axis='outputs', plot_type='line')
-        fig = figs[0]
-        
+        fig = at.plot_series(d, axis='outputs', plot_type='line')[0]
+
     fig = tb_add_confidence(P, fig, labels_to_use = legends, pops=data_pops, datapars=data_pars) #may add further entries to the legend
     
     fig.axes[0].set_ylim(bottom=0.)
@@ -2455,14 +2454,10 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
     if not title is None: fig.axes[0].set_title(title)
 
 #    label = str(res_pars).replace(':','-')
-    if save_figs: at.save_figs([fig], path=results_folder, prefix='plots_', fnames=[title])
+#     if save_figs: at.save_figs([fig], path=results_folder, prefix='plots_', fnames=[title])
     
     legend = sc.emptyfig()
-#    output = {
-#        'graphs': [customize_fig(fig=fig, is_epi=False)],
-#        'legends': [legend],
-#        'types': ['tb']
-#    }
+
     outputs['graphs'].append(customize_fig(fig=fig, is_epi=False))
     outputs['legends'].append(customize_fig(fig=legend,is_legend=True))
     outputs['types'].append('tb')
@@ -2470,7 +2465,8 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
     legends.append(legend)
 
     print('TB standard plot %s succeeded' % (title))
-
+    print(len(outputs['graphs']))
+    print(figs)
     return outputs, figs, legends
 
 def tb_indpops(P):
