@@ -1420,6 +1420,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
         year = float(year)
     if pops is None:
         pops = 'all'
+
+    print(pops)
+
     results = sc.promotetolist(results)
 
     # Decide what to do
@@ -1435,6 +1438,8 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
     else:
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
+
+    print(pops)
 
     output = {'graphs':[],'legends':[], 'types':[]}
     all_figs = []
@@ -2520,7 +2525,7 @@ def tb_natpops(P):
     return [key for key, details in P.data.pops.items() if details['type']=='env']
 
 #(proj, results=None, plot_names=None, plot_options=None, pops='all', outputs=None, do_plot_data=None, replace_nans=True, stacked=False, xlims=None, figsize=None, calibration=False):
-def tb_key_calibration_plots(proj, results=None, pops='all', xlims=None):
+def tb_key_calibration_plots(proj, results=None, pops=None, xlims=None):
     allpops = tb_indpops(proj)
     blhpops  = tb_natpops(proj)
     
@@ -2528,9 +2533,9 @@ def tb_key_calibration_plots(proj, results=None, pops='all', xlims=None):
     figs = []
     legends = []
     
-    result = results #TODO if this is a list should be a loop for result in results:? or better still pass as results and make standard_plot plot multiple results gracefully for scenario use?
-    
-    
+    result = sc.promotetolist(results) #TODO if this is a list should be a loop for result in results:? or better still pass as results and make standard_plot plot multiple results gracefully for scenario use?
+    pops = sc.promotetolist(pops)
+
     if pops==allpops:
         pops = allpops
         
@@ -2618,14 +2623,14 @@ def tb_key_calibration_plots(proj, results=None, pops='all', xlims=None):
     return outputs, figs, legends
 
 """TODO OUTPUTS FIGS LEGENDS"""
-def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018):
+def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
 
     pops = sc.promotetolist(pops)
     allfigs = []
     if len(pops) > 1:
         pops=[{'Total':pops}]
     
-    result=results #TODO if this is a list should be a loop for result in results:?
+    result=sc.promotetolist(results) #TODO if this is a list should be a loop for result in results:?
     #cascade (probabilistic outcomes)
 #    plot_single_cascade(result=None, cascade=None, pops=None, year=None, data=None, title=False):
 #    # This is the fancy cascade plot, which only applies to a single result at a single time
@@ -2640,9 +2645,20 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018)
 #    figs = at.plot_single_cascade(result=result, cascade={'Stage 1': [':acj'], 'Stage 2': [':ddis']}, pops=None, data=None, title='test-title')
 #    if save_figs:
 #        at.save_figs(fig, path=results_folder, prefix='cascade_probable_')
-    
+
+    if year+1>results[0].t[-1]:
+        year = results[0].t[-1]-1 # Scale the year back by 1 if it runs over the end
+
     ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR', 'all':'Active TB'}
-    
+
+    legend_entries = sc.odict()
+    legend_entries['Next stage'] = '#00267a'
+    legend_entries['Natural recovery or regression'] = '#aaaaaa'
+    legend_entries['TB-related death'] = '#aa2626'
+
+
+
+
     for ss in ['pd', 'nd', 'pm', 'nm', 'px', 'nx']:
         
         d = at.PlotData(result, pops=pops, outputs=[
@@ -2657,10 +2673,12 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018)
         fig = at.plot_bars(d, outer='results', stack_pops='all', stack_outputs=[['New active cases'],
                                                                ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
                                                                ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
-                                                               ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='none')[0]
+                                                               ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='together')[0]
         fig.axes[0].set_title(ss_mapping[ss], fontsize=20) #+' treatment probabilistic outcomes')
         fig.axes[0].set_ylabel('New active TB cases '+str(year))
         fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success'])
+        at.plot_legend(legend_entries, plot_type='patch', fig=fig)
+
         # fig.set_size_inches((5, 3))
 
         # fig.axes[0].get_legend().remove()
@@ -2688,6 +2706,8 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018)
     fig.axes[0].set_title(ss_mapping[ss]+' treatment probabilistic outcomes')
     fig.axes[0].set_ylabel('New active TB cases '+str(year))
     fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success', 'No relapse'])
+    at.plot_legend(legend_entries, plot_type='patch', fig=fig)
+
     # fig.set_size_inches((5, 3))
     allfigs.append(fig)
     #        fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU, relapse)'])
@@ -2702,7 +2722,8 @@ def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018)
     return outputs, allfigs, alllegends
 
 """TODO OUTPUTS FIGS LEGENDS"""    
-def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, results_folder, save_figs, plot_years, **kwargs):
+def tb_advanced_plots(P, results=None, pops=None, xlims=None): #(P, result, results_folder, save_figs, plot_years, **kwargs):
+
     allpops = tb_indpops(P)
 #    blhpops  = natpops(P)
     
