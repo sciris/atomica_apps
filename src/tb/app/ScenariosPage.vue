@@ -19,11 +19,11 @@ Last update: 2019-06-03
       </div>
     </div>
 
-    <div v-else-if="!hasPrograms">
-      <div style="font-style:italic">
-        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>
-      </div>
-    </div>
+<!--    <div v-else-if="!hasPrograms">-->
+<!--      <div style="font-style:italic">-->
+<!--        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>-->
+<!--      </div>-->
+<!--    </div>-->
 
     <div v-else>
 
@@ -61,8 +61,8 @@ Last update: 2019-06-03
 
         <div>
           <button class="btn __green" :disabled="!scenariosLoaded" @click="runScens()">Run scenarios</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('budget')">Add budget scenario</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('coverage')">Add coverage scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded || !hasPrograms" @click="addScenModal('budget')">Add budget scenario</button>
+          <button class="btn __blue" :disabled="!scenariosLoaded || !hasPrograms" @click="addScenModal('coverage')">Add coverage scenario</button>
           <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('parameter')">Add parameter scenario</button>          
         </div>
       </div>
@@ -120,6 +120,15 @@ Last update: 2019-06-03
                   <!-- multiple figs may be inserted here -->
                 </div>
                 <div class="cascade-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
+                <div class="tb-calibration-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
+                <div class="tb-cascade-graphs">
+                  <!-- multiple figs may be inserted here -->
+                </div>
+                <div class="tb-advanced-graphs">
                   <!-- multiple figs may be inserted here -->
                 </div>
               </div> <!-- ### End: calib-graphs ### -->

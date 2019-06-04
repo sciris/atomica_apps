@@ -22,6 +22,9 @@ import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
 
+ROOTDIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '')
+print(ROOTDIR)
+
 pl.rc('font', size=14)
 
 # Globals
@@ -454,7 +457,7 @@ def jsonify_project(project_id, verbose=False):
         framework_name = 'N/A'
     try:
         n_pops = len(proj.data.pops)
-        pop_pairs = [[key, val['label']] for key, val in proj.data.pops.items()]  # Pull out population keys and names
+        pop_pairs = [[key, val['label']] for key, val in proj.data.pops.items() if val['type'] != 'env']  # Pull out population keys and names. # TODO - deal with pop types properly
     except: 
         print('Could not load populations for project')
         n_pops = 'N/A'
@@ -534,7 +537,9 @@ def add_demo_project(username, model, tool):
     """
 
     if tool == 'tb':
-        proj = at.demo(which=model, do_run=False, do_plot=False, sim_dt=0.5)  # Create the project, loading in the desired spreadsheets.
+        proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5, do_run=False)
+        proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
+        # TODO - Add a selection of default scenarios here
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
     proj.name = 'Demo project'
@@ -548,28 +553,43 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
     '''
     Create a new project.
     '''
+
     if tool == 'tb':
         sim_dt = 0.5
     elif tool == 'cascade':
         sim_dt = 1.0
     else:
         sim_dt = None
+
     if tool is None or tool == 'cascade': # Optionally select by tool rather than frame
         frame = load_framework(framework_id, die=True) # Get the Framework object for the framework to be copied.
     elif tool == 'tb': # Or get a pre-existing one by the tool name
-        frame = at.demo(kind='framework', which='tb')
+        frame = at.ProjectFramework(ROOTDIR+'optima_tb_framework.xlsx')
 
-    if tool == 'tb': args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end), "num_transfers":1}
-    else:            args = {"num_pops":int(num_pops), "data_start":int(data_start), "data_end":int(data_end)}
     proj = at.Project(framework=frame, name=proj_name, sim_dt=sim_dt) # Create the project, loading in the desired spreadsheets.
-    print(">> create_new_project %s" % (proj.name))
+
+    data_dt = 1.0
+    data_tvec = np.arange(int(data_start), int(data_end) + data_dt, data_dt)
+
+    if tool == 'tb':
+        pops = sc.odict()
+        transfers = sc.odict()
+        for i in range(1, 1+int(num_pops)):
+            pops['pop_%d' % (i)] = {'label':'Population %d' % (i),'type':'ind'}
+        for env in ['best', 'low', 'high']:
+            pops['Total (%s)' % (env)] = {'label':'Total population (%s)' % (env), 'type':'env'}
+        for i in range(1, 1+1):
+            transfers['transfer %d' % (i)] = {'label':'Transfer %d' % (i),'type':'ind'}
+    else:
+        pops = int(num_pops)
+        transfers = None
+
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=username) # Generate the full file name with path.
-    data = proj.create_databook(databook_path=full_file_name, **args) # Return the databook
+    data = at.ProjectData.new(frame, data_tvec, pops, transfers) # Return the databook
     proj.databook = data.to_spreadsheet()
     save_new_project(proj, username) # Save the new project in the DataStore.
-    print(">> download_databook %s" % (full_file_name))
-    return full_file_name # Return the filename
+
+    return proj.databook.tofile(), file_name
 
 
 @RPC()
@@ -1258,7 +1278,7 @@ def supported_framework_plots_func(framework):
 
 
 @RPC()    
-def get_supported_plots(project_id, calibration_page=False, only_keys=False):
+def get_supported_plots(project_id, tool, calibration_page=False, only_keys=False):
     proj = load_project(project_id, die=True)
     supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)  # Get the framework plots
     if only_keys:
@@ -1282,6 +1302,15 @@ def get_supported_plots(project_id, calibration_page=False, only_keys=False):
             output['plotgroups'].append(this)
             this = {'group_name': 'Program coverage plots', 'active': 1}
             output['plotgroups'].append(this)
+
+        if tool == 'tb' and calibration_page:
+            this = {'group_name': 'TB calibration', 'active': 1}
+            output['plotgroups'].append(this)
+            this = {'group_name': 'TB probabilistic cascades', 'active': 1}
+            output['plotgroups'].append(this)
+            this = {'group_name': 'TB advanced', 'active': 1}
+            output['plotgroups'].append(this)
+
         this = {'group_name': 'Cascades', 'active': 1}
         output['plotgroups'].append(this)
         return output
@@ -1363,9 +1392,29 @@ def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, po
     output = {'graphs':allfigjsons, 'legends':alllegendjsons,'types': ['framework']*len(allfigjsons)}
     return output, allfigs, alllegends
 
+def all_pops(data) -> list:
+    """
+    Return non-environment population names
 
-def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None, dosave=True, calibration=False, plot_budget=False, outputfigs=False):
-    
+    This function iterates over the populations and filters out
+    and that have population type 'env'
+
+    This function is a placeholder in lieu of fully implementing
+    population type support in the FE (to be completed later)
+
+    :param data: a ProjectData instance
+    :return: A list of population code names
+
+    """
+
+    pops = []
+    for name, spec in data.pops.items():
+        if ('type' not in spec) or spec['type'] != 'env':
+            pops.append(name)
+    return pops
+
+def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None, dosave=True, calibration=False, plot_budget=False):
+
     # Handle inputs
     if sc.isstring(year):
         year = float(year)
@@ -1377,9 +1426,12 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
     if calibration and pops.lower() == 'all':
         # For calibration plot, 'all' pops means that they should all be disaggregated and visible
         # But for scenarios and optimizations, 'all' pops means aggregated over all pops
-        pops = 'all'  # pops=None means aggregate all pops in get_cascade_plot, and plots all pops _without_ aggregating in calibration
+        if tool == 'tb':
+            pops = tb_indpops(proj)
+        else:
+            pops = all_pops(proj.data)
     elif pops.lower() == 'all':
-        pops = 'total' # make sure it's lowercase
+        pops = {'Total': all_pops(proj.data)}
     else:
         pop_labels = sc.odict({y:x for x,y in zip(results[0].pop_names,results[0].pop_labels)})
         pops = pop_labels[pops]
@@ -1391,6 +1443,10 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
     showbudgetplots = False
     showcoverageplots = False
     showcascadeplots = False
+    show_tb_calibration = False
+    show_tb_advanced = False
+    show_tb_cascade = False
+
     for item in plot_options['plotgroups']:
         if item['group_name'] == 'Program spending plots':
             showbudgetplots = item['active']
@@ -1398,6 +1454,12 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             showcoverageplots = item['active']
         if item['group_name'] == 'Cascades':
             showcascadeplots = item['active']
+        if item['group_name'] == 'TB calibration':
+            show_tb_calibration = item['active']
+        if item['group_name'] == 'TB probabilistic cascades':
+            show_tb_advanced = item['active']
+        if item['group_name'] == 'TB advanced':
+            show_tb_cascade = item['active']
 
     def append_plots(d, figs, legends):
         nonlocal all_figs, all_legends
@@ -1417,6 +1479,8 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
         d, figs, legends = get_atomica_plots(proj, results=results, pops=pops, plot_options=plot_options)
     append_plots(d, figs, legends)
 
+    # Only make the budget plot if at least one result has programs
+    plot_budget = plot_budget and any([x.used_programs for x in results])
     if plot_budget:
         # Make program related plots
         if showbudgetplots:
@@ -1427,11 +1491,25 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             d, figs, legends = get_coverage_plots(results=results)
             append_plots(d, figs, legends)
 
+    if calibration and tool=='tb': # Don't do advanced TB plots on scenarios, they are only expected to work with single results for now
+        if show_tb_calibration:
+            tb_output, tb_figs, tb_legends = tb_key_calibration_plots(proj, results, pops=pops)
+            append_plots(tb_output, tb_figs, tb_legends)
+
+        if show_tb_advanced:
+            tb_output, tb_figs, tb_legends = tb_advanced_plots(proj, results, pops=pops)
+            append_plots(tb_output, tb_figs, tb_legends)
+
+        if show_tb_cascade:
+            tb_output, tb_figs, tb_legends = tb_probabilistic_cascade(proj, results, pops=pops, year=year)
+            append_plots(tb_output, tb_figs, tb_legends)
+
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
-    if outputfigs:
-        return output, all_figs, all_legends
-    else:
-        return output
+    for fig in all_figs:
+        pl.close(fig)
+    for legend in all_legends:
+        pl.close(legend)
+    return output
 
 
 def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None, is_legend=False, is_epi=True, is_cov_plot=False, popup_legends=False):
@@ -1448,7 +1526,7 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
             if figsize is None: figsize = (5,3)
             fig.set_size_inches(figsize)
             ax.set_position([0.25,0.18,0.70,0.72])
-            if is_epi:
+            if is_epi and output is not None:
                 ax.set_title(list(output.keys())[0]) # This is in a loop over outputs, so there should only be one output present
         y_max = ax.get_ylim()[1]
         labelpad = 7
@@ -1458,7 +1536,7 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
         if y_max > 1e7:  labelpad = 30
         if y_max > 1e8:  labelpad = 35
         if y_max > 1e9:  labelpad = 40
-        if is_epi:
+        if is_epi and plotdata is not None:
             ylabel = plotdata.series[0].units
             if ylabel == 'probability': ylabel = 'Probability'
             if ylabel == '':            ylabel = 'Proportion'
@@ -1580,15 +1658,10 @@ def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=Fals
         legendjsons.append(graph_dict)
         pl.close(fig)
     
-    jsondata, jsoncolors = get_json_cascade(results=results, data=proj.data)
-    output = {
-        'graphs': figjsons,
-        'legends': legendjsons,
-        'table': table,
-        'jsondata': jsondata,
-        'jsoncolors': jsoncolors,
-        'types': ['cascade']*len(figjsons)
-    }
+    # jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
+    # output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
+    output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'types':['cascade']*len(figjsons)}
+
     print('Cascade plot succeeded with %s plots and %s legends and %s table' % (len(figjsons), len(legendjsons), bool(table)))
     return output, figs, legends
 
@@ -1688,6 +1761,11 @@ def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, save
 ##################################################################################
 ### Scenario RPCs
 ##################################################################################
+
+@RPC()
+def get_data_end_year(project_id):
+    proj = load_project(project_id, die=True)
+    return proj.data.end_year
 
 def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     ''' Convert a Python scenario to JSON representation
@@ -2011,28 +2089,29 @@ def new_scen(project_id, scentype) -> dict:
 
     print('Creating default scenario...')
     proj = load_project(project_id, die=True)
-    assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
     start_year = proj.data.end_year
 
     alloc = {}
     print('MAKESCEN')
-    for prog in proj.progsets[-1].programs.values():  # Start with programs in the last progset.
-        print(prog.spend_data)
-        if prog.spend_data.has_time_data:
-            alloc[prog.name] = sc.dcp(prog.spend_data)
-        else:
-            alloc[prog.name] = at.TimeSeries(start_year, prog.spend_data.assumption)
 
-    # Construct the scenario
-    if scentype == 'budget':
-        scen = at.BudgetScenario(name='New budget scenario', active=True, parsetname=proj.parsets[-1].name,
-            progsetname=proj.progsets[-1].name, alloc=alloc, start_year=start_year)
-    elif scentype == 'coverage':
-        scen = at.CoverageScenario(name='New coverage scenario', active=True, parsetname=proj.parsets[-1].name,
-            progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
-    elif scentype == 'parameter':
-        scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,
-            scenario_values=dict())
+    if scentype == 'parameter':
+        scen = at.ParameterScenario(name='New parameter scenario', active=True, parsetname=proj.parsets[-1].name,scenario_values=dict())
+    else:
+        assert bool(proj.progsets)   # TODO - Handle initialization if the progset hasn't been uploaded yet
+        for prog in proj.progsets[-1].programs.values():  # Start with programs in the last progset.
+            print(prog.spend_data)
+            if prog.spend_data.has_time_data:
+                alloc[prog.name] = sc.dcp(prog.spend_data)
+            else:
+                alloc[prog.name] = at.TimeSeries(start_year, prog.spend_data.assumption)
+
+        # Construct the scenario
+        if scentype == 'budget':
+            scen = at.BudgetScenario(name='New budget scenario', active=True, parsetname=proj.parsets[-1].name,
+                progsetname=proj.progsets[-1].name, alloc=alloc, start_year=start_year)
+        elif scentype == 'coverage':
+            scen = at.CoverageScenario(name='New coverage scenario', active=True, parsetname=proj.parsets[-1].name,
+                progsetname=proj.progsets[-1].name, coverage=None, start_year=start_year)
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(scen, proj)
@@ -2303,3 +2382,404 @@ def export_results(cache_id, username):
     at.export_results(results, full_file_name)
     print(">> export_results %s" % (full_file_name))
     return full_file_name # Return the filename
+
+
+###############################################################
+### TB custom plotting functions
+###############################################################
+    
+def tb_add_confidence(P, fig, labels_to_use=[], pops=None, datapars=None):
+    '''
+    Add confidence intervals and/or data points (possibly with error bars) to a figure after checking years etc are appropriate
+    labels should be a list of the form ['Data line label', 'Label for confidence interval', 'Label for data estimate']
+    '''
+    legendsettings = {'loc': 'center left', 'bbox_to_anchor': (1.05, 0.5), 'ncol': 1, 'framealpha':0}
+    
+    if not datapars is None:
+        if pops is None:
+            pops = ['Total (best)', 'Total (low)', 'Total (high)']
+        elif type(pops)==type('string'):
+            pops = [pops, pops, pops] #best, low high use the same population, different parameters
+        assert len(pops)==3 #must be best, low high pops
+        
+        
+        if type(datapars)==type('string'):
+            if pops[0]==pops[1] and pops[0]==pops[2]:
+                datapars = [datapars, None, None] #getting best low and high from the same parameter
+            else:
+                datapars = [datapars, datapars, datapars] #getting best low and high from the same parameter, using different 'populations'
+        assert len(datapars)==3 #must be best, low high pops
+        
+        y_limit = fig.axes[0].get_ylim()[1] #current max based on data, may need to extend y_limit upper bound based on data input
+        
+        bestp, lowp, highp = pops
+        bestd, lowd, highd = datapars
+        ibest = P.data.tdve[bestd]
+        years = []
+        lows = []
+        highs = []
+        #for each year that is in both low and high estimates of incidence
+        if not (lowd is None or highd is None):    
+            ilow  = P.data.tdve[lowd]
+            ihigh = P.data.tdve[highd]
+            
+            for yl, year in enumerate(ilow.ts[lowp].t):
+                if year in ihigh.ts[highp].t:
+                    yh = ihigh.ts[highp].t.index(year)
+                    years.append(year)
+                    lows.append(ilow.ts[lowp].vals[yl])
+                    highs.append(ihigh.ts[highp].vals[yh])
+            if len(years)>0:
+                if len(years)==1:
+                    if len(ibest.ts[bestp].t)==0: #unless there's a confidence interval but no best estimate
+                        labels_to_use += ['Data (uncertainty range)']
+                    #skip label as it should be clear from best value
+                    fig.axes[0].errorbar(years, [0], yerr = [[-lows[0]], [highs[0]]], fmt='-')
+                else:
+                    labels_to_use+= ['Data (uncertainty range)']
+                    fig.axes[0].fill_between(years, lows, highs, facecolor='lightblue', interpolate=True)
+                y_limit = max(y_limit, max(highs)*1.05)
+            
+        #plot the best data points - do this after the range so it appears on top!
+        if len(ibest.ts[bestp].t)>0:
+            y_limit = max(y_limit, max(ibest.ts[bestp].vals)*1.05)
+            sigma = sc.dcp(P.data.tdve[bestd].ts[bestp].sigma)
+            if len(years)==0 and not sigma is None: #uncertainty was entered and there aren't any explicit lows/highs
+                fig.axes[0].errorbar(ibest.ts[bestp].t,ibest.ts[bestp].vals, yerr=sigma, fmt='o', elinewidth=3, ecolor=sc.gridcolors(1))
+            else:
+                fig.axes[0].scatter(ibest.ts[bestp].t,ibest.ts[bestp].vals, marker='o', s=40, linewidths=3,edgecolor=sc.gridcolors(1),facecolor='none')
+            labels_to_use+= ['Data (best estimate)']
+        
+        fig.axes[0].set_ylim(top=y_limit)
+
+    fig.axes[0].legend(labels_to_use, **legendsettings)
+    return fig
+
+def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='sum', res_pops=None, data_pops=None, title=None,
+                  ylabel=None, results_folder=None, sampled_results = None,
+                  outputs = None, figs=None, legends=None, xlims=None):
+    """
+    Standard TB plot covering most situations and including both model and input uncertainty
+    'res_pars': parameter name to plot from results (or a list to aggregate),
+    'data_pars': parameter name used for data (or a list if using uncertainty in entry in [best, low, high] form)
+    'agg_type': for populations weighted (e.g. prevalence) or sum (number of cases),
+    'res_pops': either a pop name or a list of pops to aggregate
+    'data_pops': either a pop name or a list of pops used for data in [best, low, high] form
+    'ylabel': label for the y axis,
+    """
+    
+    if outputs is None: outputs = { 'graphs': [], 'legends': [], 'types': []}
+    if figs is None: figs = []
+    if legends is None: legends = []
+    
+    plot_outputs = data_pars if type(data_pars)==dict else [{ylabel: sc.promotetolist(res_pars)}]
+    plot_pops = res_pops if type(res_pops)==dict else [{'Total': sc.promotetolist(res_pops)}]
+    
+    legends = ['Model (calibrated)']
+    if not sampled_results is None:  #include uncertainty as sampled
+        baseline = sc.dcp(result)
+        mapping_function = lambda x: at.PlotData(x,outputs=plot_outputs, pops= plot_pops, pop_aggregation=pop_aggregation)
+        ensemble = at.Ensemble(mapping_function=mapping_function)
+    
+        baseline.name = sampled_results[0][0].name # baseline name needs to match sampled results name
+        ensemble.update(sampled_results)
+        legends += ['Model (uncertainty range)']        
+        
+        ensemble.set_baseline(baseline)
+        ensemble.name = str(res_pars)
+    
+        fig = ensemble.plot_series()
+    else:  #just use the best result and plot as lines
+        d = at.PlotData(result, outputs=plot_outputs, pops=plot_pops, pop_aggregation=pop_aggregation)
+        fig = at.plot_series(d, axis='outputs', plot_type='line')[0]
+
+    fig = tb_add_confidence(P, fig, labels_to_use = legends, pops=data_pops, datapars=data_pars) #may add further entries to the legend
+    
+    fig.axes[0].set_ylim(bottom=0.)
+    if not xlims is None: fig.axes[0].set_xlim(xlims)
+    if not ylabel is None: fig.axes[0].set_ylabel(ylabel)
+    if not title is None: fig.axes[0].set_title(title)
+
+#    label = str(res_pars).replace(':','-')
+#     if save_figs: at.save_figs([fig], path=results_folder, prefix='plots_', fnames=[title])
+    
+    legend = sc.emptyfig()
+
+    outputs['graphs'].append(customize_fig(fig=fig, is_epi=True))
+    outputs['legends'].append(customize_fig(fig=legend,is_legend=True))
+    figs.append(fig)
+    legends.append(legend)
+
+    print('TB standard plot %s succeeded' % (title))
+    return outputs, figs, legends
+
+def tb_indpops(P):
+    return [key for key, details in P.data.pops.items() if details['type']=='ind']
+
+def tb_natpops(P):
+    return [key for key, details in P.data.pops.items() if details['type']=='env']
+
+#(proj, results=None, plot_names=None, plot_options=None, pops='all', outputs=None, do_plot_data=None, replace_nans=True, stacked=False, xlims=None, figsize=None, calibration=False):
+def tb_key_calibration_plots(proj, results=None, pops='all', xlims=None):
+    allpops = tb_indpops(proj)
+    blhpops  = tb_natpops(proj)
+    
+    outputs = { 'graphs': [], 'legends': [], 'types': []}
+    figs = []
+    legends = []
+    
+    result = results #TODO if this is a list should be a loop for result in results:? or better still pass as results and make standard_plot plot multiple results gracefully for scenario use?
+    
+    
+    if pops==allpops:
+        pops = allpops
+        
+        #active incidence
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='ac_incidence_epc', data_pars='nat_est_incidence', res_pops=allpops,
+                  data_pops=blhpops, ylabel='Incident TB cases', title='TB incidence including extrapulmonary - total cases', 
+                      result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+    
+        #DR incidence
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='dr_incidence_epc', data_pars='nat_est_dr_incidence', res_pops=allpops,
+                      data_pops=blhpops, ylabel='Incident DR-TB cases', title='DR-TB incidence including extrapulmonary  - total cases', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+        
+        #Incidence per 100K
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='inc_per100k_epc', data_pars='nat_est_incidence_per100K', res_pops=allpops, data_pops=blhpops,
+                      pop_aggregation='weighted', ylabel='Incident TB cases per 100K', title='Incidence of TB per 100K including extrapulmonary - total', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+        
+        #prevalence per 100K (total)  
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='prev_per100k', data_pars='nat_est_prevalence_per100K', res_pops=allpops, data_pops=blhpops,
+                      pop_aggregation='weighted', ylabel='Prevalent TB cases per 100K', title='Prevalence of pulmonary TB per 100K - total', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+        
+        #Latent TB prevalence
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='lt_prev', data_pars='nat_est_lat_prev', res_pops=allpops, pop_aggregation='weighted',
+                  data_pops=blhpops, ylabel='Latent TB prevalence', title='Latent TB prevalence - total',
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+        
+        #TB-related deaths 
+        outputs, figs, legends = tb_standard_plot(proj, res_pars=':ddis', data_pars='nat_est_deaths', res_pops=allpops,
+                  data_pops=blhpops, ylabel='TB-related deaths', title='TB-related deaths - total', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+        
+        #TB-related deaths per 100K (total)  
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='mort_per100k', data_pars='nat_est_mort_per100k', res_pops=allpops, data_pops=blhpops,
+                          pop_aggregation='weighted',  ylabel='TB-related deaths per 100K', title='TB-related deaths per 100K - total', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+    
+    
+        #case fatality ratio
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='case_fatality_ratio', data_pars='nat_est_case_fatality_ratio', res_pops=allpops, data_pops=blhpops,
+                          pop_aggregation='weighted',  ylabel='Proportion of TB cases resulting in death', title='Case fatality ratio (TB-related deaths/TB incidence) - pulmonary TB total', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+
+
+        #Case detection rate
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='case_detection_rate', data_pars='nat_est_case_detection_rate', res_pops=allpops, data_pops=blhpops,
+                      pop_aggregation='weighted', ylabel='Pulmonary TB case detection rate', title='Pulmonary TB case detection rate - total', 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+
+    else:    
+        for pop in pops:
+            #active incidence
+            outputs, figs, legends = tb_standard_plot(proj, res_pars='ac_incidence_epc', data_pars=['est_incidence_best', 'est_incidence_low', 'est_incidence_high'],
+                          res_pops=pop, data_pops=pop, ylabel='Incident cases', title='TB incidence including extrapulmonary - %s'%(pop),
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+            
+            #active prevalence
+            outputs, figs, legends = tb_standard_plot(proj, res_pars='ac_prev', data_pars=['est_prevalence_best', 'est_prevalence_low', 'est_prevalence_high'],
+                          res_pops=pop, data_pops=pop, ylabel='TB prevalence', title='Active pulmonary TB prevalence - %s'%(pop),
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+            #active DR prevalence
+            outputs, figs, legends = tb_standard_plot(proj, res_pars='dr_prev', data_pars=['est_dr_prevalence_best', 'est_dr_prevalence_low', 'est_dr_prevalence_high'],
+                          res_pops=pop, data_pops=pop, ylabel='DR-TB prevalence', title='Active pulmonary DR-TB prevalence - %s'%(pop), 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+            #prevalence per 100K (by pop)  
+            outputs, figs, legends = tb_standard_plot(proj, res_pars='prev_per100k', data_pars='prev_per100k', res_pops=pop, data_pops=pop,
+                          pop_aggregation='weighted', ylabel='Prevalent TB cases per 100K', title='Prevalence of pulmonary TB per 100K - %s'%(pop), 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+            
+            #TB-related deaths
+            outputs, figs, legends = tb_standard_plot(proj, res_pars=':ddis', data_pars=['est_deaths_best', 'est_deaths_low', 'est_deaths_high'],
+                      res_pops=pop, data_pops=pop, ylabel='TB-related deaths', title='TB-related deaths - %s'%(pop), 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+            
+            #Notifications
+            ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR'}
+            for ss in ss_mapping.keys():
+                outputs, figs, legends = tb_standard_plot(proj, res_pars='mod_%s_nnotif'%ss, data_pars='%s_nnotif'%ss, res_pops=pop, data_pops=pop,
+                              pop_aggregation='sum', ylabel='Notifications',
+                              title='Number of %s notifications (including extrapulmonary notifications and excluding unreported diagnoses) - %s'%(ss_mapping[ss], pop), 
+                          result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
+
+    outputs['types'] = len(outputs['graphs'])*['tb-calibration']
+    return outputs, figs, legends
+
+"""TODO OUTPUTS FIGS LEGENDS"""
+def tb_probabilistic_cascade(P, results=None, pops='all', xlims=None, year=2018):
+
+    pops = sc.promotetolist(pops)
+    allfigs = []
+    if len(pops) > 1:
+        pops=[{'Total':pops}]
+    
+    result=results #TODO if this is a list should be a loop for result in results:?
+    #cascade (probabilistic outcomes)
+#    plot_single_cascade(result=None, cascade=None, pops=None, year=None, data=None, title=False):
+#    # This is the fancy cascade plot, which only applies to a single result at a single time
+#    # INPUTS
+#    # result - A single result, or list of results. One figure will be generated for each result
+#    # cascade - A string naming a cascade, or an odict specifying cascade stages and constituents
+#    #           e.g. {'stage 1':['sus','vac'],'stage 2':['vac']}
+#    # pops - The name of a population, or a population aggregation that maps to a single population. For example
+#    #        '0-4', 'all', or {'HIV':['15-64 HIV','65+ HIV']}
+#    # year - A single year, could be a length 1 ndarray or a scalar
+#    # data - A ProjectData instance
+#    figs = at.plot_single_cascade(result=result, cascade={'Stage 1': [':acj'], 'Stage 2': [':ddis']}, pops=None, data=None, title='test-title')
+#    if save_figs:
+#        at.save_figs(fig, path=results_folder, prefix='cascade_probable_')
+    
+    ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR', 'all':'Active TB'}
+    
+    for ss in ['pd', 'nd', 'pm', 'nm', 'px', 'nx']:
+        
+        d = at.PlotData(result, pops=pops, outputs=[
+                {'New active cases':ss+'_div:flow', 'Diagnosed':ss+'_prob_udiag', 'Undiagnosed recovery':ss+'_prob_urec', 'Undiagnosed death':ss+'_prob_uterm',
+                 'Initiate treatment':ss+'_prob_dtreat', 'Diagnosed recovery':ss+'_prob_drec', 'Diagnosed death':ss+'_prob_dterm' ,
+                 'Treatment success':ss+'_prob_tsucc', 'Treatment fail/LTFU':ss+'_prob_tother', 'Treatment death':ss+'_prob_tterm'
+                 }], t_bins=[year, year+1])
+        for pop in d.pops:
+            d.set_colors('#00267a', pops=pop, outputs=['New active cases', 'Diagnosed', 'Initiate treatment', 'Treatment success'])
+            d.set_colors('#aaaaaa', pops=pop, outputs=['Undiagnosed recovery', 'Diagnosed recovery', 'Treatment fail/LTFU'])
+            d.set_colors('#aa2626', pops=pop, outputs=['Undiagnosed death', 'Diagnosed death', 'Treatment death'])
+        fig = at.plot_bars(d, outer='results', stack_pops='all', stack_outputs=[['New active cases'],
+                                                               ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
+                                                               ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
+                                                               ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='none')[0]
+        fig.axes[0].set_title(ss_mapping[ss], fontsize=20) #+' treatment probabilistic outcomes')
+        fig.axes[0].set_ylabel('New active TB cases '+str(year))
+        fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success'])
+        # fig.set_size_inches((5, 3))
+
+        # fig.axes[0].get_legend().remove()
+        allfigs.append(fig)
+#            fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU)'])
+#        if save_figs:
+#            at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
+    
+    ss = 'all'
+    d = at.PlotData(result, pops=pops, outputs=[
+                {'New active cases':'acj:', 'Diagnosed':ss+'_prob_udiag', 'Undiagnosed recovery':ss+'_prob_urec', 'Undiagnosed death':ss+'_prob_uterm',
+                 'Initiate treatment':ss+'_prob_dtreat', 'Diagnosed recovery':ss+'_prob_drec', 'Diagnosed death':ss+'_prob_dterm' ,
+                 'Treatment success':ss+'_prob_tsucc', 'Treatment fail/LTFU':ss+'_prob_tother', 'Treatment death':ss+'_prob_tterm',
+                 'Recovery clear':ss+'_prob_rfullrec', 'Recovery relapse':ss+'_prob_rrelapse'
+                 }], t_bins=[year, year+1])
+    for pop in d.pops:
+            d.set_colors('#00267a', pops=pop, outputs=['New active cases', 'Diagnosed', 'Initiate treatment', 'Treatment success', 'Recovery clear'])
+            d.set_colors('#aaaaaa', pops=pop, outputs=['Undiagnosed recovery', 'Diagnosed recovery', 'Treatment fail/LTFU', 'Recovery relapse'])
+            d.set_colors('#aa2626', pops=pop, outputs=['Undiagnosed death', 'Diagnosed death', 'Treatment death'])
+    fig = at.plot_bars(d, outer='results', stack_pops='all', stack_outputs=[['New active cases'],
+                                                           ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
+                                                           ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
+                                                           ['Treatment success', 'Treatment fail/LTFU', 'Treatment death'],
+                                                           ['Recovery clear', 'Recovery relapse']],legend_mode='together')[0]
+    fig.axes[0].set_title(ss_mapping[ss]+' treatment probabilistic outcomes')
+    fig.axes[0].set_ylabel('New active TB cases '+str(year))
+    fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success', 'No relapse'])
+    # fig.set_size_inches((5, 3))
+    allfigs.append(fig)
+    #        fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU, relapse)'])
+    #    if save_figs:
+    #        at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
+
+    outputs = {}
+    outputs['graphs'] = [customize_fig(fig=fig,is_epi=False) for fig in allfigs]
+    outputs['legends'] = []
+    outputs['types'] = ['tb-cascade']*len(allfigs)
+    alllegends = len(allfigs)*[sc.emptyfig()]
+    return outputs, allfigs, alllegends
+
+"""TODO OUTPUTS FIGS LEGENDS"""    
+def tb_advanced_plots(P, results=None, pops='all', xlims=None): #(P, result, results_folder, save_figs, plot_years, **kwargs):
+    allpops = tb_indpops(P)
+#    blhpops  = natpops(P)
+    
+    allfigs = []
+    alllegends = []
+    
+    if pops==allpops:
+        pops=[{'Total':allpops}]
+
+    result=results #TODO if this is a list should be a loop for result in results:?
+
+    #deaths by source
+    d = at.PlotData(result, pops=[{'Total':allpops}], outputs=[
+            {'Untreated SP-DS': ['pd_term:flow'],
+             'Untreated SN-DS': ['nd_term:flow'], 
+             'Untreated DR': ['pm_term:flow','px_term:flow','nm_term:flow','nx_term:flow'], 
+             'SP-DS during treatment': ['pd_sad_div:flow'],
+             'SN-DS during treatment': ['nd_sad_div:flow'], 
+             'DR during treatment': ['pm_sad_div:flow','px_sad_div:flow','nm_sad_div:flow','nx_sad_div:flow']
+             }], pop_aggregation='sum')
+    for pop in d.pops:
+        d.set_colors('Greys', pops=pop, outputs=d.outputs)
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',data=P.data,legend_mode='together')
+    for fig in figs:
+#        fig.axes[0].legend(['Model mortality'], **legendsettings)
+        fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','TB-related deaths by source - '))
+        if not xlims is None: fig.axes[0].set_xlim(xlims)
+    allfigs += figs
+
+#    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_source_')
+    #deaths by populaion
+    d = at.PlotData(result, pops=allpops, outputs=[
+            {'Model deaths': [':ddis']
+             }], pop_aggregation='sum')
+    for out in d.outputs:
+        d.set_colors('Reds', pops=d.pops, outputs=out)
+    figs = at.plot_series(d, plot_type='stacked', axis='pops',data=P.data,legend_mode='together')
+    for fig in figs:
+#        fig.axes[0].legend(['Model mortality'], **legendsettings)
+        fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default','TB-related deaths by population'))
+        if not xlims is None: fig.axes[0].set_xlim(xlims)
+#    if save_figs: at.save_figs(figs, path=results_folder, prefix='mort_by_pops_')
+    allfigs += figs
+
+    #Source of latent infections
+    d = at.PlotData(result, pops=pops, outputs=[{'New latent infections': ['sus:lteu'], 'New latent infections (vaccinated)': ['vac:ltex'], 'Reinfection': ['susx:ltex']}])
+    for pop in d.pops:
+        d.set_colors('Greens', pops=pop, outputs=d.outputs)
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='together')
+    for fig in figs:
+        fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Source of latent infections - '))
+        if not xlims is None: fig.axes[0].set_xlim(xlims)
+#    if save_figs: at.save_figs(figs, path=results_folder, prefix='lt_inf_source_')
+    allfigs += figs
+
+    #Ever infected
+    d = at.PlotData(result, pops=pops, outputs=[{'Latent TB':['lt_inf'], 'Recovered or treated more than two years previously':['ltx_inf'],'Recovered or treated within last two years':['acr'], 'Active TB':['ac_inf']}])
+    for pop in d.pops:
+        d.set_colors('PuRd', pops=pop, outputs=d.outputs)
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs', data=P.data,legend_mode='together')
+    for fig in figs:
+        fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Ever infected - '))
+        if not xlims is None: fig.axes[0].set_xlim(xlims)
+#    if save_figs: at.save_figs(figs, path=results_folder, prefix='everinfected_')
+    allfigs += figs
+
+    #Source of active infections
+    d = at.PlotData(result, pops=pops, outputs=[{'Latent early (exposed within the last five years)': ['lteu:acj', 'ltex:acj'], 'Latent late (exposed more than five years previously)': ['ltlu:acj', 'ltlx:acj'], 'Relapse (recovered within the previous two years)': ['acr:acj']}])
+    for pop in d.pops:
+        d.set_colors('Blues', pops=pop, outputs=d.outputs)
+    figs = at.plot_series(d, plot_type='stacked', axis='outputs',legend_mode='together')
+    for fig in figs:
+        fig.axes[0].set_title(fig.axes[0].get_title().replace('parset_default-','Source of new active cases - '))
+        if not xlims is None: fig.axes[0].set_xlim(xlims)
+#    if save_figs: at.save_figs(figs, path=results_folder, prefix='inf_source_')
+    allfigs += figs
+
+    outputs = { 'graphs': [customize_fig(fig,is_epi=True) for fig in allfigs], 'legends': [], 'types': len(allfigs)*['tb-advanced']}
+
+    return outputs, allfigs, alllegends
