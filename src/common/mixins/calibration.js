@@ -62,7 +62,7 @@ var CalibrationMixin = {
         (this.$store.state.activeProject.project.hasData) ) {
         console.log('created() called')
         this.simStartYear = this.simStart
-        this.simEndYear = this.simEnd  // this.dataEnd
+        this.simEndYear = this.dataEnd
         this.popOptions = this.activePops
         this.serverDatastoreId = this.$store.state.activeProject.project.id + ':calibration'
         this.getPlotOptions(this.$store.state.activeProject.project.id)
