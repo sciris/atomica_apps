@@ -1765,7 +1765,10 @@ def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, p
 def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, saveresults=True, plot_options=None, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running automatic calibration for parset %s...' % parsetname)
     proj = load_project(project_id, die=True)
-    proj.calibrate(parset=parsetname, max_time=float(max_time)) # WARNING, add kwargs!
+    if tool=='tb':
+        proj.calibrate(parset=parsetname, max_time=float(max_time), adjustables=['inf_sus','l_dep', 'p_branch'], measurables=['ac_inf', 'lt_inf']) # WARNING, incomplete
+    else:
+        proj.calibrate(parset=parsetname, max_time=float(max_time)) # WARNING, add kwargs!
     result = proj.run_sim(parset=parsetname, store_results=False)
     cache_result(proj, result, cache_id)
     output = make_plots(proj, result, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, calibration=True)
