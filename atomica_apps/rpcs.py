@@ -2026,7 +2026,12 @@ def get_param_groups(project_id, verbose=True):
     param_groups['displaynames'] = df['display name'].values
 
     # Pull out the population names from the first parset.
-    param_groups['popnames'] = proj.parsets[0].pop_names
+    if tool == 'tb':
+        pops = tb_indpops(proj)
+    else:
+        pops = all_pops(proj.data)
+    
+    param_groups['popnames'] = pops
 
     if verbose:
         print('Parameter groups:')
