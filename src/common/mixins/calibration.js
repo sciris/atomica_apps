@@ -47,7 +47,7 @@ var CalibrationMixin = {
       simStart()     { return utils.simStart(this) },
       simEnd()       { return utils.simEnd(this) },
       simYears()     { return utils.simYears(this) },
-      simEnd()       { return utils.simEnd(this) },
+      activePops()   { return utils.activePops(this) },
       dataEnd()      { return utils.dataEnd(this) },
 
       filteredParlist() {
