@@ -2665,11 +2665,9 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
     ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR', 'all':'Active TB'}
 
     legend_entries = sc.odict()
-    legend_entries['Next stage'] = '#00267a'
-    legend_entries['Natural recovery or regression'] = '#aaaaaa'
     legend_entries['TB-related death'] = '#aa2626'
-
-
+    legend_entries['Loss to cascade'] = '#aaaaaa'
+#    legend_entries['Next stage'] = '#00267a'
 
 
     for ss in ['pd', 'nd', 'pm', 'nm', 'px', 'nx']:
@@ -2687,9 +2685,9 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
                                                                ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
                                                                ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
                                                                ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='together')[0]
-        fig.axes[0].set_title(ss_mapping[ss], fontsize=20) #+' treatment probabilistic outcomes')
-        fig.axes[0].set_ylabel('New active TB cases '+str(year))
-        fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success'])
+        fig.axes[0].set_title(ss_mapping[ss]+' TB treatment probability cascade %s'%(year)) #+' treatment probabilistic outcomes')
+        fig.axes[0].set_ylabel('Number of people')
+        fig.axes[0].set_xticklabels(['New %s\n cases in %s'%(ss_mapping[ss],year), 'Ever\ndiagnosed', 'Ever initiated\ntreatment', 'Successfully\ntreated'])
         at.plot_legend(legend_entries, plot_type='patch', fig=fig)
 
         # fig.set_size_inches((5, 3))
@@ -2716,10 +2714,11 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
                                                            ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
                                                            ['Treatment success', 'Treatment fail/LTFU', 'Treatment death'],
                                                            ['Recovery clear', 'Recovery relapse']],legend_mode='together')[0]
-    fig.axes[0].set_title(ss_mapping[ss]+' treatment probabilistic outcomes')
-    fig.axes[0].set_ylabel('New active TB cases '+str(year))
-    fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success', 'No relapse'])
+    fig.axes[0].set_title(ss_mapping[ss]+' treatment probability cascade %s'%(year))
+    fig.axes[0].set_ylabel('Number of people')
+    fig.axes[0].set_xticklabels(['New active TB\n cases in %s'%year, 'Ever\ndiagnosed', 'Ever initiated\ntreatment', 'Successfully\ntreated', 'Recovered\nwithout relapse'])
     at.plot_legend(legend_entries, plot_type='patch', fig=fig)
+
 
     # fig.set_size_inches((5, 3))
     allfigs.append(fig)
