@@ -494,7 +494,8 @@ function makeGraphs(vm, data, routepath) {
           // Draw the mpld3 figure into the figN div where it belongs.
           try {
             // If we are dealing with a cascade or budget figure... 
-            if (graphtypes[index] == "cascade" || graphtypes[index] == "budget") {
+            if (graphtypes[index] == "cascade" || graphtypes[index] == "budget" || 
+              graphtypes[index] == "tb-cascade") {
               sciris.graphs.mpld3.draw_figure(figlabel, graphdata[index], function (fig, element) {
                 fig.axes[0].axisList[0].props.tickformat_formatter = "fixed"         
               }, true)
