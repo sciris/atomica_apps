@@ -1315,7 +1315,7 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
         if tool == 'tb' and calibration_page and proj.data.pops[0]['type']=='ind':
             this = {'group_name': 'TB calibration', 'active': 1}
             output['plotgroups'].append(this)
-            this = {'group_name': 'TB probabilistic cascades', 'active': 0}
+            this = {'group_name': 'TB probability cascades', 'active': 0}
             output['plotgroups'].append(this)
             this = {'group_name': 'TB advanced', 'active': 0}
             output['plotgroups'].append(this)
@@ -1471,7 +1471,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             showcascadeplots = item['active']
         if item['group_name'] == 'TB calibration':
             show_tb_calibration = item['active']
-        if item['group_name'] == 'TB probabilistic cascades':
+        if item['group_name'] == 'TB probability cascades':
             show_tb_cascade = item['active']
         if item['group_name'] == 'TB advanced':
             show_tb_advanced = item['active']
@@ -1516,7 +1516,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             append_plots(tb_output, tb_figs, tb_legends)
 
         if show_tb_cascade:
-            tb_output, tb_figs, tb_legends = tb_probabilistic_cascade(proj, results, pops=pops, year=year)
+            tb_output, tb_figs, tb_legends = tb_probability_cascade(proj, results, pops=pops, year=year)
             append_plots(tb_output, tb_figs, tb_legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
@@ -2636,7 +2636,7 @@ def tb_key_calibration_plots(proj, results=None, pops=None, xlims=None):
     return outputs, figs, legends
 
 """TODO OUTPUTS FIGS LEGENDS"""
-def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
+def tb_probability_cascade(P, results=None, pops=None, xlims=None, year=2018):
 
     pops = sc.promotetolist(pops)
     allfigs = []
@@ -2685,7 +2685,7 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
                                                                ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
                                                                ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
                                                                ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='together')[0]
-        fig.axes[0].set_title(ss_mapping[ss]+' TB treatment probability cascade %s'%(year)) #+' treatment probabilistic outcomes')
+        fig.axes[0].set_title(ss_mapping[ss]+' TB treatment probability cascade %s'%(year))
         fig.axes[0].set_ylabel('Number of people')
         fig.axes[0].set_xticklabels(['New %s\n cases in %s'%(ss_mapping[ss],year), 'Ever\ndiagnosed', 'Ever initiated\ntreatment', 'Successfully\ntreated'])
         at.plot_legend(legend_entries, plot_type='patch', fig=fig)
