@@ -47,7 +47,8 @@ var CalibrationMixin = {
       simStart()     { return utils.simStart(this) },
       simEnd()       { return utils.simEnd(this) },
       simYears()     { return utils.simYears(this) },
-      activePops()   { return utils.activePops(this) },
+      simEnd()       { return utils.simEnd(this) },
+      dataEnd()      { return utils.dataEnd(this) },
 
       filteredParlist() {
         return this.applyParametersFilter(this.parlist)
@@ -61,7 +62,7 @@ var CalibrationMixin = {
         (this.$store.state.activeProject.project.hasData) ) {
         console.log('created() called')
         this.simStartYear = this.simStart
-        this.simEndYear = this.simEnd
+        this.simEndYear = this.simEnd  // this.dataEnd
         this.popOptions = this.activePops
         this.serverDatastoreId = this.$store.state.activeProject.project.id + ':calibration'
         this.getPlotOptions(this.$store.state.activeProject.project.id)
