@@ -1472,9 +1472,9 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
         if item['group_name'] == 'TB calibration':
             show_tb_calibration = item['active']
         if item['group_name'] == 'TB probabilistic cascades':
-            show_tb_advanced = item['active']
-        if item['group_name'] == 'TB advanced':
             show_tb_cascade = item['active']
+        if item['group_name'] == 'TB advanced':
+            show_tb_advanced = item['active']
 
     def append_plots(d, figs, legends):
         nonlocal all_figs, all_legends
