@@ -223,7 +223,7 @@ var ScenarioMixin = {
     getParamGroups() {
       console.log('getParamGroups() called')
       this.$sciris.start(this)
-      this.$sciris.rpc('get_param_groups', [this.projectID])
+      this.$sciris.rpc('get_param_groups', [this.projectID, this.toolName()])
         .then(response => {
           this.paramGroups = response.data // Set the parameter groups to what we received.
           this.addEditModal.selectedParamGroup = this.paramGroups.grouplist[0]
