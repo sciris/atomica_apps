@@ -1137,7 +1137,7 @@ def get_default_programs(fulloutput=False, verbose=True):
     
     # Get programs
     if verbose: print('get_default_programs(): Creating framework...')
-    F = at.demo(kind='framework', which='tb')
+    F = at.ProjectFramework(ROOTDIR+"optima_tb_framework.xlsx")
     if verbose: print('get_default_programs(): Creating dict...')
     default_pops = sc.odict() # TODO - read in the pops from the defaults file instead of hard-coding them here
     for key in ['^0.*', '.*HIV.*', '.*[pP]rison.*', '^[^0](?!HIV)(?![pP]rison).*']:
@@ -1145,8 +1145,7 @@ def get_default_programs(fulloutput=False, verbose=True):
     if verbose: print('get_default_programs(): Creating project data...')
     D = at.ProjectData.new(F, tvec=np.array([0]), pops=default_pops, transfers=0)
     if verbose: print('get_default_programs(): Loading spreadsheet...')
-    spreadsheetpath = at.LIBRARY_PATH + "tb_progbook_defaults.xlsx"
-    default_progset = at.ProgramSet.from_spreadsheet(spreadsheetpath, framework=F, data=D, _allow_missing_data=True)
+    default_progset = at.ProgramSet.from_spreadsheet(ROOTDIR + "optima_tb_default_programs.xlsx", framework=F, data=D, _allow_missing_data=True)
 
 
     # Assemble dictionary
@@ -1315,7 +1314,7 @@ def get_supported_plots(project_id, tool, calibration_page=False, only_keys=Fals
         if tool == 'tb' and calibration_page and proj.data.pops[0]['type']=='ind':
             this = {'group_name': 'TB calibration', 'active': 1}
             output['plotgroups'].append(this)
-            this = {'group_name': 'TB probabilistic cascades', 'active': 0}
+            this = {'group_name': 'TB probability cascades', 'active': 0}
             output['plotgroups'].append(this)
             this = {'group_name': 'TB advanced', 'active': 0}
             output['plotgroups'].append(this)
@@ -1471,7 +1470,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             showcascadeplots = item['active']
         if item['group_name'] == 'TB calibration':
             show_tb_calibration = item['active']
-        if item['group_name'] == 'TB probabilistic cascades':
+        if item['group_name'] == 'TB probability cascades':
             show_tb_cascade = item['active']
         if item['group_name'] == 'TB advanced':
             show_tb_advanced = item['active']
@@ -1516,7 +1515,7 @@ def make_plots(proj, results, tool=None, year=None, pops=None, plot_options=None
             append_plots(tb_output, tb_figs, tb_legends)
 
         if show_tb_cascade:
-            tb_output, tb_figs, tb_legends = tb_probabilistic_cascade(proj, results, pops=pops, year=year)
+            tb_output, tb_figs, tb_legends = tb_probability_cascade(proj, results, pops=pops, year=year)
             append_plots(tb_output, tb_figs, tb_legends)
 
     savefigs(all_figs, username=proj.webapp.username) # WARNING, dosave ignored fornow
@@ -1765,7 +1764,10 @@ def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, p
 def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, saveresults=True, plot_options=None, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running automatic calibration for parset %s...' % parsetname)
     proj = load_project(project_id, die=True)
-    proj.calibrate(parset=parsetname, max_time=float(max_time)) # WARNING, add kwargs!
+    if tool=='tb':
+        proj.calibrate(parset=parsetname, max_time=float(max_time), adjustables=['inf_sus','l_dep', 'p_branch'], measurables=['ac_inf', 'lt_inf']) # WARNING, incomplete
+    else:
+        proj.calibrate(parset=parsetname, max_time=float(max_time)) # WARNING, add kwargs!
     result = proj.run_sim(parset=parsetname, store_results=False)
     cache_result(proj, result, cache_id)
     output = make_plots(proj, result, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, calibration=True)
@@ -2004,7 +2006,7 @@ def get_initial_coverages(project_id, js_scen, verbose=True):
 
 
 @RPC()
-def get_param_groups(project_id, verbose=True):
+def get_param_groups(project_id, tool, verbose=True):
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
 
@@ -2023,7 +2025,12 @@ def get_param_groups(project_id, verbose=True):
     param_groups['displaynames'] = df['display name'].values
 
     # Pull out the population names from the first parset.
-    param_groups['popnames'] = proj.parsets[0].pop_names
+    if tool == 'tb':
+        pops = tb_indpops(proj)
+    else:
+        pops = all_pops(proj.data)
+    
+    param_groups['popnames'] = pops
 
     if verbose:
         print('Parameter groups:')
@@ -2633,7 +2640,7 @@ def tb_key_calibration_plots(proj, results=None, pops=None, xlims=None):
     return outputs, figs, legends
 
 """TODO OUTPUTS FIGS LEGENDS"""
-def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
+def tb_probability_cascade(P, results=None, pops=None, xlims=None, year=2018):
 
     pops = sc.promotetolist(pops)
     allfigs = []
@@ -2662,11 +2669,9 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
     ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR', 'all':'Active TB'}
 
     legend_entries = sc.odict()
-    legend_entries['Next stage'] = '#00267a'
-    legend_entries['Natural recovery or regression'] = '#aaaaaa'
     legend_entries['TB-related death'] = '#aa2626'
-
-
+    legend_entries['Loss to cascade'] = '#aaaaaa'
+#    legend_entries['Next stage'] = '#00267a'
 
 
     for ss in ['pd', 'nd', 'pm', 'nm', 'px', 'nx']:
@@ -2684,9 +2689,9 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
                                                                ['Diagnosed', 'Undiagnosed recovery', 'Undiagnosed death'],
                                                                ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
                                                                ['Treatment success', 'Treatment fail/LTFU', 'Treatment death']], legend_mode='together')[0]
-        fig.axes[0].set_title(ss_mapping[ss], fontsize=20) #+' treatment probabilistic outcomes')
-        fig.axes[0].set_ylabel('New active TB cases '+str(year))
-        fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success'])
+        fig.axes[0].set_title(ss_mapping[ss]+' TB treatment probability cascade %s'%(year))
+        fig.axes[0].set_ylabel('Number of people')
+        fig.axes[0].set_xticklabels(['New %s\n cases in %s'%(ss_mapping[ss],year), 'Ever\ndiagnosed', 'Ever initiated\ntreatment', 'Successfully\ntreated'])
         at.plot_legend(legend_entries, plot_type='patch', fig=fig)
 
         # fig.set_size_inches((5, 3))
@@ -2713,10 +2718,11 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
                                                            ['Initiate treatment', 'Diagnosed recovery', 'Diagnosed death'],
                                                            ['Treatment success', 'Treatment fail/LTFU', 'Treatment death'],
                                                            ['Recovery clear', 'Recovery relapse']],legend_mode='together')[0]
-    fig.axes[0].set_title(ss_mapping[ss]+' treatment probabilistic outcomes')
-    fig.axes[0].set_ylabel('New active TB cases '+str(year))
-    fig.axes[0].set_xticklabels(['Active TB', 'Diagnosed', 'Treated', 'Success', 'No relapse'])
+    fig.axes[0].set_title(ss_mapping[ss]+' treatment probability cascade %s'%(year))
+    fig.axes[0].set_ylabel('Number of people')
+    fig.axes[0].set_xticklabels(['New active TB\n cases in %s'%year, 'Ever\ndiagnosed', 'Ever initiated\ntreatment', 'Successfully\ntreated', 'Recovered\nwithout relapse'])
     at.plot_legend(legend_entries, plot_type='patch', fig=fig)
+
 
     # fig.set_size_inches((5, 3))
     allfigs.append(fig)
