@@ -540,6 +540,7 @@ def add_demo_project(username, model, tool):
         proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5, do_run=False)
         proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
         proj.demo_scenarios()  # Add example scenarios
+        proj.demo_optimization(tool='tb')  # Add example scenarios
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
     proj.name = 'Demo project'
