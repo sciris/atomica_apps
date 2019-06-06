@@ -2520,7 +2520,12 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
     
     legend = sc.emptyfig()
 
-    outputs['graphs'].append(customize_fig(fig=fig, is_epi=True))
+    # Resize the figure to be larger than the default.
+    ax = fig.axes[0]
+    fig.set_size_inches(10, 4)
+    ax.set_position([0.15, 0.2, 0.35, 0.7])
+
+    outputs['graphs'].append(customize_fig(fig=fig, is_epi=False))
     outputs['legends'].append(customize_fig(fig=legend,is_legend=True))
     figs.append(fig)
     legends.append(legend)
@@ -2724,6 +2729,12 @@ def tb_probabilistic_cascade(P, results=None, pops=None, xlims=None, year=2018):
     #    if save_figs:
     #        at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
 
+    # Resize all of the figures to be larger than the default.
+    for fig in allfigs:
+        ax = fig.axes[0]
+        fig.set_size_inches(10, 4)
+        ax.set_position([0.15, 0.2, 0.35, 0.7])
+
     outputs = {}
     outputs['graphs'] = [customize_fig(fig=fig,is_epi=False) for fig in allfigs]
     outputs['legends'] = []
@@ -2811,6 +2822,16 @@ def tb_advanced_plots(P, results=None, pops=None, xlims=None): #(P, result, resu
 #    if save_figs: at.save_figs(figs, path=results_folder, prefix='inf_source_')
     allfigs += figs
 
-    outputs = { 'graphs': [customize_fig(fig,is_epi=True) for fig in allfigs], 'legends': [], 'types': len(allfigs)*['tb-advanced']}
+    # Resize all of the figures to be larger than the default.
+    for fig in allfigs:
+        ax = fig.axes[0]
+        fig.set_size_inches(10, 4)
+        ax.set_position([0.15, 0.2, 0.35, 0.7])
+
+    outputs = {
+        'graphs': [customize_fig(fig, is_epi=False) for fig in allfigs],
+        'legends': [],
+        'types': len(allfigs)*['tb-advanced']
+    }
 
     return outputs, allfigs, alllegends
