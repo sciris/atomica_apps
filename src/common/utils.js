@@ -358,19 +358,19 @@ function makeGraphs(vm, data, routepath) {
         }
 
         if (vm.toolName() === 'tb') {
-          let tbCalibrationDivs = document.getElementsByClassName("tb-calibration-graphs")
+          var tbCalibrationDivs = document.getElementsByClassName("tb-calibration-graphs")
           if (tbCalibrationDivs) {
             while (tbCalibrationDivs[0].children[0]) {
               tbCalibrationDivs[0].removeChild(tbCalibrationDivs[0].children[0])
             }
           }
-          let tbCascadeDivs = document.getElementsByClassName("tb-cascade-graphs")
+          var tbCascadeDivs = document.getElementsByClassName("tb-cascade-graphs")
           if (tbCascadeDivs) {
             while (tbCascadeDivs[0].children[0]) {
               tbCascadeDivs[0].removeChild(tbCascadeDivs[0].children[0])
             }
           }
-          let tbAdvancedDivs = document.getElementsByClassName("tb-advanced-graphs")
+          var tbAdvancedDivs = document.getElementsByClassName("tb-advanced-graphs")
           if (tbAdvancedDivs) {
             while (tbAdvancedDivs[0].children[0]) {
               tbAdvancedDivs[0].removeChild(tbAdvancedDivs[0].children[0])
