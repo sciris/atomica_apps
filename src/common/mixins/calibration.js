@@ -358,7 +358,11 @@ var CalibrationMixin = {
         .then(response => {
           this.table = response.data.table
           this.makeGraphs(response.data)
-          this.$sciris.succeed(this, 'Simulation run, graphs now rendering...')
+          this.updateSets() // Update the project summaries so the deleted parset shows up on the list.
+          .then(response2 => {
+            this.loadParTable() // Reload the parameters.
+            this.$sciris.succeed(this, 'Simulation run, graphs now rendering...') // Indicate success.
+          })
         })
         .catch(error => {
           console.log(error.message)
