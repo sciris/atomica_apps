@@ -357,7 +357,7 @@ function makeGraphs(vm, data, routepath) {
           }
         }
 
-        // if (vm.toolName() === 'tb') {
+        if (vm.toolName() === 'tb') {
           let tbCalibrationDivs = document.getElementsByClassName("tb-calibration-graphs")
           if (tbCalibrationDivs) {
             while (tbCalibrationDivs[0].children[0]) {
@@ -376,7 +376,7 @@ function makeGraphs(vm, data, routepath) {
               tbAdvancedDivs[0].removeChild(tbAdvancedDivs[0].children[0])
             }
           }
-        // }
+        }
 
         // Remove all existing graph-header (class) elements.
         let headers = document.getElementsByClassName("graph-header")
