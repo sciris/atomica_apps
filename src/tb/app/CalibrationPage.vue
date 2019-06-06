@@ -1,7 +1,7 @@
 <!--
 Calibration Page
 
-Last update: 2019-06-03
+Last update: 2019-06-06
 -->
 
 <template>
@@ -85,7 +85,7 @@ Last update: 2019-06-03
               <th>Category</th>
               <th>Parameter</th>
               <th>Overall scale factor</th>
-              <th v-for="popLabel in poplabels">{{ popLabel }}</th>
+              <th v-for="popLabel in poplabels.slice(0, poplabels.length - 3)">{{ popLabel }}</th>
             </tr>
             </thead>
             <tbody>
