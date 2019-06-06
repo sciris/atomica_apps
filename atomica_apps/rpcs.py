@@ -1137,7 +1137,7 @@ def get_default_programs(fulloutput=False, verbose=True):
     
     # Get programs
     if verbose: print('get_default_programs(): Creating framework...')
-    F = at.demo(kind='framework', which='tb')
+    F = at.ProjectFramework(ROOTDIR+"optima_tb_framework.xlsx")
     if verbose: print('get_default_programs(): Creating dict...')
     default_pops = sc.odict() # TODO - read in the pops from the defaults file instead of hard-coding them here
     for key in ['^0.*', '.*HIV.*', '.*[pP]rison.*', '^[^0](?!HIV)(?![pP]rison).*']:
@@ -1145,8 +1145,7 @@ def get_default_programs(fulloutput=False, verbose=True):
     if verbose: print('get_default_programs(): Creating project data...')
     D = at.ProjectData.new(F, tvec=np.array([0]), pops=default_pops, transfers=0)
     if verbose: print('get_default_programs(): Loading spreadsheet...')
-    spreadsheetpath = at.LIBRARY_PATH + "tb_progbook_defaults.xlsx"
-    default_progset = at.ProgramSet.from_spreadsheet(spreadsheetpath, framework=F, data=D, _allow_missing_data=True)
+    default_progset = at.ProgramSet.from_spreadsheet(ROOTDIR + "optima_tb_default_programs.xlsx", framework=F, data=D, _allow_missing_data=True)
 
 
     # Assemble dictionary
@@ -2007,7 +2006,7 @@ def get_initial_coverages(project_id, js_scen, verbose=True):
 
 
 @RPC()
-def get_param_groups(project_id, verbose=True):
+def get_param_groups(project_id, tool, verbose=True):
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
 
