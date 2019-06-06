@@ -628,7 +628,7 @@ function makeGraphs(vm, data, routepath) {
           newItem2 = document.createElement("BR")
           newItem.appendChild(newItem2)
           newItem2 = document.createElement("H2")
-          textnode = document.createTextNode("\u00A0\u00A0TB Probabilistic Cascades")
+          textnode = document.createTextNode("\u00A0\u00A0TB Probability Cascades")
           newItem2.appendChild(textnode)
           newItem.appendChild(newItem2)
           destdiv = tbCascadeDivs[0].parentNode
