@@ -181,7 +181,7 @@ var CalibrationMixin = {
           .then(response => {
             this.parlist = response.data.parlist // Get the parameter values
             var tmpParset = _.cloneDeep(this.activeParset)
-            this.activeParset = null
+//            this.activeParset = null
             this.$sciris.sleep(500).then(response => {
               this.activeParset = tmpParset
             })
