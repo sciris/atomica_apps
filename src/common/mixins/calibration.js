@@ -181,7 +181,7 @@ var CalibrationMixin = {
           .then(response => {
             this.parlist = response.data.parlist // Get the parameter values
             var tmpParset = _.cloneDeep(this.activeParset)
-            this.activeParset = null
+//            this.activeParset = null
             this.$sciris.sleep(500).then(response => {
               this.activeParset = tmpParset
             })
@@ -358,7 +358,11 @@ var CalibrationMixin = {
         .then(response => {
           this.table = response.data.table
           this.makeGraphs(response.data)
-          this.$sciris.succeed(this, 'Simulation run, graphs now rendering...')
+          this.updateSets() // Update the project summaries so the deleted parset shows up on the list.
+          .then(response2 => {
+            this.loadParTable() // Reload the parameters.
+            this.$sciris.succeed(this, 'Simulation run, graphs now rendering...') // Indicate success.
+          })
         })
         .catch(error => {
           console.log(error.message)
