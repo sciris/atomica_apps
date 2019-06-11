@@ -2230,8 +2230,15 @@ def scen_reset_values(js_scen, project_id):
     # Handle the parameter scenario case...
     elif isinstance(py_scen, at.ParameterScenario):
         # Create a new parameter scenario with the settings from the old.
+        result = proj.run_sim(parset=py_scen.parsetname, store_results=False)
+        scenario_values = py_scen.scenario_values
+        for par in scenario_values:
+            for pop in scenario_values[par]:
+                for yr, year in enumerate(scenario_values[par][pop]['t']):
+                    yr_ind = list(result.get_variable(name=par, pops=pop)[0].t).index(float(year))
+                    scenario_values[par][pop]['y'][yr] = result.get_variable(name=par, pops=pop)[0].vals[yr_ind]
         py_scen = at.ParameterScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
-            scenario_values=dict())
+            scenario_values=scenario_values)
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(py_scen, proj)
