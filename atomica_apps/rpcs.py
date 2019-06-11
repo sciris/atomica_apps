@@ -2181,12 +2181,10 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
     # Handle the coverage scenario case...
     elif isinstance(py_scen, at.CoverageScenario):
         # Create a new coverage scenario with the settings from the old.
-        # TODO - Retrieve coverage values in the same way
         coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
         result = proj.run_sim(parset=py_scen.parsetname,progset=py_scen.progsetname, progset_instructions=at.ProgramInstructions(start_year=py_scen.start_year),store_results=False)
         for t in coverageyears:
             vals = result.get_coverage(quantity='fraction', year=t)
-            print(vals)
             for prog in proj.progsets[py_scen.progsetname].programs.values():
                 if prog.name not in py_scen.coverage:
                     py_scen.coverage[prog.name] = at.TimeSeries()
@@ -2198,7 +2196,6 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
         # Create a new parameter scenario with the settings from the old.
         result = proj.run_sim(parset=py_scen.parsetname, store_results=False)
         scenario_values = py_scen.scenario_values
-        print(scenario_values)
         for par in scenario_values:
             for pop in scenario_values[par]:
                 for yr, year in enumerate(scenario_values[par][pop]['t']):
