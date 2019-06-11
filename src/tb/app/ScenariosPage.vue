@@ -440,9 +440,12 @@ Last update: 2019-06-04
           <button @click="modalSave()" class='btn __green' style="display:inline-block">
             Save scenario
           </button>
-          <button @click="resetToDefaultValues()" class='btn' style="display:inline-block">
-            Reset to default values
-          </button>          
+          <button @click="resetToDefaultValues(false)" class='btn' style="display:inline-block">
+            Fill with baseline
+          </button>
+          <button @click="resetToDefaultValues(true)" class='btn' style="display:inline-block">
+            Reset to baseline
+          </button>
           <button @click="$modal.hide('add-edit-scen')" class='btn __red' style="display:inline-block">
             Cancel
           </button>

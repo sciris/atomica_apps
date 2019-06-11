@@ -254,9 +254,10 @@ var ScenarioMixin = {
       }
     },
     
-    resetToDefaultValues() {
+    resetToDefaultValues(overwrite) {
+      // overwrite is a boolean flag, if True then existing contents will be cleared
       this.$sciris.start(this)
-      this.$sciris.rpc('scen_reset_values', [this.addEditModal.scenSummary, this.projectID])
+      this.$sciris.rpc('scen_reset_values', [this.addEditModal.scenSummary, this.projectID,overwrite])
         .then(response => {           
           this.addEditModal.scenSummary = response.data
           this.$sciris.succeed(this, 'Value reset completed')
@@ -397,30 +398,7 @@ var ScenarioMixin = {
       for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
         this.addEditModal.scenSummary.progs[i].coveragevals.push(null)
       }
-
-      // If we now have just one year column...
-      if (this.addEditModal.scenSummary.coverageyears.length == 1) {
-        // Run the RPC to to pull out the coverages at the program start year.
-        this.$sciris.start(this)
-        this.$sciris.rpc('get_initial_coverages', [this.projectID, this.addEditModal.scenSummary])
-        .then(response => {
-          startingCovs = response.data
-          
-          // For each program, copy the RPC coverages over to the values to be in the textboxes.
-          for (var i = 0; i < this.addEditModal.scenSummary.progs.length; i++) {
-            this.addEditModal.scenSummary.progs[i].coveragevals[0] = startingCovs[i]
-          }
-          
-          // Hack to get the Vue display of progs[x].coveragevals to update
-          this.addEditModal.scenSummary.progs.push(this.addEditModal.scenSummary.progs[0])
-          this.addEditModal.scenSummary.progs.pop()
-          
-          this.$sciris.succeed(this, '')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not get initial coverages', error)
-        })
-      }
+      
     },
     
     modalRemoveCoverageYear(yearindex) {
@@ -513,44 +491,7 @@ var ScenarioMixin = {
       if (this.addEditModal.scenSummary.paramoverwrites[0].paramvals.length == 0) {
         this.modalAddParamYear()
       }
-      
-      // Build arguments for an RPC call to get all of the interpolated parameter values 
-      // for the first year column.
-      paramCodeNames = []
-      popNames = []
-      paramInterpolations = []
-      for (var i = this.addEditModal.scenSummary.paramoverwrites.length - selectedParams.length *   
-        selectedPopulations.length; 
-        i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
-        paramCodeNames.push(this.addEditModal.scenSummary.paramoverwrites[i].paramcodename)
-        popNames.push(this.addEditModal.scenSummary.paramoverwrites[i].popname)
-        paramInterpolations.push(1234.5)
-      }
-      
-      // Do the RPC call.
-      this.$sciris.start(this)
-      this.$sciris.rpc('get_param_interpolations', [this.projectID, this.addEditModal.scenSummary.parsetname, paramCodeNames, popNames, this.addEditModal.scenSummary.paramyears[0]])
-        .then(response => {
-          paramInterpolations = response.data
-            
-          // For each of the rows we just added, add the interpolated parameter value for the 
-          // first year column.
-          for (var i = this.addEditModal.scenSummary.paramoverwrites.length - 
-            selectedParams.length * selectedPopulations.length; 
-            i < this.addEditModal.scenSummary.paramoverwrites.length; i++) {
-            this.addEditModal.scenSummary.paramoverwrites[i].paramvals[0] = 
-              paramInterpolations[i - this.addEditModal.scenSummary.paramoverwrites.length + selectedParams.length * selectedPopulations.length]        
-          }
 
-          // Hack to get the Vue display of paramoverwrites to update
-          this.addEditModal.scenSummary.paramoverwrites.push(this.addEditModal.scenSummary.paramoverwrites[0])
-          this.addEditModal.scenSummary.paramoverwrites.pop()
-          
-          this.$sciris.succeed(this, '')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not get parameter interpolations', error)
-        })
     },
     
     modalDeleteParameter(paramoverwrite) {
