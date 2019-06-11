@@ -302,7 +302,7 @@ var ScenarioMixin = {
     applyParamOverwriteSorting3(paramoverwrites) {
       return paramoverwrites.slice(0).sort((po1, po2) =>
         {
-          return (po1.popname.toLowerCase() > po2.popname.toLowerCase())
+          return (this.paramGroups.popnames.lastIndexOf(po1.popname) > this.paramGroups.popnames.lastIndexOf(po2.popname))
         }
       )
     }, 
