@@ -213,10 +213,14 @@ Last update: 2019-06-03
                 {{ parset }}
               </option>
             </select><br><br>
-            <b>Use optimal allocation of funds beginning in year</b><br>
+            <b>Start programs in year</b><br>
             <input type="text"
                    class="txbox"
                    v-model="modalOptim.start_year"/><br>
+            <b>Optimize allocation in year</b><br>
+            <input type="text"
+                   class="txbox"
+                   v-model="modalOptim.adjustment_year"/><br>
             <b>Target year for optimizing outcomes</b><br>
             <input type="text"
                    class="txbox"

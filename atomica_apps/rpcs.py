@@ -2245,7 +2245,7 @@ def py_to_js_optim(py_optim, project=None):
 
 def js_to_py_optim(js_optim):
     json = js_optim
-    for key in ['start_year', 'end_year', 'budget_factor', 'maxtime']:
+    for key in ['start_year', 'adjustment_year', 'end_year', 'budget_factor', 'maxtime']:
         json[key] = to_float(json[key]) # Convert to a number
     for subkey in json['objective_weights'].keys():
         json['objective_weights'][subkey] = to_float(json['objective_weights'][subkey], blank_ok=True)
