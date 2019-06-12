@@ -171,15 +171,6 @@ def admin_reset_projects(username):
     user.projects = []
     output = datastore.saveuser(user)
     return output
-    
-
-def admin_grab_projects(username1, username2):
-    ''' For use with run_query '''
-    user1 = datastore.loaduser(username1)
-    for projectkey in user1.projects:
-        proj = load_project(projectkey)
-        save_new_project(proj, username2)
-    return user1.projects
 
 
 def admin_dump_db(filename=None):
@@ -1918,13 +1909,14 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
     coverage = sc.odict()
     for prog in js_scen['progs']:
         if scentype == 'budget':
-            if any(prog['budgetvals']):
-                budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
-                alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x) if x is not None else None for x in prog['budgetvals'] ])
+            if any([val is not None for val in prog['budgetvals']]):
+                budgetyears = [to_float(x,blank_ok=True,die=False) for x in js_scen['budgetyears']]
+                alloc[prog['shortname']] = at.TimeSeries(budgetyears,[to_float(x,blank_ok=True,die=False) for x in prog['budgetvals']])
         elif scentype == 'coverage':
             if any([val is not None for val in prog['coveragevals']]):
-                coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
-                coverage[prog['shortname']] = at.TimeSeries(coverageyears,[to_float(x)/100.0 if x is not None else None for x in prog['coveragevals']])
+                coverageyears = [to_float(x,blank_ok=True,die=False) for x in js_scen['coverageyears']]
+                vals = [to_float(x,blank_ok=True,die=False) for x in prog['coveragevals']]
+                coverage[prog['shortname']] = at.TimeSeries(coverageyears,[x/100.0 if x is not None else None for x in vals])
 
     # Construct the scenario
     if scentype == 'budget':
@@ -1984,31 +1976,6 @@ def get_baseline_spending(project_id, verbose=True):
 
     return spending
 
-
-@RPC()
-def get_initial_coverages(project_id, js_scen, verbose=True):
-    print('Getting initial program coverage values...')
-    py_scen = js_to_py_scen(js_scen)
-    proj = load_project(project_id, die=True)
-
-    # Run the scenario.
-    result = py_scen.run(project=proj, store_results=False)
-
-    # Get all of the coverages at the program start year.
-    raw_covs = result.get_coverage(quantity='fraction', year=py_scen.start_year)
-
-    # Get the coverages in the order that the programs are in the JSON representation of the scenario, and convert to
-    # percentages and round to 2 significant figures.
-    covs = []
-    for js_prog in js_scen['progs']:
-        covs.append(round(raw_covs[js_prog['shortname']][0] * 100.0, 2))
-
-    if verbose:
-        print('JavaScript initial program coverages:')
-        sc.pp(covs)
-    return covs
-
-
 @RPC()
 def get_param_groups(project_id, tool, verbose=True):
     print('Getting parameter groups...')
@@ -2051,24 +2018,6 @@ def param_code_name_to_param_diaplay_name(code_name, proj):
 def param_code_name_to_param_group_name(code_name, proj):
     param_group_name = proj.framework.pars.loc[code_name, 'scenario']
     return param_group_name
-
-
-@RPC()
-def get_param_interpolations(project_id, parset_name, param_code_names, pop_names, interp_year, verbose=True):
-    print('Getting parameter interpolation values...')
-    proj = load_project(project_id, die=True)
-
-    parset = proj.parsets[parset_name]
-
-    # For each of the elements in the arrays passed in, pull out interpolation values.
-    interps = []
-    for ind, param_code in enumerate(param_code_names):
-        interps.append(parset.pars[param_code].interpolate(interp_year, pop_names[ind])[0])
-
-    if verbose:
-        print('JavaScript parameter interpolations:')
-        sc.pp(interps)
-    return interps
 
 
 @RPC()
@@ -2205,33 +2154,55 @@ def scen_change_progset(js_scen: dict,new_progset_name: str, project_id) -> dict
 
 
 @RPC()
-def scen_reset_values(js_scen, project_id):
+def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
+    """
+    Reset scenario values using RPC call
+
+    :param js_scen: JS representation of the scenario from the FE
+    :param project_id: Project to retrieve baseline values from
+    :param overwrite: If False, then values will only be inserted where they are currently missing
+    :return: An updated JS representation of the scenario
+
+    """
+
     py_scen = js_to_py_scen(js_scen)
     proj = load_project(project_id, die=True)
 
     # Handle the budget scenario case...
     if isinstance(py_scen, at.BudgetScenario):
-        alloc = sc.odict()
+        budgetyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['budgetyears']]
         for prog in proj.progsets[py_scen.progsetname].programs.values():
-            print(prog.spend_data)
-            if prog.spend_data.has_time_data:
-                alloc[prog.name] = sc.dcp(prog.spend_data)
-            else:
-                alloc[prog.name] = at.TimeSeries(py_scen.start_year, prog.spend_data.assumption)
-
-        py_scen.alloc = alloc
+            if prog.name not in py_scen.alloc:
+                py_scen.alloc[prog.name] = at.TimeSeries()
+            for t in budgetyears:
+                if (t in py_scen.alloc[prog.name].t and overwrite) or (t not in py_scen.alloc[prog.name].t):
+                    py_scen.alloc[prog.name].insert(t, prog.spend_data.interpolate(t))
 
     # Handle the coverage scenario case...
     elif isinstance(py_scen, at.CoverageScenario):
         # Create a new coverage scenario with the settings from the old.
-        py_scen = at.CoverageScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
-            progsetname=py_scen.progsetname, coverage=None, start_year=py_scen.start_year)
+        coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
+        result = proj.run_sim(parset=py_scen.parsetname,progset=py_scen.progsetname, progset_instructions=at.ProgramInstructions(start_year=py_scen.start_year),store_results=False)
+        for t in coverageyears:
+            vals = result.get_coverage(quantity='fraction', year=t)
+            for prog in proj.progsets[py_scen.progsetname].programs.values():
+                if prog.name not in py_scen.coverage:
+                    py_scen.coverage[prog.name] = at.TimeSeries()
+                if (t in py_scen.coverage[prog.name].t and overwrite) or (t not in py_scen.coverage[prog.name].t):
+                    py_scen.coverage[prog.name].insert(t,vals[prog.name])
 
     # Handle the parameter scenario case...
     elif isinstance(py_scen, at.ParameterScenario):
         # Create a new parameter scenario with the settings from the old.
-        py_scen = at.ParameterScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,
-            scenario_values=dict())
+        result = proj.run_sim(parset=py_scen.parsetname, store_results=False)
+        scenario_values = py_scen.scenario_values
+        for par in scenario_values:
+            for pop in scenario_values[par]:
+                for yr, year in enumerate(scenario_values[par][pop]['t']):
+                    yr_ind = list(result.get_variable(name=par, pops=pop)[0].t).index(float(year))
+                    if overwrite or scenario_values[par][pop]['y'][yr] is None:
+                        scenario_values[par][pop]['y'][yr] = result.get_variable(name=par, pops=pop)[0].vals[yr_ind]
+        py_scen = at.ParameterScenario(name=py_scen.name, active=py_scen.active, parsetname=py_scen.parsetname,scenario_values=scenario_values)
 
     # Make the JSON for the scenario
     js_scen = py_to_js_scen(py_scen, proj)
