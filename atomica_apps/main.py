@@ -30,7 +30,7 @@ def make_app(which=None, **kwargs):
 
 def run(which=None, **kwargs):
     app = make_app(which=which, **kwargs) # Make the app
-    app.run(autoreload=True) # Run the client page with Flask and a Twisted server.
+    app.run() # Run the client page with Flask and a Twisted server.
     return None
 
 if __name__ == '__main__':
