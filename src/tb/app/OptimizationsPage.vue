@@ -46,6 +46,7 @@ Last update: 2019-06-03
             <td>
               {{ statusFormatStr(optimSummary) }}
               {{ timeFormatStr(optimSummary) }}
+              <button class="btn btn-icon" v-if="optimSummary.status === 'error'" @click="showError(optimSummary)"><i class="ti-info"></i></button>
             </td>
             <td style="white-space: nowrap">
               <button class="btn __green" :disabled="!canRunTask(optimSummary)" @click="runOptim(optimSummary, 3600)">Run</button>
