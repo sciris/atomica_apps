@@ -168,9 +168,14 @@ var OptimizationMixin = {
             optimSummary.status = statusStr
             optimSummary.pendingTime = result.data.pendingTime
             optimSummary.executionTime = result.data.executionTime
-            if (optimSummary.status == 'error') {
+            if (optimSummary.status === 'error') {
+              optimSummary.errorMsg = result.data.task.errorMsg
+              optimSummary.errorText = result.data.task.errorText
               console.log('Error in task: ', optimSummary.serverDatastoreId)
               console.log(result.data.task.errorText)
+            } else {
+              optimSummary.errorMsg = undefined
+              optimSummary.errorText = undefined // Clear the error
             }
             resolve(result)
           })
@@ -178,11 +183,19 @@ var OptimizationMixin = {
             optimSummary.status = 'not started'
             optimSummary.pendingTime = '--'
             optimSummary.executionTime = '--'
+            optimSummary.errorMsg = undefined
+            optimSummary.errorText = undefined
             resolve(error)  // yes, resolve, not reject, because this means non-started task
           })
       })
     },
-    
+
+    showError(optimSummary){
+      console.log(optimSummary.errorText);
+      console.log(optimSummary.errorMsg);
+      this.$sciris.fail(this,'Optimization error',{message:optimSummary.errorMsg});
+    },
+
     needToPoll() {
       // Check if we're still on the Optimizations page.
       let routePath = (this.$route.path === '/optimizations')
