@@ -121,7 +121,7 @@ var ProjectMixin = {
             theProj.selected = false // Set to not selected.
             theProj.renaming = '' // Set to not being renamed.
             creationTimeDate = new Date(theProj.project.creationTime)          
-            if (creationTimeDate >= lastCreationTimeDate) { // Update the last creation time and ID if what se see is later.
+            if (creationTimeDate >= lastCreationTimeDate) { // Update the last creation time and ID if what we see is later.
               lastCreationTimeDate = creationTimeDate
               lastCreatedID = theProj.project.id
             }
