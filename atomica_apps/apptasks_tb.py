@@ -36,15 +36,16 @@ celery_instance = sw.make_celery(config=config) # Create the Celery instance for
 
 
 @async_task
-def run_tb_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
+def run_tb_optimization(project_id, cache_id, optim_name=None, maxtime=None):
     print('Running optimization...')
-    sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'cascade', 'dosave'], color='blue')
+    sc.printvars(locals(), ['project_id', 'optim_name', 'maxtime'], color='blue')
     datastore = rpcs.find_datastore(config=config)
     origproj = rpcs.load_project(project_id)
     results = rpcs.run_json_optimization(origproj,optim_name, maxtime=float(maxtime))
     newproj = datastore.loadblob(uid=project_id, objtype='project', die=True)
     result_key = rpcs.cache_result(newproj, results, cache_id)
     return result_key
+
 
 
 # Add the asynchronous task functions in this module to the tasks.py module so run_task() can call them.

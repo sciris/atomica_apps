@@ -36,9 +36,9 @@ celery_instance = sw.make_celery(config=config) # Create the Celery instance for
 
 
 @async_task
-def run_cascade_optimization(project_id, cache_id, optim_name=None, plot_options=None, maxtime=None, tool=None, plotyear=None, pops=None, cascade=None, dosave=True):
+def run_cascade_optimization(project_id, cache_id, optim_name=None, maxtime=None):
     print('Running optimization...')
-    sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'cascade', 'dosave'], color='blue')
+    sc.printvars(locals(), ['project_id', 'optim_name', 'maxtime',], color='blue')
     datastore = rpcs.find_datastore(config=config)
     origproj = rpcs.load_project(project_id)
     results = rpcs.run_json_optimization(origproj,optim_name, maxtime=float(maxtime))

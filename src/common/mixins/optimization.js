@@ -364,9 +364,17 @@ var OptimizationMixin = {
 
     saveOptim() {
       console.log('saveOptim() called')
+
+      // Guard against duplicate names
+      for (let i = 0; i < this.optimSummaries.length; i++){
+        if (this.modalOptim.name === this.optimSummaries[i].name & this.modalOptim.name !== this.modalOptim.old_name){
+          this.$sciris.fail(this, 'Another optimization with that name already exists')
+          return
+        }
+      }
+
       this.$modal.hide('add-optim')
       this.$sciris.start(this)
-      this.simEndYear = this.modalOptim.end_year
       let newOptim = _.cloneDeep(this.modalOptim) // Get the new optimization summary from the modal.
       let optimNames = [] // Get the list of all of the current optimization names.
       this.optimSummaries.forEach(optimSum => {
@@ -407,7 +415,6 @@ var OptimizationMixin = {
       this.$sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries])
         .then( response => {
           this.$sciris.succeed(this, 'Optimization added')
-          this.resetModal(this.defaultOptim)
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not add optimization', error)
@@ -422,14 +429,14 @@ var OptimizationMixin = {
     resetModal(optimData) {
       console.log('resetModal() called')
       this.modalOptim = _.cloneDeep(optimData)
+      this.modalOptim.old_name = this.modalOptim.name // Store the old name to detect renaming
       console.log(this.modalOptim)
     },
 
     editOptim(optimSummary) {
       // Open a model dialog for creating a new project
       console.log('editOptim() called');
-      this.modalOptim = _.cloneDeep(optimSummary)
-      console.log('defaultOptim', this.defaultOptim.obj)
+      this.resetModal(optimSummary)
       this.addEditDialogMode = 'edit'
       this.addEditDialogOldName = this.modalOptim.name
       this.$modal.show('add-optim');
@@ -493,11 +500,7 @@ var OptimizationMixin = {
                 optimSummary.name
               ],
               {
-                'plot_options': this.plotOptions, 
-                'maxtime': maxtime, 
-                'tool': this.toolName(), 
-                'plotyear': this.simEndYear, 
-                'pops': this.activePop, 
+                'maxtime': maxtime,
               }
             ])  // should this last be null?
             .then(response => {
