@@ -344,19 +344,7 @@ var OptimizationMixin = {
         this.$sciris.fail(this, 'Could not load optimizations', error)
       }
     },
-
-    async setOptimSummaries() {
-      console.log('setOptimSummaries() called')
-      this.$sciris.start(this)
-      try{
-        let response = await this.$sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries])
-        this.optimSummaries = response.data
-        this.startPolling()
-      } catch (error) {
-        this.$sciris.fail(this, 'Could not save optimizations', error)
-      }
-    },
-
+    
     addOptimModal(optim_type) { // Open a model dialog for creating a new project
       console.log('addOptimModal() called for ' + optim_type);
       this.$sciris.rpc('get_default_optim', [
