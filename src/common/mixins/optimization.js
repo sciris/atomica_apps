@@ -316,7 +316,12 @@ var OptimizationMixin = {
     },
 
     startPolling(){
-      // Call after reloading optimSummaries to add status and start task polling
+      // This function adds the status and execution time fields ot the optim summary
+      // Then it starts polling, which will first do a single round to check all optimizations,
+      // and then continue polling or not depending on whether any of them are initializing or running
+      // It should be called whenever the optimSummaries are updated from an RPC, because after updating in
+      // an RPC, they will generally be missing the status/time fields - they may be present due to not
+      // explicitly stripping them out, but in that case they would be out of date anyway
       this.optimSummaries.forEach(optimSum => { // For each of the optimization summaries...
         optimSum.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + optimSum.name // Build a task and results cache ID from the project's hex UID and the optimization name.
         optimSum.status = 'not started' // Set the status to 'not started' by default, and the pending and execution times to '--'.
@@ -344,8 +349,9 @@ var OptimizationMixin = {
       console.log('setOptimSummaries() called')
       this.$sciris.start(this)
       try{
-        await this.$sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries])
-        this.getOptimSummaries() // This call will terminate the spinner
+        let response = await this.$sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries])
+        this.optimSummaries = response.data
+        this.startPolling()
       } catch (error) {
         this.$sciris.fail(this, 'Could not save optimizations', error)
       }

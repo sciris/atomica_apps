@@ -1970,7 +1970,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
 
 
 @RPC()
-def get_baseline_spending(project_id, verbose=True):
+def get_baseline_spending(project_id, verbose=False):
     print('Getting baseline spending...')
     proj = load_project(project_id, die=True)
 
@@ -1998,7 +1998,7 @@ def get_baseline_spending(project_id, verbose=True):
     return spending
 
 @RPC()
-def get_param_groups(project_id, tool, verbose=True):
+def get_param_groups(project_id, tool, verbose=False):
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
 
@@ -2042,7 +2042,7 @@ def param_code_name_to_param_group_name(code_name, proj):
 
 
 @RPC()
-def get_scen_info(project_id, verbose=True):
+def get_scen_info(project_id, verbose=False):
     print('Getting scenario info...')
     proj = load_project(project_id, die=True)
     scenario_jsons = [py_to_js_scen(scen,proj) for scen in proj.scens.values()]
@@ -2292,7 +2292,7 @@ def get_default_optim(project_id, tool=None, optim_type=None, verbose=True):
 
 
 @RPC()    
-def set_optim_info(project_id, optim_jsons: list) -> None:
+def set_optim_info(project_id, optim_jsons: list) -> list:
     """
     Set updated optim info from the FE
 
@@ -2302,6 +2302,7 @@ def set_optim_info(project_id, optim_jsons: list) -> None:
 
     :param project_id: The active project ID to store optimizations in
     :param optim_jsons: The FE optimization JSONs (a list of dicts)
+    :return: An updated FE JSON list
 
     """
 
@@ -2321,7 +2322,7 @@ def set_optim_info(project_id, optim_jsons: list) -> None:
     proj.optim_jsons = optim_jsons
     print('Saving project...')
     save_project(proj)   
-    return None
+    return optim_jsons
 
 
 # This is the function we should use on occasions when we can't use Celery.
