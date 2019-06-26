@@ -2203,7 +2203,7 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
     elif isinstance(py_scen, at.CoverageScenario):
         # Create a new coverage scenario with the settings from the old.
         coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
-        result = proj.run_sim(parset=py_scen.parsetname,progset=py_scen.progsetname, progset_instructions=at.ProgramInstructions(start_year=py_scen.start_year),store_results=False)
+        result = proj.run_sim(parset=py_scen.parsetname, progset=py_scen.progsetname, progset_instructions=at.ProgramInstructions(start_year=py_scen.start_year),store_results=False)
         for t in coverageyears:
             vals = result.get_coverage(quantity='fraction', year=t)
             for prog in proj.progsets[py_scen.progsetname].programs.values():
@@ -2242,8 +2242,6 @@ def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=Non
     print('Saving project...')
     save_project(proj)
     return output
-
-
 
 
 ##################################################################################
@@ -2829,7 +2827,7 @@ def tb_advanced_plots(P, results=None, pops=None, xlims=None): #(P, result, resu
     return outputs, allfigs, alllegends
 
 
-def default_optim_json(proj: at.Project, tool: str, optim_type:str = 'outcome') -> dict:
+def default_optim_json(proj: at.Project, tool: str, optim_type:str = 'outcome', progset_name:str = None) -> dict:
     """
     Return FE JSON dict for a default scenario of given type
 
@@ -2928,8 +2926,8 @@ def default_optim_json(proj: at.Project, tool: str, optim_type:str = 'outcome') 
         raise Exception('Tool "%s" not recognized' % tool)
     json['maxtime'] = 30  # WARNING, default!
     json['prog_spending'] = sc.odict()
-    for prog_name in proj.progset().programs.keys():
-        json['prog_spending'][prog_name] = [0, None]
+    for prog in proj.progset(progset_name).programs.values():
+        json['prog_spending'][prog.name] = {'min':0, 'max':None, 'label':prog.label}
 
     return json
 
