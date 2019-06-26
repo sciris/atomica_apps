@@ -21,6 +21,7 @@ import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
+from .optimization import default_optim_json
 
 ROOTDIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '')
 print(ROOTDIR)
@@ -531,7 +532,8 @@ def add_demo_project(username, model, tool):
         proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5, do_run=False)
         proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
         proj.demo_scenarios()  # Add example scenarios
-        proj.demo_optimization(tool='tb')  # Add example scenarios
+        opt = default_optim_json(proj,tool='tb')  # Add example scenarios
+        proj.optim_jsons[opt['name']] = opt
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
     proj.name = 'Demo project'
@@ -615,6 +617,8 @@ def upload_project(prj_filename, username):
     print(">> create_project_from_prj_file '%s'" % prj_filename) # Display the call information.
     try: # Try to open the .prj file, and return an error message if this fails.
         proj = at.Project.load(prj_filename) # NB. load via Project() method which automatically calls migration
+        if not hasattr(proj,'optim_jsons'):
+            proj.optim_jsons = sc.odict() # Add the FE's optimization storage odict if it doesn't have one yet
     except Exception:
         return { 'error': 'BadFileFormatError' }
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
@@ -630,6 +634,7 @@ def download_project(project_id):
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s.prj' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     full_file_name = get_path(file_name, proj.webapp.username) # Generate the full file name with path.
+
     sc.saveobj(full_file_name, proj) # Write the object to a Gzip string pickle file.
     print(">> download_project %s" % (full_file_name)) # Display the call information.
     return full_file_name # Return the full filename.
@@ -2275,34 +2280,24 @@ def js_to_py_optim(js_optim):
 def get_optim_info(project_id, verbose=False):
     print('Getting optimization info...')
     proj = load_project(project_id, die=True)
-    optim_jsons = []
-    for py_optim in proj.optims.values():
-        js_optim = py_to_js_optim(py_optim, project=proj)
-        optim_jsons.append(js_optim)
-    if verbose: sc.pp(optim_jsons)
-    return optim_jsons
+    if verbose: sc.pp(proj.optim_jsons)
+    return proj.optim_jsons
 
 
 @RPC()
 def get_default_optim(project_id, tool=None, optim_type=None, verbose=True):
     print('Getting default optimization...')
     proj = load_project(project_id, die=True)
-    py_optim = proj.demo_optimization(tool=tool, optim_type=optim_type)
-    js_optim = py_to_js_optim(py_optim, project=proj)
+    js_optim = default_optim_json(proj,tool=tool, optim_type=optim_type)
     if verbose: sc.pp(js_optim)
     return js_optim
 
 
 @RPC()    
-def set_optim_info(project_id, optim_jsons, verbose=False):
+def set_optim_info(project_id, optim_jsons):
     print('Setting optimization info...')
     proj = load_project(project_id, die=True)
-    proj.optims.clear()
-    for j,js_optim in enumerate(optim_jsons):
-        if verbose: print('Setting optimization %s of %s...' % (j+1, len(optim_jsons)))
-        json = js_to_py_optim(js_optim)
-        if verbose: sc.pp(json)
-        proj.make_optimization(json=json)
+    proj.optim_jsons = optim_jsons
     print('Saving project...')
     save_project(proj)   
     return None
