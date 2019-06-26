@@ -2292,9 +2292,32 @@ def get_default_optim(project_id, tool=None, optim_type=None, verbose=True):
 
 
 @RPC()    
-def set_optim_info(project_id, optim_jsons):
+def set_optim_info(project_id, optim_jsons: list) -> None:
+    """
+    Set updated optim info from the FE
+
+    This function sanitizes the JSONs by converting to number where appropriate.
+    It does not currently, but could, raise errors if the user enters arbitrary text
+    (these entries are simply removed).
+
+    :param project_id: The active project ID to store optimizations in
+    :param optim_jsons: The FE optimization JSONs (a list of dicts)
+
+    """
+
     print('Setting optimization info...')
     proj = load_project(project_id, die=True)
+
+    # Sanitize numbers
+    for json in optim_jsons:
+        for key in ['start_year', 'adjustment_year', 'end_year', 'budget_factor', 'maxtime']:
+            json[key] = to_float(json[key])  # Convert to a number
+        for objective in json['objective_weights'].keys():
+            json['objective_weights'][objective] = to_float(json['objective_weights'][objective], blank_ok=True)
+        for prog_name in json['prog_spending'].keys():
+            json['prog_spending'][prog_name]['min'] = to_float(json['prog_spending'][prog_name]['min'])
+            json['prog_spending'][prog_name]['max'] = to_float(json['prog_spending'][prog_name]['max'])
+
     proj.optim_jsons = optim_jsons
     print('Saving project...')
     save_project(proj)   
