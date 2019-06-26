@@ -2292,37 +2292,81 @@ def get_default_optim(project_id, tool=None, optim_type=None, verbose=True):
 
 
 @RPC()    
-def set_optim_info(project_id, optim_jsons: list) -> list:
+def update_optim(project_id, json: dict, old_name:str = None) -> list:
     """
-    Set updated optim info from the FE
+    Add or update a single optim json
 
     This function sanitizes the JSONs by converting to number where appropriate.
     It does not currently, but could, raise errors if the user enters arbitrary text
     (these entries are simply removed).
 
+    If an old name is provided, then the json will replace an existing optimization
+    with that previous name. This handles renaming optimizations. Otherwise, the
+    optimization will be appended.
+
     :param project_id: The active project ID to store optimizations in
-    :param optim_jsons: The FE optimization JSONs (a list of dicts)
-    :return: An updated FE JSON list
+    :param json: The FE optimization JSON (a single dict)
+    :param old_name: If we are updating an existing optimization, pass in the old name
+    :return: An updated FE JSON dict (with numbers sanitized)
 
     """
 
     print('Setting optimization info...')
     proj = load_project(project_id, die=True)
 
-    # Sanitize numbers
-    for json in optim_jsons:
-        for key in ['start_year', 'adjustment_year', 'end_year', 'budget_factor', 'maxtime']:
-            json[key] = to_float(json[key])  # Convert to a number
-        for objective in json['objective_weights'].keys():
-            json['objective_weights'][objective] = to_float(json['objective_weights'][objective], blank_ok=True)
-        for prog_name in json['prog_spending'].keys():
-            json['prog_spending'][prog_name]['min'] = to_float(json['prog_spending'][prog_name]['min'])
-            json['prog_spending'][prog_name]['max'] = to_float(json['prog_spending'][prog_name]['max'])
+    # Double check no name collisions
+    if json['name'] != old_name:
+        for existing in proj.optim_jsons:
+            if existing['name'] == json['name']:
+                raise Exception('Another optimization with that name already exists')
 
-    proj.optim_jsons = optim_jsons
+    for key in ['start_year', 'adjustment_year', 'end_year', 'budget_factor', 'maxtime']:
+        json[key] = to_float(json[key])  # Convert to a number
+    for objective in json['objective_weights'].keys():
+        json['objective_weights'][objective] = to_float(json['objective_weights'][objective], blank_ok=True)
+    for prog_name in json['prog_spending'].keys():
+        json['prog_spending'][prog_name]['min'] = to_float(json['prog_spending'][prog_name]['min'])
+        json['prog_spending'][prog_name]['max'] = to_float(json['prog_spending'][prog_name]['max'])
+
+    # If we are updating an existing optimization, then the old name (assigned when
+    # the modal was opened) will match one of the existing entries. Otherwise, it's a new one
+    if old_name:
+        for i in range(0,len(proj.optim_jsons)):
+            if proj.optim_jsons[i]['name'] == old_name:
+                proj.optim_jsons[i] = json
+                break
+        else:
+            raise Exception('An existing optimization with name "%s" was not found' % (old_name))
+    else:
+        proj.optim_jsons.append(json)
+
     print('Saving project...')
     save_project(proj)   
-    return optim_jsons
+    return json
+
+@RPC()
+def delete_optim(project_id, optim_name) -> None:
+    """
+    Remove an optim from the project
+
+    :param project_id:
+    :param optim_name:
+    :return:
+    """
+
+    print('Deleting optimization "%s"...' % (optim_name))
+
+    proj = load_project(project_id, die=True)
+    for i in range(0,len(proj.optim_jsons)):
+        if proj.optim_jsons[i]['name'] == optim_name:
+            del proj.optim_jsons[i]
+            break
+    else:
+        raise Exception('Optimization "%s" not found for deletion' % (optim_name))
+
+    print('Saving project...')
+    save_project(proj)
+    return None
 
 
 # This is the function we should use on occasions when we can't use Celery.
