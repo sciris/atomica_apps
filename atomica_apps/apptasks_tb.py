@@ -10,7 +10,6 @@ import scirisweb as sw
 from . import rpcs
 from . import config_tb as config
 import matplotlib.pyplot as ppl
-from .optimization import run_json_optimization
 
 ppl.switch_backend(config.MATPLOTLIB_BACKEND)
 
@@ -42,7 +41,7 @@ def run_tb_optimization(project_id, cache_id, optim_name=None, plot_options=None
     sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'cascade', 'dosave'], color='blue')
     datastore = rpcs.find_datastore(config=config)
     origproj = rpcs.load_project(project_id)
-    results = run_json_optimization(origproj,optim_name, maxtime=float(maxtime), store_results=False)
+    results = rpcs.run_json_optimization(origproj,optim_name, maxtime=float(maxtime))
     newproj = datastore.loadblob(uid=project_id, objtype='project', die=True)
     result_key = rpcs.cache_result(newproj, results, cache_id)
     return result_key
