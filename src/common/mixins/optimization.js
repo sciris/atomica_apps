@@ -63,12 +63,8 @@ var OptimizationMixin = {
       this.simEndYear = this.simEnd
       this.popOptions = this.activePops
       this.getPlotOptions(this.$store.state.activeProject.project.id)
-        .then(response => {
-          this.updateSets()
-            .then(response2 => {
-              this.getOptimSummaries()
-            })
-        })
+      this.updateSets()
+      this.getOptimSummaries()
     }
   },
 
@@ -319,37 +315,40 @@ var OptimizationMixin = {
       })
     },
 
-    getOptimSummaries() {
-      console.log('getOptimSummaries() called')
-      this.$sciris.start(this)
-      this.$sciris.rpc('get_optim_info', [this.projectID]) // Get the current project's optimization summaries from the server.
-        .then(response => {
-          this.optimSummaries = response.data // Set the optimizations to what we received.
-          this.optimSummaries.forEach(optimSum => { // For each of the optimization summaries...
-            optimSum.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + optimSum.name // Build a task and results cache ID from the project's hex UID and the optimization name.
-            optimSum.status = 'not started' // Set the status to 'not started' by default, and the pending and execution times to '--'.
-            optimSum.pendingTime = '--'
-            optimSum.executionTime = '--'
-          })
-          this.doTaskPolling(true)  // start task polling, kicking off with running check_task() for all optimizations
-          this.optimsLoaded = true
-          this.$sciris.succeed(this, 'Optimizations loaded')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not load optimizations', error)
-        })
+    startPolling(){
+      // Call after reloading optimSummaries to add status and start task polling
+      this.optimSummaries.forEach(optimSum => { // For each of the optimization summaries...
+        optimSum.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + optimSum.name // Build a task and results cache ID from the project's hex UID and the optimization name.
+        optimSum.status = 'not started' // Set the status to 'not started' by default, and the pending and execution times to '--'.
+        optimSum.pendingTime = '--'
+        optimSum.executionTime = '--'
+      })
+      this.doTaskPolling(true)  // start task polling, kicking off with running check_task() for all optimizations
     },
 
-    setOptimSummaries() {
+    async getOptimSummaries() {
+      console.log('getOptimSummaries() called')
+      this.$sciris.start(this)
+      try{
+        let response = await this.$sciris.rpc('get_optim_info', [this.projectID]) // Get the current project's optimization summaries from the server.
+        this.optimSummaries = response.data // Set the optimizations to what we received.
+        this.optimsLoaded = true
+        this.$sciris.succeed(this, '')
+        this.startPolling()
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not load optimizations', error)
+      }
+    },
+
+    async setOptimSummaries() {
       console.log('setOptimSummaries() called')
       this.$sciris.start(this)
-      this.$sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries])
-        .then( response => {
-          this.$sciris.succeed(this, 'Optimizations saved')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not save optimizations', error)
-        })
+      try{
+        await this.$sciris.rpc('set_optim_info', [this.projectID, this.optimSummaries])
+        this.getOptimSummaries() // This call will terminate the spinner
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not save optimizations', error)
+      }
     },
 
     addOptimModal(optim_type) { // Open a model dialog for creating a new project

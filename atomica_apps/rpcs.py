@@ -1003,7 +1003,7 @@ def reconcile(project_id, parsetname=None, progsetname=-1, year=2018, unit_cost_
 ##################################################################################
 
 @RPC() 
-def get_parset_info(project_id):
+def get_parset_names(project_id):
     print('Returning parset info...')
     proj = load_project(project_id, die=True)
     parset_names = proj.parsets.keys()
@@ -1085,7 +1085,7 @@ def upload_parset(parset_filename, project_id):
 
 
 @RPC() 
-def get_progset_info(project_id):
+def get_progset_names(project_id):
     print('Returning progset info...')
     proj = load_project(project_id, die=True)
     progset_names = proj.progsets.keys()
@@ -3013,7 +3013,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
     adjustments = []
     default_spend = progset.get_alloc(tvec=adjustment_year, instructions=baseline_instructions)  # Record the default spend for scale-up in money minimization
     for prog_name in progset.programs:
-        limits = list(sc.dcp(prog_spending[prog_name]))
+        limits = [prog_spending[prog_name]['min'],prog_spending[prog_name]['max']]
         if limits[0] is None:
             limits[0] = 0.0
         if limits[1] is None and optim_type == 'money':
@@ -3087,7 +3087,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
 ###### OPTIMIZATION ####
 ########################
 
-def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None, maxiters:int =None) -> tuple:
+def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None, maxiters:int =None) -> list:
     """
     Run an optimization from a named JSON
 
@@ -3127,4 +3127,4 @@ def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None,
     proj.settings.sim_end = original_end  # Note that if the end year is after the original simulation year, the result won't be visible (although it will have been optimized for)
     optimized_result = proj.run_sim(parset=parset, progset=progset, progset_instructions=optimized_instructions, result_name="Optimized")
     unoptimized_result = proj.run_sim(parset=parset, progset=progset, progset_instructions=baseline_instructions, result_name="Baseline")
-    return unoptimized_result, optimized_result
+    return [unoptimized_result, optimized_result]
