@@ -1125,9 +1125,25 @@ def delete_progset(project_id, progsetname=None):
     save_project(proj)
     return None
 
+@RPC()
+def get_tb_default_program_list() -> list:
+    '''
+    Retrieve list of default TB programs
+
+    This is about twice as fast as `get_tb_default_progset` because we do not need to
+    parse the framework or databook
+
+    :return: List with [{full_name:active}] flag for each program in the default progbook
+
+    '''
+
+    df = pd.read_excel(ROOTDIR + "optima_tb_default_programs.xlsx",usecols=1,header=1)
+    active = df['Display name'].str.contains('[Inactive]', regex=False)
+    names = df['Display name'].str.split(']').str[1].str.strip()
+    return [{'name':name,'included':act} for name, act in zip(names,active)]
 
 @RPC()
-def get_default_programs(fulloutput=False, verbose=True):
+def get_tb_default_progset(fulloutput=False, verbose=True):
     ''' Only used for TB '''
     
     # Get programs
@@ -1174,7 +1190,7 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
 
     proj = load_project(project_id, die=True)
     
-    default_active_progs, default_progset = get_default_programs(fulloutput=True)
+    default_active_progs, default_progset = get_tb_default_progset(fulloutput=True)
     if default_active_progs is None:
         active_progs = default_active_progs
     

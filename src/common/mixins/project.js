@@ -67,17 +67,16 @@ var ProjectMixin = {
         })
     },
 
-    getDefaultPrograms() {
+    async getDefaultPrograms() {
       console.log('getDefaultPrograms() called')
-      this.$sciris.rpc('get_default_programs') // Get the current user's framework summaries from the server.
-        .then(response => {
+      if (this.toolName() === 'tb') {
+        try {
+          let response = await this.$sciris.rpc('get_tb_default_program_list') // Get the current user's framework summaries from the server.
           this.defaultPrograms = response.data // Set the frameworks to what we received.
-          console.log('Loaded default programs:')
-          console.log(this.defaultPrograms)
-        })
-        .catch(error => {
+        } catch (error) {
           this.$sciris.fail(this, 'Could not load default programs', error)
-        })
+        }
+      }
     },
 
     updateFrameworkSummaries() {
@@ -120,12 +119,12 @@ var ProjectMixin = {
           this.projectSummaries.forEach(theProj => { // Preprocess all projects.
             theProj.selected = false // Set to not selected.
             theProj.renaming = '' // Set to not being renamed.
-            creationTimeDate = new Date(theProj.project.creationTime)          
+            creationTimeDate = new Date(theProj.project.creationTime)
             if (creationTimeDate >= lastCreationTimeDate) { // Update the last creation time and ID if what we see is later.
               lastCreationTimeDate = creationTimeDate
               lastCreatedID = theProj.project.id
             }
-          })          
+          })
           if (this.projectSummaries.length > 0) { // If we have a project on the list...
             if (setActiveID === null) { // If no ID is passed in, set the active project to the last-created project.
               this.openProject(lastCreatedID)
@@ -154,15 +153,15 @@ var ProjectMixin = {
 
       // Have the server create a new project.
       this.$sciris.rpc('add_demo_project', [
-        this.userName, 
-        demoOption, 
+        this.userName,
+        demoOption,
         this.toolName(),
       ])
       .then(response => {
         // Update the project summaries so the new project shows up on the list.
-        this.updateProjectSummaries(response.data.projectID) 
+        this.updateProjectSummaries(response.data.projectID)
         // Already have notification from project
-        this.$sciris.succeed(this, '') 
+        this.$sciris.succeed(this, '')
       })
       .catch(error => {
         this.$sciris.fail(this, 'Could not add demo project', error)
@@ -196,21 +195,21 @@ var ProjectMixin = {
       var frameworkID = this.getFrameworkID()
       this.$sciris.download('create_new_project',  // Have the server create a new project.
         [
-          this.userName, 
-          frameworkID, 
-          this.proj_name, 
-          this.num_pops, 
-          this.num_progs, 
-          this.data_start, 
+          this.userName,
+          frameworkID,
+          this.proj_name,
+          this.num_pops,
+          this.num_progs,
+          this.data_start,
           this.data_end
         ], {
           tool: this.toolName()
         })
         .then(response => {
-          // Update the project summaries so the new project shows up on the list. 
-          // Note: There's no easy way to get the new project UID to tell the 
+          // Update the project summaries so the new project shows up on the list.
+          // Note: There's no easy way to get the new project UID to tell the
           // project update to choose the new project because the RPC cannot pass it back.
-          this.updateProjectSummaries(null) 
+          this.updateProjectSummaries(null)
           this.$sciris.succeed(this, 'New project "' + this.proj_name + '" created')
         })
         .catch(error => {
@@ -220,14 +219,14 @@ var ProjectMixin = {
 
     uploadProjectFromFile() {
       console.log('uploadProjectFromFile() called')
-      this.$sciris.upload('upload_project', [this.userName], {}, '.prj') 
+      this.$sciris.upload('upload_project', [this.userName], {}, '.prj')
         // Have the server upload the project.
-        .then(response => { 
+        .then(response => {
           // This line needs to be here to avoid the spinner being up during the user modal.
-          this.$sciris.start(this) 
+          this.$sciris.start(this)
 
           // Update the project summaries so the new project shows up on the list.
-          this.updateProjectSummaries(response.data.projectID) 
+          this.updateProjectSummaries(response.data.projectID)
           this.$sciris.succeed(this, 'New project uploaded')
         })
         .catch(error => {
@@ -237,7 +236,7 @@ var ProjectMixin = {
 
     projectIsActive(uid) {
       // If the project is undefined, it is not active.
-      if (this.$store.state.activeProject.project === undefined) { 
+      if (this.$store.state.activeProject.project === undefined) {
         return false
       } else { // Otherwise, the project is active if the UIDs match.
         return (this.$store.state.activeProject.project.id === uid)
@@ -271,11 +270,11 @@ var ProjectMixin = {
       return projects.slice(0).sort((proj1, proj2) =>
         {
           let sortDir = this.sortReverse ? -1: 1
-          if (this.sortColumn === 'name'){ 
+          if (this.sortColumn === 'name'){
             return (proj1.project.name.toLowerCase() > proj2.project.name.toLowerCase() ? sortDir: -sortDir)
-          } else if (this.sortColumn === 'creationTime') { 
+          } else if (this.sortColumn === 'creationTime') {
             return (proj1.project.creationTime > proj2.project.creationTime ? sortDir: -sortDir)
-          } else if (this.sortColumn === 'updatedTime')  { 
+          } else if (this.sortColumn === 'updatedTime')  {
             return (proj1.project.updatedTime > proj2.project.updatedTime ? sortDir: -sortDir)
           }
         }
@@ -297,7 +296,7 @@ var ProjectMixin = {
       this.$sciris.rpc('copy_project', [uid]) // Have the server copy the project, giving it a new name.
         .then(response => {
           // Update the project summaries so the copied program shows up on the list.
-          this.updateProjectSummaries(response.data.projectID) 
+          this.updateProjectSummaries(response.data.projectID)
 
           // Indicate success.
           this.$sciris.succeed(
@@ -332,8 +331,8 @@ var ProjectMixin = {
         // to be renamed.
 //        window.removeEventListener('click', this.finishRename)
         this.projectToRename = null
-        // Make a deep copy of the projectSummary object by 
-        // JSON-stringifying the old object, and then parsing 
+        // Make a deep copy of the projectSummary object by
+        // JSON-stringifying the old object, and then parsing
         // the result back into a new object.
 
         let newProjectSummary = _.cloneDeep(projectSummary)
@@ -342,10 +341,10 @@ var ProjectMixin = {
         this.$sciris.start(this)
 
         // Have the server change the name of the project by passing in the new copy of the summary.
-        this.$sciris.rpc('rename_project', [newProjectSummary]) 
+        this.$sciris.rpc('rename_project', [newProjectSummary])
           .then(response => {
             // Update the project summaries so the rename shows up on the list.
-            this.updateProjectSummaries(newProjectSummary.project.id) 
+            this.updateProjectSummaries(newProjectSummary.project.id)
 
             // Turn off the renaming mode.
             projectSummary.renaming = ''
@@ -367,12 +366,12 @@ var ProjectMixin = {
 
     downloadProjectFile(uid) {
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid) 
+      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
       console.log('downloadProjectFile() called for ' + matchProject.project.name)
       this.$sciris.start(this)
 
       // Make the server call to download the project to a .prj file.
-      this.$sciris.download('download_project', [uid]) 
+      this.$sciris.download('download_project', [uid])
         .then(response => { // Indicate success.
           this.$sciris.succeed(this, '')
         })
@@ -444,9 +443,9 @@ var ProjectMixin = {
       this.$sciris.start(this, 'Creating default program book...')
       this.$sciris.download(
         'create_default_progbook', [
-          uid, 
-          this.progStartYear, 
-          this.progEndYear, 
+          uid,
+          this.progStartYear,
+          this.progEndYear,
           this.defaultPrograms
         ]) // TODO: set years
         .then(response => {
@@ -456,7 +455,7 @@ var ProjectMixin = {
           this.$sciris.fail(this, 'Could not create program book', error)
         })
     },
-    
+
     uploadDatabookModal(uid) {
       this.simplertModalUid = uid
       var obj = { // Alert object data
@@ -468,7 +467,7 @@ var ProjectMixin = {
       }
       this.$Simplert.open(obj)
     },
-    
+
     uploadDatabook() {
       let uid = this.simplertModalUid
       console.log('uploadDatabook() called')
@@ -483,7 +482,7 @@ var ProjectMixin = {
           this.$sciris.fail(this, 'Could not upload databook', error)
         })
     },
-    
+
     uploadProgbookModal(uid) {
       this.simplertModalUid = uid
       var obj = { // Alert object data
@@ -495,7 +494,7 @@ var ProjectMixin = {
       }
       this.$Simplert.open(obj)
     },
-    
+
     uploadProgbook() {
       let uid = this.simplertModalUid
       // Find the project that matches the UID passed in.
@@ -504,7 +503,7 @@ var ProjectMixin = {
         .then(response => {
           this.$sciris.start(this)
           // Update the project summaries so the copied program shows up on the list.
-          this.updateProjectSummaries(uid) 
+          this.updateProjectSummaries(uid)
           this.$sciris.succeed(this, 'Programs uploaded')   // Indicate success.
         })
         .catch(error => {
@@ -540,25 +539,25 @@ var ProjectMixin = {
       )
       console.log('deleteSelectedProjects() called for ', selectProjectsUIDs)
       // Have the server delete the selected projects.
-      if (selectProjectsUIDs.length > 0) { 
+      if (selectProjectsUIDs.length > 0) {
         this.$sciris.start(this)
         this.$sciris.rpc('delete_projects', [selectProjectsUIDs, this.userName])
           .then(response => {
             // Get the active project ID.
-            let activeProjectId = this.$store.state.activeProject.project.id 
+            let activeProjectId = this.$store.state.activeProject.project.id
             if (activeProjectId === undefined) {
               activeProjectId = null
             }
             // If the active project ID is one of the ones deleted...
-            if (selectProjectsUIDs.find(theId => theId === activeProjectId)) { 
+            if (selectProjectsUIDs.find(theId => theId === activeProjectId)) {
               // Set the active project to an empty project.
-              this.$store.commit('newActiveProject', {}) 
+              this.$store.commit('newActiveProject', {})
               // Null out the project.
-              activeProjectId = null 
+              activeProjectId = null
             }
             // Update the project summaries so the deletions show up on the list.
             // Make sure it tries to set the project that was active (if any).
-            this.updateProjectSummaries(activeProjectId) 
+            this.updateProjectSummaries(activeProjectId)
             this.$sciris.succeed(this, '')
           })
           .catch(error => {
