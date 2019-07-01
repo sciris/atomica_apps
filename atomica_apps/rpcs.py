@@ -16,6 +16,7 @@ import pylab as pl
 import pandas as pd
 import mpld3
 import re
+import io
 import sciris as sc
 import scirisweb as sw
 import atomica as at
@@ -630,14 +631,15 @@ def download_project(project_id):
     file, minus results, and pass the full path of this file back.
     '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
-    file_name = '%s.prj' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, proj.webapp.username) # Generate the full file name with path.
     # For convenience, construct Optimizations for each FE optimization when downloading to facilitate BE usage
     for json in proj.optim_jsons:
         proj.optims.append(make_optimization(proj,json)[0])
-    sc.saveobj(full_file_name, proj) # Write the object to a Gzip string pickle file.
-    print(">> download_project %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.
+
+    f = sc.saveobj(obj=proj) # Write the object to a BytesIO using filename=None
+
+    # Return it together with a filename
+    file_name = '%s.prj' % proj.name  # Create a filename containing the project name followed by a .prj suffix.
+    return f, file_name # Return the full filename.
 
 
 @RPC(call_type='download')
@@ -675,41 +677,21 @@ def download_databook(project_id):
     ''' Download databook '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s_databook.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
-    try:
-        proj.databook.save(full_file_name)
-    except Exception as E:
-        errormsg = 'Databook has not been uploaded or is invalid: %s' % str(E)
-        raise Exception(errormsg)
-    print(">> download_databook %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.
-
+    return proj.databook.tofile(), file_name
 
 @RPC(call_type='download')   
 def download_progbook(project_id):
     ''' Download program book '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s_program_book.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
-    try:
-        proj.progbook.save(full_file_name)
-    except Exception as E:
-        errormsg = 'Program book has not been uploaded or is invalid: %s' % str(E)
-        raise Exception(errormsg)
-    print(">> download_progbook %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.
-  
-    
+    return proj.progbook.tofile(), file_name
+
 @RPC(call_type='download')   
 def create_progbook(project_id, num_progs, start_year, end_year):
     ''' Create program book -- only used for Cascades '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
-    file_name = '%s_program_book.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
-    proj.make_progbook(progbook_path=full_file_name, progs=int(num_progs), data_start=int(start_year), data_end=int(end_year))
-    print(">> download_progbook %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.    
-
+    progset = at.ProgramSet.new(tvec=np.arange(int(start_year), int(end_year) + 1), progs=int(num_progs), framework=proj.framework, data=proj.data)
+    return progset.to_spreadsheet().tofile(),  '%s_program_book.xlsx' % proj.name
 
 @RPC(call_type='upload')
 def upload_databook(databook_filename, project_id):
@@ -806,18 +788,11 @@ def copy_framework(framework_id):
     print(">> copy_framework %s" % (new_framework.name))  # Display the call information.
     return {'frameworkID': str(new_framework.uid)} # Return the UID for the new frameworks record.
 
-
-
 @RPC(call_type='download')   
 def download_framework(framework_id):
     ''' Download the framework Excel file from a project '''
     frame = load_framework(framework_id, die=True) # Load the project with the matching UID.
-    file_name = '%s.xlsx' % frame.name
-    full_file_name = get_path(file_name, username=frame.webapp.username) # Generate the full file name with path.
-    filepath = frame.save(full_file_name)
-    print(">> download_framework %s" % (filepath)) # Display the call information.
-    return filepath # Return the full filename.
-
+    return frame.spreadsheet.tofile(), '%s.xlsx' % frame.name
 
 @RPC(call_type='download')
 def download_frameworks(framework_keys, username):
@@ -1842,6 +1817,7 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     elif js_scen['scentype'] == 'parameter':
         js_scen['paramyears'] = np.array([])
         js_scen['paramoverwrites'] = []
+        js_scen['interpolation'] = scen.interpolation if scen.interpolation else 'linear' # FE defaults to linear
         scen_values = scen.scenario_values
         extracted_param_years = False
         for code_param_name in scen_values.keys():
@@ -1948,6 +1924,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
             coverage=coverage, start_year=start_year)
     elif scentype == 'parameter':
         scen_values = dict()
+        interpolation = js_scen['interpolation']
         paramyears = []
         if 'paramyears' in js_scen:
             paramyears = js_scen['paramyears']
@@ -1964,7 +1941,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
                 paramvals = [to_float(pval) for pval in paramvals]
                 scen_values[paramname][popname]['y'] = paramvals
 
-        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values)
+        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values, interpolation=interpolation)
 
     return scen
 

@@ -225,7 +225,7 @@ Last update: 2019-06-04
               </option>
             </select><br><br>
           </div>
-          <div v-if="addEditModal.scenSummary.scentype != 'parameter'" 
+          <div v-if="addEditModal.scenSummary.scentype != 'parameter'"
                style="display:inline-block; padding-right:10px">
             <b>Program start year</b><br>
             <select :disabled="addEditModal.scenSummary.progsetname=='None'"
@@ -235,45 +235,61 @@ Last update: 2019-06-04
               </option>
             </select><br><br>
           </div>
-          
-          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
-               style="display:inline-block; padding-right:10px">
-            <b>Parameter group</b><br>
-            <select v-model="addEditModal.selectedParamGroup">
-              <option v-for='group in paramGroups.grouplist'>
-                {{ group }}
-              </option>
-            </select><br><br>
-          </div>   
-          
-          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
-               style="display:inline-block; padding-right:10px">
-            <b>Parameters</b><br>
-            <select v-model="addEditModal.selectedParams" :size="paramGroupMembers(addEditModal.selectedParamGroup).length" multiple>
-              <option v-for="paramname in paramGroupMembers(addEditModal.selectedParamGroup)">
-                {{ paramname }}
-              </option>
-            </select><br><br>
-          </div> 
 
-          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"
-               style="display:inline-block; padding-right:10px">
-            <b>Populations</b><br>
-            <select v-model="addEditModal.selectedPopulations" :size="paramGroups.popnames.length" multiple>
-              <option v-for="popname in paramGroups.popnames">
-                {{ popname }}
-              </option>
-            </select><br><br>
-          </div> 
-      
-          <div v-if="addEditModal.scenSummary.scentype == 'parameter'"     
-               style="display:inline-block; padding-right:10px">
-            <button class="btn __blue"
-                    @click="modalAddParameters(addEditModal.selectedParamGroup, addEditModal.selectedParams, addEditModal.selectedPopulations)"
-                    :disabled="(addEditModal.selectedParams.length == 0) || (addEditModal.selectedPopulations.length == 0)">
-              Add parameters...
-            </button><br><br>
-          </div>
+          <template v-if="addEditModal.scenSummary.scentype == 'parameter'">
+
+            <div style="display:inline-block; padding-right:10px">
+              <b>Interpolation</b><br>
+              <select v-model="addEditModal.scenSummary.interpolation">
+                <option value="linear">Linear</option>
+                <option value="previous">Stepped</option>
+              </select><br><br>
+            </div>
+
+            <br><br>
+
+            <div style="display:inline-block; padding-right:10px">
+              <b>Parameter group</b><br>
+              <select v-model="addEditModal.selectedParamGroup">
+                <option v-for='group in paramGroups.grouplist'>
+                  {{ group }}
+                </option>
+              </select><br><br>
+            </div>
+
+            <div style="display:inline-block; padding-right:10px">
+
+              <b>Parameters</b><br>
+              <select v-model="addEditModal.selectedParams" :size="paramGroupMembers(addEditModal.selectedParamGroup).length" multiple>
+                <option v-for="paramname in paramGroupMembers(addEditModal.selectedParamGroup)">
+                  {{ paramname }}
+                </option>
+              </select><br><br>
+            </div>
+
+            <div style="display:inline-block; padding-right:10px">
+
+              <b>Populations</b><br>
+              <select v-model="addEditModal.selectedPopulations" :size="paramGroups.popnames.length" multiple>
+                <option v-for="popname in paramGroups.popnames">
+                  {{ popname }}
+                </option>
+              </select><br><br>
+            </div>
+
+            <br><br>
+
+            <div style="display:inline-block; padding-right:10px">
+
+              <button class="btn __blue"
+                      @click="modalAddParameters(addEditModal.selectedParamGroup, addEditModal.selectedParams, addEditModal.selectedPopulations)"
+                      :disabled="(addEditModal.selectedParams.length == 0) || (addEditModal.selectedPopulations.length == 0)">
+                Add parameters...
+              </button>
+              <br><br>
+            </div>
+          </template>
+
           <br>
           
           <div v-if="addEditModal.scenSummary.scentype == 'budget'">
