@@ -22,6 +22,7 @@ import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
+from atomica.function_parser import parse_function
 
 ROOTDIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '')
 print(ROOTDIR)
@@ -1823,9 +1824,9 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
         for code_param_name in scen_values.keys():
             for pop_name in scen_values[code_param_name].keys():
                 paramoverwrite_dict = dict()
-                paramoverwrite_dict['paramname'] = param_code_name_to_param_diaplay_name(code_param_name, proj)
+                paramoverwrite_dict['paramname'] = proj.framework.pars.loc[code_param_name, 'display name']
                 paramoverwrite_dict['paramcodename'] = code_param_name
-                paramoverwrite_dict['groupname'] = param_code_name_to_param_group_name(code_param_name, proj)
+                paramoverwrite_dict['groupname'] = proj.framework.pars.loc[code_param_name, 'scenario'] if 'scenario' in proj.framework.pars else 'All'
                 paramoverwrite_dict['popname'] = pop_name
                 paramoverwrite_dict['paramvals'] = scen_values[code_param_name][pop_name]['y']
                 if not extracted_param_years:
@@ -1975,25 +1976,60 @@ def get_baseline_spending(project_id, verbose=False):
     return spending
 
 @RPC()
-def get_param_groups(project_id, tool, verbose=False):
+def get_param_groups(project_id, tool:str, verbose:bool=False) -> dict:
+    """
+    Return dict of parameters available for overwrite
+
+    In parameter scenarios, it's possible to flag a subset of the parameters in the framework
+    as being eligible for overwrites. This is done by optionally including a 'Scenario' column
+    in the parameters sheet of the framework. If this column is present,
+    :param project_id:
+    :param tool:
+    :param verbose:
+    :return:
+    """
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
 
     # Start with empty JSON
     param_groups = dict()
 
-    # Get the list of parameter groups from the framework dataframe.
-    param_groups['grouplist'] = pd.unique(proj.framework.pars['scenario'].dropna())
+    pars = proj.framework.pars
+    # Get the list of parameter groups from the framework dataframe
+    if 'scenario' not in proj.framework.pars:
+        # Make a separate 'group' for every non-output parameter
+        # First, need to identify non-output parameters
+        include = set()
+        for par_name in pars.index:
+            fcn_str = pars.at[par_name,'function']
+            if fcn_str:
+                _, deps = parse_function(fcn_str)
+                include.update(deps)
+        include.update(proj.framework.transitions.keys())
 
-    # Pull out a DataFrame only of the parameters that are in groups.
-    df = proj.framework.pars.loc[:, ['scenario', 'display name']].dropna().reset_index()
+        param_groups['codenames'] = list()
+        param_groups['groupnames'] = list()
+        param_groups['displaynames'] = list()
 
-    # Pull out arrays for the code names, group names, and display names.
-    param_groups['codenames'] = df['code name'].values
-    param_groups['groupnames'] = df['scenario'].values
-    param_groups['displaynames'] = df['display name'].values
+        for par_name in pars.index:
+            if par_name in include:
+                param_groups['codenames'].append(par_name)
+                param_groups['groupnames'].append('All')
+                param_groups['displaynames'].append(pars.at[par_name,'display name'])
+        param_groups['grouplist'] = ['All']
+    else:
+        # Return only parameters that have groups
+        param_groups['grouplist'] = pd.unique(pars['scenario'].dropna())
 
-    # Pull out the population names from the first parset.
+        # Pull out a DataFrame only of the parameters that are in groups.
+        df = pars.loc[:, ['scenario', 'display name']].dropna().reset_index()
+
+        # Pull out arrays for the code names, group names, and display names.
+        param_groups['codenames'] = df['code name'].values
+        param_groups['groupnames'] = df['scenario'].values
+        param_groups['displaynames'] = df['display name'].values
+
+    # Retrieve the population names
     if tool == 'tb':
         pops = tb_indpops(proj)
     else:
@@ -2006,17 +2042,6 @@ def get_param_groups(project_id, tool, verbose=False):
         sc.pp(param_groups)
 
     return param_groups
-
-
-def param_code_name_to_param_diaplay_name(code_name, proj):
-    param_diaplay_name = proj.framework.pars.loc[code_name, 'display name']
-    return param_diaplay_name
-
-
-def param_code_name_to_param_group_name(code_name, proj):
-    param_group_name = proj.framework.pars.loc[code_name, 'scenario']
-    return param_group_name
-
 
 @RPC()
 def get_scen_info(project_id, verbose=False):
