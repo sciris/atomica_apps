@@ -328,8 +328,15 @@ var OptimizationMixin = {
     async getOptimSummaries() {
       console.log('getOptimSummaries() called')
       this.$sciris.start(this)
-      try{
+      try {
         let response = await this.$sciris.rpc('get_optim_info', [this.projectID]) // Get the current project's optimization summaries from the server.
+        for (var i = 0; i < response.data.length; i++) {
+          response.data[i].status = 'not started';
+          response.data[i].pendingTime = '--';
+          response.data[i].executionTime = '--';
+          response.data[i].errorMsg = undefined;
+          response.data[i].errorText = undefined
+        }
         this.optimSummaries = response.data // Set the optimizations to what we received.
         this.optimsLoaded = true
         this.$sciris.succeed(this, '')

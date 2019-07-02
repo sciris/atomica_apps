@@ -75,6 +75,7 @@ Last update: 2019-06-03
           <div class="calib-title">
             <help reflink="results-plots" label="Results"></help>
             <div>
+              &nbsp;&nbsp;&nbsp;
               <b>Year: &nbsp;</b>
               <select v-model="simEndYear" @change="reloadGraphs(displayResultDatastoreId, true)">
                 <option v-for='year in projectionYears'>
@@ -304,6 +305,7 @@ Last update: 2019-06-03
 
   </div>
 </template>
+
 
 <script>
 import { mixins } from '../../common';

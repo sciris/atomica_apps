@@ -2236,6 +2236,7 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
 def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running scenarios...')
     proj = load_project(project_id, die=True)
+    print(proj.settings.sim_start)
     results = proj.run_scenarios(store_results=False)
     if len(results) < 1:  # Fail if we have no results (user didn't pick a scenario)
         return {'error': 'No scenario selected'}
