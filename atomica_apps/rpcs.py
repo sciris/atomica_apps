@@ -3119,7 +3119,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
             measurables.append(at.MinimizeMeasurable(prog.name, adjustment_year))  # Minimize 2020 spending on Treatment 1
 
     # Create the Optimization object
-    optim = at.Optimization(name=name, parsetname=parset_name, progsetname=progset_name, adjustments=adjustments, measurables=measurables, constraints=constraints, maxtime=maxtime)
+    optim = at.Optimization(name=name, adjustments=adjustments, measurables=measurables, constraints=constraints, maxtime=maxtime)
 
     # Set the method used for optimization
     if method is not None:
@@ -3160,8 +3160,8 @@ def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None,
         optim.maxtime = maxtime
     if maxiters is not None:
         optim.maxiters = maxiters
-    parset = proj.parset(optim.parsetname)
-    progset = proj.progset(optim.progsetname)
+    parset = proj.parset(json['parset_name'])
+    progset = proj.progset(json['progset_name'])
     original_end = proj.settings.sim_end
     proj.settings.sim_end = json['end_year']  # Simulation should be run up to the user's end year
     try:
