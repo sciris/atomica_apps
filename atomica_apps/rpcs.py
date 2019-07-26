@@ -3013,15 +3013,8 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
     The baseline instructions correspond to the unoptimized instructions - for example, with
     default spending, or with a doubled budget.
 
-    In the case where a money minimization is being performed, the optimization should be initialized
-    with the maximum possible spend - either by scaling up the initial values, or using the user-specified
-    upper bounds for each program. Thus, the initial instructions for the algorithm do NOT correspond to
-    baseline spending, they correspond to the upper bound of spending which is then incrementally decreased
-    to perform money minimization.
-
-    Thus, the `initial_instructions` should be passed to `at.optimize()` while the `baseline_instructions`
-    should be used to generate the baseline result. After running optimization, the `initial_instructions`
-    can be discarded, but the baseline result should be retained to serve as the unoptimized counterfactual.
+    For FE optimizations, the initial spend is drawn from the ProgramSet directly. For money minimizations,
+    the adjustables are initialized with an increased initial value.
 
     :param proj: A at.Project instance
     :param json: A FE JSON optimization dict - the type returned by default_optim_json and stored in proj.optim_jsons
@@ -3030,7 +3023,6 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
     """
 
     name = json['name']
-    parset_name = json['parset_name']  # WARNING, shouldn't be unused
     progset_name = json['progset_name']
     budget_factor = json['budget_factor']
     objective_weights = json['objective_weights']
@@ -3051,27 +3043,29 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
 
     # Set up the initial allocation and program instructions
     baseline_instructions = at.ProgramInstructions(alloc=progset, start_year=start_year)  # passing in the progset means we fix the spending in the start year
-    initial_instructions = sc.dcp(baseline_instructions)
 
-    # Add a spending adjustment in the start/optimization year for every program in the progset, using the lower/upper bounds
-    # passed in as arguments to this function
+    # Add a spending adjustment in the start/optimization year for every program in the progset, using the lower/upper bounds from the JSON
     adjustments = []
-    default_spend = progset.get_alloc(tvec=adjustment_year, instructions=baseline_instructions)  # Record the default spend for scale-up in money minimization
+    default_spend = progset.get_alloc(tvec=adjustment_year, instructions=baseline_instructions)  # Get the default spend in the program start year
+
     for prog_name in progset.programs:
-        limits = [prog_spending[prog_name]['min'],prog_spending[prog_name]['max']]
+
+        # Determine limits
+        limits = [prog_spending[prog_name]['min'], prog_spending[prog_name]['max']]  # Get the upper and lower bounds from the GUI fields via JSON
         if limits[0] is None:
             limits[0] = 0.0
         if limits[1] is None and optim_type == 'money':
             # Money minimization requires an absolute upper bound. Limit it to 5x default spend by default
             limits[1] = 10 * default_spend[prog_name]
-        adjustments.append(at.SpendingAdjustment(prog_name, t=adjustment_year, limit_type='abs', lower=limits[0], upper=limits[1]))
 
+        # Determine initial value - use the upper limit as the initial spend for money minimization
         if optim_type == 'money':
-            # Modify default spending to see if more money allows target to be met at all
-            if limits[1] is not None and np.isfinite(limits[1]):
-                initial_instructions.alloc[prog_name].insert(adjustment_year, limits[1])
-            else:
-                initial_instructions.alloc[prog_name] = at.TimeSeries(adjustment_year, 5 * default_spend[prog_name])
+            initial_spend = limits[1]
+        else:
+            initial_spend = default_spend[prog_name]
+
+        # Instantiate the adjustable
+        adjustments.append(at.SpendingAdjustment(prog_name, t=adjustment_year, limit_type='abs', lower=limits[0], upper=limits[1], initial=initial_spend))
 
     if optim_type == 'outcome':
         # Add a total spending constraint with the given budget scale up
@@ -3097,21 +3091,12 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
                 raise Exception('Unknown measurable "%s"' % (mname))
         else:
             if optim_type == 'money':
-                # For money minimization, use at AtMostMeasurable to meet the target by the end year.
-                # The weight stores the threshold value
-                measurables.append(at.AtMostMeasurable(mname, t=end_year, threshold=mweight))
+                measurables.append(at.DecreaseByMeasurable(mname, t=end_year, decrease=mweight/100.0))
             else:
                 measurables.append(at.Measurable(mname, t=[adjustment_year, end_year], weight=mweight))
 
     if optim_type == 'money':
-        # Do a prerun to convert the optimization targets into absolute units
-        result = proj.run_sim(proj.parsets[parset_name], progset=progset, progset_instructions=baseline_instructions, store_results=False)
-        for measurable in measurables:
-            val = measurable.get_objective_val(result.model)  # This is the baseline value for the quantity being thresholded
-            assert measurable.threshold <= 100 and measurable.threshold >= 0
-            measurable.threshold = val * (1 - measurable.threshold / 100.)
-
-        # Then, add extra measurables for program spending
+        # Add extra measurables for program spending
         for prog in progset.programs.values():
             measurables.append(at.MinimizeMeasurable(prog.name, adjustment_year))  # Minimize 2020 spending on Treatment 1
 
@@ -3126,7 +3111,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
 
     # Baseline instructions - the actual initial allocation
     # Initial instructions - instructions with the optimization initial allocation (scaled up for money minimization)
-    return optim, baseline_instructions, initial_instructions
+    return optim, baseline_instructions
 
 ########################
 ###### OPTIMIZATION ####
@@ -3152,7 +3137,7 @@ def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None,
     else:
         raise Exception('Could not find any optim json with name "%s"' % (optimname))
 
-    optim, baseline_instructions, initial_instructions = make_optimization(proj,json)
+    optim, baseline_instructions = make_optimization(proj,json)
     if maxtime is not None:
         optim.maxtime = maxtime
     if maxiters is not None:
@@ -3162,7 +3147,7 @@ def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None,
     original_end = proj.settings.sim_end
     proj.settings.sim_end = json['end_year']  # Simulation should be run up to the user's end year
     try:
-        optimized_instructions = at.optimize(proj, optim, parset, progset, initial_instructions)
+        optimized_instructions = at.optimize(proj, optim, parset, progset, baseline_instructions)
     except at.InvalidInitialConditions:
         if json['optim_type'] == 'money':
             raise Exception('It was not possible to achieve the optimization target even with an increased budget. Specify or raise upper limits for spending, or decrease the optimization target')
