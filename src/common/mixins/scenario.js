@@ -1,4 +1,5 @@
 import utils from "../utils"
+import sciris from "sciris-js";
 
 var ScenarioMixin = {
 
@@ -61,7 +62,7 @@ var ScenarioMixin = {
     },
   },
 
-  created() {
+  async created() {
     this.$sciris.addListener(this)
     this.$sciris.createDialogs(this)
     if ((this.$store.state.activeProject.project !== undefined) &&
@@ -75,18 +76,13 @@ var ScenarioMixin = {
       }      
       this.popOptions = this.activePops
       this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
-      this.getPlotOptions(this.$store.state.activeProject.project.id)
-        .then(response => {
-          this.updateSets()
-            .then(response2 => {
-              // The order of execution / completion of these doesn't matter.
-              this.getDataEndYear()
-              this.getScenSummaries()
-              this.getSpendingBaselines()
-              this.getParamGroups()
-              this.reloadGraphs(false)
-            })
-        })
+      await Promise.all([this.getPlotOptions(this.$store.state.activeProject.project.id), this.updateSets()]); // These don't depend on each other
+      // The order of these doesn't matter
+      this.getDataEndYear()
+      this.getScenSummaries()
+      this.getSpendingBaselines()
+      this.getParamGroups()
+      this.reloadGraphs(false)
     }
   },
 
@@ -183,7 +179,7 @@ var ScenarioMixin = {
           console.log('Scenario summaries:')
           console.log(this.scenSummaries)
           this.scenariosLoaded = true
-          this.$sciris.succeed(this, 'Scenarios loaded')
+          this.$sciris.succeed(this, '')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not get scenarios', error)
@@ -213,7 +209,7 @@ var ScenarioMixin = {
             year <= this.spendingBaselines.data_end + 10; year++) {
               this.validProgramStartYears.push(year)
           }
-          this.$sciris.succeed(this, 'Spending baselines loaded')
+          this.$sciris.succeed(this, '')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not get spending baselines', error)

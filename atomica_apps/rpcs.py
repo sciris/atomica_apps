@@ -16,11 +16,13 @@ import pylab as pl
 import pandas as pd
 import mpld3
 import re
+import io
 import sciris as sc
 import scirisweb as sw
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
+from atomica.function_parser import parse_function
 
 ROOTDIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), '')
 print(ROOTDIR)
@@ -530,10 +532,10 @@ def add_demo_project(username, model, tool):
     if tool == 'tb':
         proj = at.Project(framework=ROOTDIR+'optima_tb_framework.xlsx',databook=ROOTDIR+'optima_tb_databook.xlsx', sim_dt=0.5, do_run=False)
         proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
-        proj.demo_scenarios()  # Add example scenarios
-        proj.demo_optimization(tool='tb')  # Add example scenarios
+        at.make_demo_scenarios(proj)  # Add example scenarios
     else:
         proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
+    proj.optim_jsons = [default_optim_json(proj,tool=tool)] # Add a default optimization JSON
     proj.name = 'Demo project'
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
     print('Added demo project %s/%s' % (username, proj.name))
@@ -578,10 +580,7 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
 
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     data = at.ProjectData.new(frame, data_tvec, pops, transfers) # Return the databook
-    if tool == 'tb':
-        proj.databook = data.to_spreadsheet(write_uncertainty=True)
-    else:
-        proj.databook = data.to_spreadsheet()
+    proj.databook = data.to_spreadsheet()
     save_new_project(proj, username) # Save the new project in the DataStore.
 
     return proj.databook.tofile(), file_name
@@ -615,6 +614,8 @@ def upload_project(prj_filename, username):
     print(">> create_project_from_prj_file '%s'" % prj_filename) # Display the call information.
     try: # Try to open the .prj file, and return an error message if this fails.
         proj = at.Project.load(prj_filename) # NB. load via Project() method which automatically calls migration
+        if not hasattr(proj,'optim_jsons'):
+            proj.optim_jsons = list() # Add the FE's optimization JSON storage attribute if it doesn't have one yet
     except Exception:
         return { 'error': 'BadFileFormatError' }
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
@@ -628,11 +629,15 @@ def download_project(project_id):
     file, minus results, and pass the full path of this file back.
     '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
-    file_name = '%s.prj' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, proj.webapp.username) # Generate the full file name with path.
-    sc.saveobj(full_file_name, proj) # Write the object to a Gzip string pickle file.
-    print(">> download_project %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.
+    # For convenience, construct Optimizations for each FE optimization when downloading to facilitate BE usage
+    for json in proj.optim_jsons:
+        proj.optims.append(make_optimization(proj,json)[0])
+
+    f = sc.saveobj(obj=proj) # Write the object to a BytesIO using filename=None
+
+    # Return it together with a filename
+    file_name = '%s.prj' % proj.name  # Create a filename containing the project name followed by a .prj suffix.
+    return f, file_name # Return the full filename.
 
 
 @RPC(call_type='download')
@@ -670,41 +675,21 @@ def download_databook(project_id):
     ''' Download databook '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s_databook.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
-    try:
-        proj.databook.save(full_file_name)
-    except Exception as E:
-        errormsg = 'Databook has not been uploaded or is invalid: %s' % str(E)
-        raise Exception(errormsg)
-    print(">> download_databook %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.
-
+    return proj.databook.tofile(), file_name
 
 @RPC(call_type='download')   
 def download_progbook(project_id):
     ''' Download program book '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s_program_book.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
-    try:
-        proj.progbook.save(full_file_name)
-    except Exception as E:
-        errormsg = 'Program book has not been uploaded or is invalid: %s' % str(E)
-        raise Exception(errormsg)
-    print(">> download_progbook %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.
-  
-    
+    return proj.progbook.tofile(), file_name
+
 @RPC(call_type='download')   
 def create_progbook(project_id, num_progs, start_year, end_year):
     ''' Create program book -- only used for Cascades '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
-    file_name = '%s_program_book.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
-    full_file_name = get_path(file_name, username=proj.webapp.username) # Generate the full file name with path.
-    proj.make_progbook(progbook_path=full_file_name, progs=int(num_progs), data_start=int(start_year), data_end=int(end_year))
-    print(">> download_progbook %s" % (full_file_name)) # Display the call information.
-    return full_file_name # Return the full filename.    
-
+    progset = at.ProgramSet.new(tvec=np.arange(int(start_year), int(end_year) + 1), progs=int(num_progs), framework=proj.framework, data=proj.data)
+    return progset.to_spreadsheet().tofile(),  '%s_program_book.xlsx' % proj.name
 
 @RPC(call_type='upload')
 def upload_databook(databook_filename, project_id):
@@ -801,18 +786,11 @@ def copy_framework(framework_id):
     print(">> copy_framework %s" % (new_framework.name))  # Display the call information.
     return {'frameworkID': str(new_framework.uid)} # Return the UID for the new frameworks record.
 
-
-
 @RPC(call_type='download')   
 def download_framework(framework_id):
     ''' Download the framework Excel file from a project '''
     frame = load_framework(framework_id, die=True) # Load the project with the matching UID.
-    file_name = '%s.xlsx' % frame.name
-    full_file_name = get_path(file_name, username=frame.webapp.username) # Generate the full file name with path.
-    filepath = frame.save(full_file_name)
-    print(">> download_framework %s" % (filepath)) # Display the call information.
-    return filepath # Return the full filename.
-
+    return frame.spreadsheet.tofile(), '%s.xlsx' % frame.name
 
 @RPC(call_type='download')
 def download_frameworks(framework_keys, username):
@@ -998,7 +976,7 @@ def reconcile(project_id, parsetname=None, progsetname=-1, year=2018, unit_cost_
 ##################################################################################
 
 @RPC() 
-def get_parset_info(project_id):
+def get_parset_names(project_id):
     print('Returning parset info...')
     proj = load_project(project_id, die=True)
     parset_names = proj.parsets.keys()
@@ -1080,7 +1058,7 @@ def upload_parset(parset_filename, project_id):
 
 
 @RPC() 
-def get_progset_info(project_id):
+def get_progset_names(project_id):
     print('Returning progset info...')
     proj = load_project(project_id, die=True)
     progset_names = proj.progsets.keys()
@@ -1837,14 +1815,15 @@ def py_to_js_scen(scen: at.Scenario, proj=at.Project) -> dict:
     elif js_scen['scentype'] == 'parameter':
         js_scen['paramyears'] = np.array([])
         js_scen['paramoverwrites'] = []
+        js_scen['interpolation'] = scen.interpolation if scen.interpolation else 'linear' # FE defaults to linear
         scen_values = scen.scenario_values
         extracted_param_years = False
         for code_param_name in scen_values.keys():
             for pop_name in scen_values[code_param_name].keys():
                 paramoverwrite_dict = dict()
-                paramoverwrite_dict['paramname'] = param_code_name_to_param_diaplay_name(code_param_name, proj)
+                paramoverwrite_dict['paramname'] = proj.framework.pars.loc[code_param_name, 'display name']
                 paramoverwrite_dict['paramcodename'] = code_param_name
-                paramoverwrite_dict['groupname'] = param_code_name_to_param_group_name(code_param_name, proj)
+                paramoverwrite_dict['groupname'] = proj.framework.pars.loc[code_param_name, 'scenario'] if 'scenario' in proj.framework.pars else 'All'
                 paramoverwrite_dict['popname'] = pop_name
                 paramoverwrite_dict['paramvals'] = scen_values[code_param_name][pop_name]['y']
                 if not extracted_param_years:
@@ -1943,6 +1922,7 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
             coverage=coverage, start_year=start_year)
     elif scentype == 'parameter':
         scen_values = dict()
+        interpolation = js_scen['interpolation']
         paramyears = []
         if 'paramyears' in js_scen:
             paramyears = js_scen['paramyears']
@@ -1959,13 +1939,13 @@ def js_to_py_scen(js_scen: dict) -> at.Scenario:
                 paramvals = [to_float(pval) for pval in paramvals]
                 scen_values[paramname][popname]['y'] = paramvals
 
-        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values)
+        scen = at.ParameterScenario(name=name, active=active, parsetname=parsetname, scenario_values=scen_values, interpolation=interpolation)
 
     return scen
 
 
 @RPC()
-def get_baseline_spending(project_id, verbose=True):
+def get_baseline_spending(project_id, verbose=False):
     print('Getting baseline spending...')
     proj = load_project(project_id, die=True)
 
@@ -1993,25 +1973,60 @@ def get_baseline_spending(project_id, verbose=True):
     return spending
 
 @RPC()
-def get_param_groups(project_id, tool, verbose=True):
+def get_param_groups(project_id, tool:str, verbose:bool=False) -> dict:
+    """
+    Return dict of parameters available for overwrite
+
+    In parameter scenarios, it's possible to flag a subset of the parameters in the framework
+    as being eligible for overwrites. This is done by optionally including a 'Scenario' column
+    in the parameters sheet of the framework. If this column is present,
+    :param project_id:
+    :param tool:
+    :param verbose:
+    :return:
+    """
     print('Getting parameter groups...')
     proj = load_project(project_id, die=True)
 
     # Start with empty JSON
     param_groups = dict()
 
-    # Get the list of parameter groups from the framework dataframe.
-    param_groups['grouplist'] = pd.unique(proj.framework.pars['scenario'].dropna())
+    pars = proj.framework.pars
+    # Get the list of parameter groups from the framework dataframe
+    if 'scenario' not in proj.framework.pars:
+        # Make a separate 'group' for every non-output parameter
+        # First, need to identify non-output parameters
+        include = set()
+        for par_name in pars.index:
+            fcn_str = pars.at[par_name,'function']
+            if fcn_str:
+                _, deps = parse_function(fcn_str)
+                include.update(deps)
+        include.update(proj.framework.transitions.keys())
 
-    # Pull out a DataFrame only of the parameters that are in groups.
-    df = proj.framework.pars.loc[:, ['scenario', 'display name']].dropna().reset_index()
+        param_groups['codenames'] = list()
+        param_groups['groupnames'] = list()
+        param_groups['displaynames'] = list()
 
-    # Pull out arrays for the code names, group names, and display names.
-    param_groups['codenames'] = df['code name'].values
-    param_groups['groupnames'] = df['scenario'].values
-    param_groups['displaynames'] = df['display name'].values
+        for par_name in pars.index:
+            if par_name in include:
+                param_groups['codenames'].append(par_name)
+                param_groups['groupnames'].append('All')
+                param_groups['displaynames'].append(pars.at[par_name,'display name'])
+        param_groups['grouplist'] = ['All']
+    else:
+        # Return only parameters that have groups
+        param_groups['grouplist'] = pd.unique(pars['scenario'].dropna())
 
-    # Pull out the population names from the first parset.
+        # Pull out a DataFrame only of the parameters that are in groups.
+        df = pars.loc[:, ['scenario', 'display name']].dropna().reset_index()
+
+        # Pull out arrays for the code names, group names, and display names.
+        param_groups['codenames'] = df['code name'].values
+        param_groups['groupnames'] = df['scenario'].values
+        param_groups['displaynames'] = df['display name'].values
+
+    # Retrieve the population names
     if tool == 'tb':
         pops = tb_indpops(proj)
     else:
@@ -2025,19 +2040,8 @@ def get_param_groups(project_id, tool, verbose=True):
 
     return param_groups
 
-
-def param_code_name_to_param_diaplay_name(code_name, proj):
-    param_diaplay_name = proj.framework.pars.loc[code_name, 'display name']
-    return param_diaplay_name
-
-
-def param_code_name_to_param_group_name(code_name, proj):
-    param_group_name = proj.framework.pars.loc[code_name, 'scenario']
-    return param_group_name
-
-
 @RPC()
-def get_scen_info(project_id, verbose=True):
+def get_scen_info(project_id, verbose=False):
     print('Getting scenario info...')
     proj = load_project(project_id, die=True)
     scenario_jsons = [py_to_js_scen(scen,proj) for scen in proj.scens.values()]
@@ -2198,7 +2202,7 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
     elif isinstance(py_scen, at.CoverageScenario):
         # Create a new coverage scenario with the settings from the old.
         coverageyears = [to_float(x) if sc.isstring(x) else x for x in js_scen['coverageyears']]
-        result = proj.run_sim(parset=py_scen.parsetname,progset=py_scen.progsetname, progset_instructions=at.ProgramInstructions(start_year=py_scen.start_year),store_results=False)
+        result = proj.run_sim(parset=py_scen.parsetname, progset=py_scen.progsetname, progset_instructions=at.ProgramInstructions(start_year=py_scen.start_year),store_results=False)
         for t in coverageyears:
             vals = result.get_coverage(quantity='fraction', year=t)
             for prog in proj.progsets[py_scen.progsetname].programs.values():
@@ -2229,6 +2233,7 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
 def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running scenarios...')
     proj = load_project(project_id, die=True)
+    print(proj.settings.sim_start)
     results = proj.run_scenarios(store_results=False)
     if len(results) < 1:  # Fail if we have no results (user didn't pick a scenario)
         return {'error': 'No scenario selected'}
@@ -2237,8 +2242,6 @@ def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=Non
     print('Saving project...')
     save_project(proj)
     return output
-
-
 
 
 ##################################################################################
@@ -2275,36 +2278,94 @@ def js_to_py_optim(js_optim):
 def get_optim_info(project_id, verbose=False):
     print('Getting optimization info...')
     proj = load_project(project_id, die=True)
-    optim_jsons = []
-    for py_optim in proj.optims.values():
-        js_optim = py_to_js_optim(py_optim, project=proj)
-        optim_jsons.append(js_optim)
-    if verbose: sc.pp(optim_jsons)
-    return optim_jsons
+    if verbose: sc.pp(proj.optim_jsons)
+    return proj.optim_jsons
 
 
 @RPC()
 def get_default_optim(project_id, tool=None, optim_type=None, verbose=True):
     print('Getting default optimization...')
     proj = load_project(project_id, die=True)
-    py_optim = proj.demo_optimization(tool=tool, optim_type=optim_type)
-    js_optim = py_to_js_optim(py_optim, project=proj)
+    js_optim = default_optim_json(proj,tool=tool, optim_type=optim_type)
     if verbose: sc.pp(js_optim)
     return js_optim
 
 
 @RPC()    
-def set_optim_info(project_id, optim_jsons, verbose=False):
+def update_optim(project_id, json: dict, old_name:str = None) -> list:
+    """
+    Add or update a single optim json
+
+    This function sanitizes the JSONs by converting to number where appropriate.
+    It does not currently, but could, raise errors if the user enters arbitrary text
+    (these entries are simply removed).
+
+    If an old name is provided, then the json will replace an existing optimization
+    with that previous name. This handles renaming optimizations. Otherwise, the
+    optimization will be appended.
+
+    :param project_id: The active project ID to store optimizations in
+    :param json: The FE optimization JSON (a single dict)
+    :param old_name: If we are updating an existing optimization, pass in the old name
+    :return: An updated FE JSON dict (with numbers sanitized)
+
+    """
+
     print('Setting optimization info...')
     proj = load_project(project_id, die=True)
-    proj.optims.clear()
-    for j,js_optim in enumerate(optim_jsons):
-        if verbose: print('Setting optimization %s of %s...' % (j+1, len(optim_jsons)))
-        json = js_to_py_optim(js_optim)
-        if verbose: sc.pp(json)
-        proj.make_optimization(json=json)
+
+    # Double check no name collisions
+    if json['name'] != old_name:
+        for existing in proj.optim_jsons:
+            if existing['name'] == json['name']:
+                raise Exception('Another optimization with that name already exists')
+
+    for key in ['start_year', 'adjustment_year', 'end_year', 'budget_factor', 'maxtime']:
+        json[key] = to_float(json[key])  # Convert to a number
+    for objective in json['objective_weights'].keys():
+        json['objective_weights'][objective] = to_float(json['objective_weights'][objective], blank_ok=True)
+    for prog_name in json['prog_spending'].keys():
+        json['prog_spending'][prog_name]['min'] = to_float(json['prog_spending'][prog_name]['min'])
+        json['prog_spending'][prog_name]['max'] = to_float(json['prog_spending'][prog_name]['max'])
+
+    # If we are updating an existing optimization, then the old name (assigned when
+    # the modal was opened) will match one of the existing entries. Otherwise, it's a new one
+    if old_name:
+        for i in range(0,len(proj.optim_jsons)):
+            if proj.optim_jsons[i]['name'] == old_name:
+                proj.optim_jsons[i] = json
+                break
+        else:
+            raise Exception('An existing optimization with name "%s" was not found' % (old_name))
+    else:
+        proj.optim_jsons.append(json)
+
     print('Saving project...')
     save_project(proj)   
+    return json
+
+@RPC()
+def delete_optim(project_id, optim_name) -> None:
+    """
+    Remove an optim from the project
+
+    :param project_id:
+    :param optim_name:
+    :return:
+    """
+
+    print('Deleting optimization "%s"...' % (optim_name))
+
+    proj = load_project(project_id, die=True)
+    for i in range(0,len(proj.optim_jsons)):
+        if proj.optim_jsons[i]['name'] == optim_name:
+            del proj.optim_jsons[i]
+            break
+    else:
+        raise Exception('Optimization "%s" not found for deletion' % (optim_name))
+
+    print('Saving project...')
+    save_project(proj)
     return None
 
 
@@ -2832,3 +2893,268 @@ def tb_advanced_plots(P, results=None, pops=None, xlims=None): #(P, result, resu
     }
 
     return outputs, allfigs, alllegends
+
+
+def default_optim_json(proj: at.Project, tool: str, optim_type:str = 'outcome', progset_name:str = None) -> dict:
+    """
+    Return FE JSON dict for a default scenario of given type
+
+    Note that if optim_type='money' then the optimization 'weights' entered in the FE are
+    actually treated as relative scalings for the minimization target. e.g. If ':ddis' has a weight
+    of 25, this is a objective weight factor for optim_type='outcome' but it means 'we need to reduce
+    deaths by 25%' if optim_type='money' (since there is no weight factor for the minimize money epi targets)
+
+    :param tool: ``'cascade'`` or ``'tb'``
+    :param optim_type: set to ``'outcome'`` or ``'money'`` - use ``'money'`` to minimize money
+    :return: If ``dorun=True``, return list of results. Otherwise, returns an ``OptimInstructions`` instance
+
+    """
+
+    if optim_type is None:
+        optim_type = 'outcome'
+    assert tool in ['cascade', 'tb']
+    assert optim_type in ['outcome', 'money']
+    json = sc.odict()
+    if optim_type == 'outcome':
+        json['name'] = 'Default outcome optimization'
+    elif optim_type == 'money':
+        json['name'] = 'Default money optimization'
+    json['parset_name'] = -1
+    json['progset_name'] = -1
+    json['start_year'] = proj.data.end_year
+    json['adjustment_year'] = proj.data.end_year
+    json['end_year'] = proj.settings.sim_end
+    json['budget_factor'] = 1.0
+    json['optim_type'] = optim_type
+    json['tool'] = tool
+    json['method'] = 'asd'  # Note: may want to change this if PSO is improved
+
+    if tool == 'cascade':
+        json['objective_weights'] = sc.odict()
+        json['objective_labels'] = sc.odict()
+
+        for cascade_name in proj.framework.cascades:
+            cascade = at.sanitize_cascade(proj.framework, cascade_name)[1]
+
+            if optim_type == 'outcome':
+                json['objective_weights']['conversion:%s' % (cascade_name)] = 1.
+            elif optim_type == 'money':
+                json['objective_weights']['conversion:%s' % (cascade_name)] = 0.
+            else:
+                raise Exception('Unknown optim_type')
+
+            if cascade_name.lower() == 'cascade':
+                json['objective_labels']['conversion:%s' % (cascade_name)] = 'Maximize the conversion rates along each stage of the cascade'
+            else:
+                json['objective_labels']['conversion:%s' % (cascade_name)] = 'Maximize the conversion rates along each stage of the %s cascade' % (cascade_name)
+
+            for stage_name in cascade.keys():
+                # We checked earlier that there are no ':' symbols here, but asserting that this is true, just in case
+                assert ':' not in cascade_name
+                assert ':' not in stage_name
+                objective_name = 'cascade_stage:%s:%s' % (cascade_name, stage_name)
+
+                if optim_type == 'outcome':
+                    json['objective_weights'][objective_name] = 1
+                elif optim_type == 'money':
+                    json['objective_weights'][objective_name] = 0
+                else:
+                    raise Exception('Unknown optim_type')
+
+                if cascade_name.lower() == 'cascade':
+                    json['objective_labels'][objective_name] = 'Maximize the number of people in cascade stage "%s"' % (stage_name)
+                else:
+                    json['objective_labels'][objective_name] = 'Maximize the number of people in stage "%s" of the %s cascade' % (stage_name, cascade_name)
+
+    elif tool == 'tb':
+        if optim_type == 'outcome':
+            json['objective_weights'] = {'daly_rate': 0, ':ddis': 1, ':acj': 1, 'ds_inf': 0, 'mdr_inf': 0, 'xdr_inf': 0}  # These are TB-specific: maximize people alive, minimize people dead due to TB
+            json['objective_labels'] = {'daly_rate': 'Minimize DALYs',
+                                        ':ddis': 'Minimize TB-related deaths',
+                                        ':acj': 'Minimize total new active TB infections',
+                                        'ds_inf': 'Minimize prevalence of active DS-TB',
+                                        'mdr_inf': 'Minimize prevalence of active MDR-TB',
+                                        'xdr_inf': 'Minimize prevalence of active XDR-TB'}
+        elif optim_type == 'money':
+            # The weights here default to 0 because it's possible, depending on what programs are selected, that improvement
+            # in one or more of them might be impossible even with infinite money. Also, can't increase money too much because otherwise
+            # run the risk of a local minimum stopping optimization early with the current algorithm (this will change in the future)
+            json['objective_weights'] = {'daly_rate': 0, ':ddis': 0, ':acj': 5, 'ds_inf': 0, 'mdr_inf': 0, 'xdr_inf': 0}  # These are TB-specific: maximize people alive, minimize people dead due to TB
+            json['objective_labels'] = {'daly_rate': 'Minimize DALYs',
+                                        ':ddis': 'Minimize TB-related deaths',
+                                        ':acj': 'Total new active TB infections',
+                                        'ds_inf': 'Prevalence of active DS-TB',
+                                        'mdr_inf': 'Prevalence of active MDR-TB',
+                                        'xdr_inf': 'Prevalence of active XDR-TB'}
+
+        else:
+            raise Exception('Unknown optim_type')
+
+    else:
+        raise Exception('Tool "%s" not recognized' % tool)
+    json['maxtime'] = 30  # WARNING, default!
+    json['prog_spending'] = sc.odict()
+    for prog in proj.progset(progset_name).programs.values():
+        json['prog_spending'][prog.name] = {'min':0, 'max':None, 'label':prog.label}
+
+    return json
+
+def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
+    """
+    Construct and return an at.Optimization from JSON
+
+    The FE and RPCs work with a JSON-representation of optimizations matching the fields
+    in the FE. This function handles turning the JSON-dict into an at.Optimization.
+
+    This function also returns two sets of instructions
+    - Initialization instructions
+    - Baseline instructions
+
+    The baseline instructions correspond to the unoptimized instructions - for example, with
+    default spending, or with a doubled budget.
+
+    For FE optimizations, the initial spend is drawn from the ProgramSet directly. For money minimizations,
+    the adjustables are initialized with an increased initial value.
+
+    :param proj: A at.Project instance
+    :param json: A FE JSON optimization dict - the type returned by default_optim_json and stored in proj.optim_jsons
+    :return: Tuple containing (optimization, initial_instructions, baseline_instructions)
+
+    """
+
+    name = json['name']
+    progset_name = json['progset_name']
+    budget_factor = json['budget_factor']
+    objective_weights = json['objective_weights']
+    prog_spending = json['prog_spending']
+    maxtime = json['maxtime']
+    optim_type = json['optim_type']
+    tool = json['tool']
+    method = json.get('method', None)
+
+    start_year = json['start_year']  # The year when programs turn on
+    adjustment_year = json['adjustment_year']  # The year when adjustments get made
+    end_year = json['end_year']  # For cascades, this is the evaluation year. For other measurables, it is optimized from the adjustment year to the end year
+
+    if tool == 'cascade' and optim_type == 'money':
+        raise NotImplementedError('Money minimization not yet implemented for Cascades tool')
+
+    progset = proj.progsets[progset_name]  # Retrieve the progset
+
+    # Set up the initial allocation and program instructions
+    baseline_instructions = at.ProgramInstructions(alloc=progset, start_year=start_year)  # passing in the progset means we fix the spending in the start year
+
+    # Add a spending adjustment in the start/optimization year for every program in the progset, using the lower/upper bounds from the JSON
+    adjustments = []
+    default_spend = progset.get_alloc(tvec=adjustment_year, instructions=baseline_instructions)  # Get the default spend in the program start year
+
+    for prog_name in progset.programs:
+
+        # Determine limits
+        limits = [prog_spending[prog_name]['min'], prog_spending[prog_name]['max']]  # Get the upper and lower bounds from the GUI fields via JSON
+        if limits[0] is None:
+            limits[0] = 0.0
+        if limits[1] is None and optim_type == 'money':
+            # Money minimization requires an absolute upper bound. Limit it to 5x default spend by default
+            limits[1] = 10 * default_spend[prog_name]
+
+        # Determine initial value - use the upper limit as the initial spend for money minimization
+        if optim_type == 'money':
+            initial_spend = limits[1]
+        else:
+            initial_spend = default_spend[prog_name]
+
+        # Instantiate the adjustable
+        adjustments.append(at.SpendingAdjustment(prog_name, t=adjustment_year, limit_type='abs', lower=limits[0], upper=limits[1], initial=initial_spend))
+
+    if optim_type == 'outcome':
+        # Add a total spending constraint with the given budget scale up
+        # For money minimization we do not need to do this
+        constraints = [at.TotalSpendConstraint(budget_factor=budget_factor)]
+    else:
+        constraints = None
+
+    # Add all of the terms in the objective
+    measurables = []
+    for mname, mweight in objective_weights.items():
+
+        if not mweight:
+            continue
+
+        if tool == 'cascade':
+            tokens = mname.split(':')
+            if tokens[0] == 'cascade_stage':  # Parse a measurable name like 'cascade_stage:Default:All diagnosed'
+                measurables.append(at.MaximizeCascadeStage(cascade_name=tokens[1], t=[end_year], pop_names='all', cascade_stage=tokens[2], weight=mweight))
+            elif tokens[0] == 'conversion':  # Parse a measurable name like 'conversions:Default'
+                measurables.append(at.MaximizeCascadeConversionRate(cascade_name=tokens[1], t=[end_year], pop_names='all', weight=mweight))
+            else:
+                raise Exception('Unknown measurable "%s"' % (mname))
+        else:
+            if optim_type == 'money':
+                measurables.append(at.DecreaseByMeasurable(mname, t=end_year, decrease=mweight/100.0))
+            else:
+                measurables.append(at.Measurable(mname, t=[adjustment_year, end_year], weight=mweight))
+
+    if optim_type == 'money':
+        # Add extra measurables for program spending
+        for prog in progset.programs.values():
+            measurables.append(at.MinimizeMeasurable(prog.name, adjustment_year))  # Minimize 2020 spending on Treatment 1
+
+    # Create the Optimization object
+    optim = at.Optimization(name=name, adjustments=adjustments, measurables=measurables, constraints=constraints, maxtime=maxtime)
+
+    # Set the method used for optimization
+    if method is not None:
+        optim.method = method
+    elif optim_type == 'money':
+        optim.method = 'pso'
+
+    # Baseline instructions - the actual initial allocation
+    # Initial instructions - instructions with the optimization initial allocation (scaled up for money minimization)
+    return optim, baseline_instructions
+
+########################
+###### OPTIMIZATION ####
+########################
+
+def run_json_optimization(proj: at.Project, optimname: str, maxtime:float =None, maxiters:int =None) -> list:
+    """
+    Run an optimization from a named JSON
+
+    This function is used by the FE to run optimizations based on a JSON contained
+    within `proj.optim_jsons`.
+
+    :param proj: a Project instance
+    :param optimname: The name of an optimization (needs to match the 'name' stored in one of `proj.optim_jsons`)
+    :param maxtime: Optionally specify maximum run time
+    :param maxiters: Optionally specify maximum number of iterations
+    :return: Tuple containing (unoptimized_result, optimized_result)
+    """
+
+    for json in proj.optim_jsons:
+        if json['name'] == optimname:
+            break
+    else:
+        raise Exception('Could not find any optim json with name "%s"' % (optimname))
+
+    optim, baseline_instructions = make_optimization(proj,json)
+    if maxtime is not None:
+        optim.maxtime = maxtime
+    if maxiters is not None:
+        optim.maxiters = maxiters
+    parset = proj.parset(json['parset_name'])
+    progset = proj.progset(json['progset_name'])
+    original_end = proj.settings.sim_end
+    proj.settings.sim_end = json['end_year']  # Simulation should be run up to the user's end year
+    try:
+        optimized_instructions = at.optimize(proj, optim, parset, progset, baseline_instructions)
+    except at.InvalidInitialConditions:
+        if json['optim_type'] == 'money':
+            raise Exception('It was not possible to achieve the optimization target even with an increased budget. Specify or raise upper limits for spending, or decrease the optimization target')
+        else:
+            raise  # Just raise it as-is
+
+    proj.settings.sim_end = original_end  # Note that if the end year is after the original simulation year, the result won't be visible (although it will have been optimized for)
+    optimized_result = proj.run_sim(parset=parset, progset=progset, progset_instructions=optimized_instructions, result_name="Optimized")
+    unoptimized_result = proj.run_sim(parset=parset, progset=progset, progset_instructions=baseline_instructions, result_name="Baseline")
+    return [unoptimized_result, optimized_result]
