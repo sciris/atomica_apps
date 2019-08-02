@@ -581,6 +581,7 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     data = at.ProjectData.new(frame, data_tvec, pops, transfers) # Return the databook
     proj.databook = data.to_spreadsheet()
+    proj.optim_jsons = list()
     save_new_project(proj, username) # Save the new project in the DataStore.
 
     return proj.databook.tofile(), file_name
