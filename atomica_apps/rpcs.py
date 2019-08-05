@@ -2656,9 +2656,9 @@ def tb_key_calibration_plots(proj, results=None, pops=None, xlims=None):
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
 
 
-        #Case detection rate
-        outputs, figs, legends = tb_standard_plot(proj, res_pars='case_detection_rate', data_pars='nat_est_case_detection_rate', res_pops=allpops, data_pops=blhpops,
-                      pop_aggregation='weighted', ylabel='Pulmonary TB case detection rate', title='Pulmonary TB case detection rate - total', 
+        #Case notification rate
+        outputs, figs, legends = tb_standard_plot(proj, res_pars='case_notification_rate_epc', data_pars='nat_est_case_detection_rate', res_pops=allpops, data_pops=blhpops,
+                      pop_aggregation='weighted', ylabel='Pulmonary TB case notification rate', title='Pulmonary TB case notification rate - total', 
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
 
     else:    
