@@ -3058,12 +3058,14 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
         if limits[1] is None and optim_type == 'money':
             # Money minimization requires an absolute upper bound. Limit it to 5x default spend by default
             limits[1] = 10 * default_spend[prog_name]
+        elif limits[1] is None:
+            limits[1] = np.inf
 
         # Determine initial value - use the upper limit as the initial spend for money minimization
         if optim_type == 'money':
             initial_spend = limits[1]
         else:
-            initial_spend = default_spend[prog_name]
+            initial_spend = np.clip(default_spend[prog_name],limits[0],limits[1])
 
         # Instantiate the adjustable
         adjustments.append(at.SpendingAdjustment(prog_name, t=adjustment_year, limit_type='abs', lower=limits[0], upper=limits[1], initial=initial_spend))
