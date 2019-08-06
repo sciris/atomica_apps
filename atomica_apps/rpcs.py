@@ -3065,7 +3065,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
         if optim_type == 'money':
             initial_spend = limits[1]
         else:
-            initial_spend = np.clip(default_spend[prog_name],limits[0],limits[1])
+            initial_spend = np.clip(default_spend[prog_name], limits[0], limits[1])
 
         # Instantiate the adjustable
         adjustments.append(at.SpendingAdjustment(prog_name, t=adjustment_year, limit_type='abs', lower=limits[0], upper=limits[1], initial=initial_spend))
@@ -3073,7 +3073,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
     if optim_type == 'outcome':
         # Add a total spending constraint with the given budget scale up
         # For money minimization we do not need to do this
-        constraints = [at.TotalSpendConstraint(budget_factor=budget_factor)]
+        constraints = [at.TotalSpendConstraint(t=adjustment_year, total_spend=sum(x[0] for x in default_spend.values()), budget_factor=budget_factor)]
     else:
         constraints = None
 
