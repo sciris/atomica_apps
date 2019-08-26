@@ -498,10 +498,10 @@ def jsonify_projects(username, verbose=False):
 
 
 @RPC()
-def rename_project(project_json):
+def rename_project(project_id, new_name):
     ''' Given the passed in project json, update the underlying project accordingly. ''' 
-    proj = load_project(project_json['project']['id']) # Load the project corresponding with this json.
-    proj.name = project_json['project']['name'] # Use the json to set the actual project.
+    proj = load_project(project_id) # Load the project corresponding with this json.
+    proj.name = new_name # Use the json to set the actual project.
     save_project(proj) # Save the changed project to the DataStore.
     return None
 

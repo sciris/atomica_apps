@@ -1,7 +1,7 @@
 <!--
 Manage projects page
 
-Last update: 2019may16
+Last update: 2019Aug23
 -->
 
 <template>
@@ -45,18 +45,15 @@ Last update: 2019may16
           </thead>
           <tbody>
           <tr v-for="projectSummary in sortedFilteredProjectSummaries"
-              :class="{ highlighted: projectIsActive(projectSummary.project.id) }">
+              :class="{ highlighted: projectSummary.loaded }">
             <td>
               <input type="checkbox" @click="uncheckSelectAll()" v-model="projectSummary.selected"/>
             </td>
-            <td v-if="projectSummary.renaming !== ''">
-              <input type="text"
-                     class="txbox renamebox"
-                     @keyup.enter="renameProject(projectSummary)"
-                     v-model="projectSummary.renaming"/>
+            <td v-if="projectSummary.renaming">
+              <input type="text" v-model="projectSummary.new_name" class="txbox renamebox" @keyup.escape="cancelRename(projectSummary)" @keyup.enter="renameProject(projectSummary)"/>
             </td>
             <td v-else>
-              <div v-if="projectLoaded(projectSummary.project.id)">
+              <div v-if="projectSummary.loaded">
                 <b>{{ projectSummary.project.name }}</b>
               </div>
               <div v-else>
@@ -64,69 +61,69 @@ Last update: 2019may16
               </div>
             </td>
             <td style="text-align:left">
-              <button 
-                v-if="sortedFilteredProjectSummaries.length>1"
-                class="btn __green"  
-                data-tooltip="Open project" 
-                :disabled="projectLoaded(projectSummary.project.id)"
-                @click="openProject(projectSummary.project.id)">
+              <button
+                  v-if="sortedFilteredProjectSummaries.length>1"
+                  class="btn __green"
+                  :disabled="projectSummary.loaded"
+                  @click="openProject(projectSummary.project.id)">
                 <span>Open</span>
               </button>
-              <button 
-                class="btn btn-icon" 
-                data-tooltip="Rename"
-                @click="renameProject(projectSummary)">
+              <button
+                  class="btn btn-icon"
+                  data-tooltip="Rename"
+                  @click="startRename(projectSummary)">
                 <i class="ti-pencil"></i>
               </button>
-              <button 
-                class="btn btn-icon" 
-                data-tooltip="Copy"
-                @click="copyProject(projectSummary.project.id)">
+              <button
+                  class="btn btn-icon"
+                  data-tooltip="Copy"
+                  @click="copyProject(projectSummary.project.id)">
                 <i class="ti-files"></i>
               </button>
-              <button 
-                class="btn btn-icon"
-                data-tooltip="Download"
-                @click="downloadProjectFile(projectSummary.project.id)">
+              <button
+                  class="btn btn-icon"
+                  data-tooltip="Download"
+                  @click="downloadProjectFile(projectSummary.project.id)">
                 <i class="ti-download"></i>
               </button>
             </td>
             <td style="text-align:left">
               {{ projectSummary.project.updatedTime ? projectSummary.project.updatedTime:
-              'No modification' }}</td>
+              'No modification' }}
+            </td>
             <td style="text-align:left">
-              <button 
-                class="btn __blue btn-icon" 
-                @click="uploadDatabookModal(projectSummary.project.id)" 
-                data-tooltip="Upload">  
+              <button
+                  class="btn __blue btn-icon"
+                  @click="uploadDatabookModal(projectSummary.project.id)"
+                  data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
-              <button 
-                class="btn btn-icon" 
-                :disabled="!projectSummary.project.hasData" 
-                @click="downloadDatabook(projectSummary.project.id)"
-                data-tooltip="Download">
+              <button
+                  class="btn btn-icon"
+                  :disabled="!projectSummary.project.hasData"
+                  @click="downloadDatabook(projectSummary.project.id)"
+                  data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
             </td>
             <td style="white-space: nowrap; text-align:left">
-              <button 
-                class="btn btn-icon"
-                @click="createProgbookModal(projectSummary.project.id)"
-                data-tooltip="New">
+              <button
+                  class="btn btn-icon"
+                  @click="createProgbookModal(projectSummary.project.id)"
+                  data-tooltip="New">
                 <i class="ti-plus"></i>
               </button>
-              <button 
-                class="btn __blue btn-icon" 
-                @click="uploadProgbookModal(projectSummary.project.id)" 
-                data-tooltip="Upload">  
+              <button
+                  class="btn __blue btn-icon"
+                  @click="uploadProgbookModal(projectSummary.project.id)"
+                  data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
-              <button 
-                class="btn btn-icon" 
-                :disabled="!projectSummary.project.hasPrograms" 
-                @click="downloadProgbook(projectSummary.project.id)"
-                data-tooltip="Download">
+              <button
+                  class="btn btn-icon"
+                  :disabled="!projectSummary.project.hasPrograms"
+                  @click="downloadProgbook(projectSummary.project.id)"
+                  data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
             </td>
@@ -239,11 +236,15 @@ Last update: 2019may16
           <div class="divTableBody">
             <div class="divTableRow">
               <div class="divRowContent" style="padding-bottom:10px"><b>Start year: &nbsp;</b></div>
-              <div class="divRowContent" style="padding-bottom:10px"><select v-model="progStartYear"><option v-for='year in simYears'>{{ year }}</option></select></div>
+              <div class="divRowContent" style="padding-bottom:10px"><select v-model="progStartYear">
+                <option v-for='year in simYears'>{{ year }}</option>
+              </select></div>
             </div>
             <div class="divTableRow">
               <div class="divRowContent" style="padding-bottom:10px"><b>End year: &nbsp;</b></div>
-              <div class="divRowContent" style="padding-bottom:10px"><select v-model="progEndYear"><option v-for='year in simYears'>{{ year }}</option></select></div>
+              <div class="divRowContent" style="padding-bottom:10px"><select v-model="progEndYear">
+                <option v-for='year in simYears'>{{ year }}</option>
+              </select></div>
             </div>
           </div>
         </div>
@@ -285,50 +286,51 @@ Last update: 2019may16
 </template>
 
 <script>
-import { mixins } from '../../common';
-import router from '../router.js'
-import sciris from 'sciris-js';
+  import {mixins} from '../../common';
+  import sciris from 'sciris-js';
+  import router from '../router.js'
 
-export default {
-  name: 'ProjectsPage',
-  mixins: [
-    mixins.ProjectMixin 
-  ],
-  data() {
-    return {
-      data_start: 2000, // For creating a new project: number of populations
-      data_end:   2017, // For creating a new project: number of populations
-    }
-  },
-  created() {
-    let projectID = null
-    if (this.$store.state.currentUser.displayname === undefined) { // If we have no user logged in, automatically redirect to the login page.
-      router.push('/login')
-    } else {    // Otherwise...
-      if (this.$store.state.activeProject.project !== undefined) { // Get the active project ID if there is an active project.
-        projectID = this.$store.state.activeProject.project.id
+  export default {
+    name: 'ProjectsPage',
+    mixins: [
+      mixins.ProjectMixin
+    ],
+    data() {
+      return {
+        data_start: 2000, // For creating a new project: number of populations
+        data_end: 2017, // For creating a new project: number of populations
       }
-      this.getDefaultPrograms()
-      this.getDemoOptions()
-      this.updateFrameworkSummaries()        // Load the frameworks so the new project dialog is populated
-      this.updateProjectSummaries(projectID) // Load the project summaries of the current user.
-      sciris.sleep(2000) // This can take a surprisingly long time...
-        .then(response => {
-          this.progStartYear = this.simYears[0] // This isn't ideal, but this ensures that the drop-down boxes are actually populated
-          this.progEndYear = this.simYears[this.simYears.length -1]
-        })
-    }
-  },
-  methods: {
-    toolName: function(){
-      return this.$toolName; 
     },
-    getFrameworkID: function(){
-      return null;
+
+    methods: {
+      toolName: function () {
+        return this.$toolName;
+      },
+      getFrameworkID: function () {
+        return null;
+      },
+      getAppRouter: function () {
+        return router;
+      },
     },
-    getAppRouter: function(){
-      return router;
+
+    created() {
+      let projectID = null
+      // If we have no user logged in, automatically redirect to the login page.
+      if (this.$store.state.currentUser.displayname === undefined) {
+        this.getAppRouter().push('/login')
+      } else {
+        // Get the active project ID if there is an active project.
+        if (this.$store.state.activeProject.project !== undefined) {
+          projectID = this.$store.state.activeProject.project.id
+        }
+        this.getDefaultPrograms()
+        this.getDemoOptions()
+        // Load the frameworks so the new project dialog is populated
+        this.updateFrameworkSummaries()
+        // Load the project summaries of the current user.
+        this.updateProjectSummaries(projectID)
+      }
     },
-  },
-}
+  }
 </script>

@@ -6,7 +6,6 @@ var ProjectMixin = {
       filterPlaceholder: 'Type here to filter projects', // Placeholder text for table filter box
       filterText: '',  // Text in the table filter box
       allSelected: false, // Are all of the projects selected?
-      projectToRename: null, // What project is being renamed?
       sortColumn: 'name',  // Column of table used for sorting the projects: name, country, creationTime, updatedTime, dataUploadTime
       sortReverse: false, // Sort in reverse order?
       projectSummaries: [], // List of summary objects for projects the user has
@@ -19,8 +18,6 @@ var ProjectMixin = {
       demoOptions: [],
       demoOption: '',
       defaultPrograms: [],
-      progStartYear: [],
-      progEndYear: [],
       simplertModalUid: '',
     }
   },
@@ -29,6 +26,8 @@ var ProjectMixin = {
     projectID()    { return utils.projectID(this) },
     userName()     { return this.$store.state.currentUser.username },
     simYears()     { return utils.simYears(this) },
+    progStartYear(){ return this.simYears[0] },
+    progEndYear()  { return this.simYears[this.simYears.length -1] },
     sortedFilteredProjectSummaries() {
       return this.applyNameFilter(this.applySorting(this.projectSummaries))
     },
@@ -37,20 +36,6 @@ var ProjectMixin = {
   methods: {
 
     updateSorting(column) { return utils.updateSorting(this, column) },
-
-    projectLoaded(uid) {
-      console.log('projectLoaded called')
-      if (this.$store.state.activeProject.project !== undefined) {
-        if (this.$store.state.activeProject.project.id === uid) {
-          console.log('Project ' + uid + ' is loaded')
-          return true
-        } else {
-          return false
-        }
-      } else {
-        return false
-      }
-    },
 
     getDemoOptions() {
       console.log('getDemoOptions() called')
@@ -102,41 +87,39 @@ var ProjectMixin = {
         })
     },
 
-    updateProjectSummaries(setActiveID) {
-      console.log('updateProjectSummaries() called')
-      this.$sciris.start(this)
-      this.$sciris.rpc('jsonify_projects', [this.userName]) // Get the current user's project summaries from the server.
-        .then(response => {
-          let lastCreationTimeDate = null
-          let creationTimeDate = null
-          let lastCreatedID = null
-          this.projectSummaries = response.data.projects // Set the projects to what we received.
-          if (this.projectSummaries.length > 0) { // Initialize the last creation time stuff if we have a non-empty list.
-            lastCreationTimeDate = new Date(this.projectSummaries[0].project.creationTime)
-            lastCreatedID = this.projectSummaries[0].project.id
-          }
-          this.projectToRename = null  // Unset the link to a project being renamed.
-          this.projectSummaries.forEach(theProj => { // Preprocess all projects.
-            theProj.selected = false // Set to not selected.
-            theProj.renaming = '' // Set to not being renamed.
-            creationTimeDate = new Date(theProj.project.creationTime)
+    async updateProjectSummaries(setActiveID) {
+      console.log('updateProjectSummaries() called');
+      this.$sciris.start(this);
+      try {
+        let response = await this.$sciris.rpc('jsonify_projects', [this.userName]); // Get the current user's project summaries from the server.
+        for (let i = 0; i < response.data.projects.length; i++) {
+          response.data.projects[i].new_name = ''; // Store the string in the edit text box for renaming (create the property here so that the text boxes can bind to it)
+          response.data.projects[i].selected = false; // Flag whether the checkbox is checked or not
+          response.data.projects[i].renaming = false; // Flag whether to show the edit text box or not
+          response.data.projects[i].loaded = false; // Flag whether this project is open (and thus needs to have its row highlighted)
+        }
+        this.projectSummaries = response.data.projects; // Set the projects to what we received.
+
+        if (setActiveID !== null) {
+          this.openProject(setActiveID);
+        } else if (this.projectSummaries.length > 0) {
+          // Determine the last-created project and open it
+          let creationTimeDate = null;
+          let lastCreationTimeDate = new Date(this.projectSummaries[0].project.creationTime);
+          let lastCreatedID = this.projectSummaries[0].project.id;
+          for (let i = 0; i < this.projectSummaries.length; i++) {
+            creationTimeDate = new Date(this.projectSummaries[i].project.creationTime);
             if (creationTimeDate >= lastCreationTimeDate) { // Update the last creation time and ID if what we see is later.
-              lastCreationTimeDate = creationTimeDate
-              lastCreatedID = theProj.project.id
-            }
-          })
-          if (this.projectSummaries.length > 0) { // If we have a project on the list...
-            if (setActiveID === null) { // If no ID is passed in, set the active project to the last-created project.
-              this.openProject(lastCreatedID)
-            } else { // Otherwise, set the active project to the one passed in.
-              this.openProject(setActiveID)
+              lastCreationTimeDate = creationTimeDate;
+              lastCreatedID = this.projectSummaries[i].project.id;
             }
           }
-          this.$sciris.succeed(this, '')  // No green popup.
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not load projects', error)
-        })
+          this.openProject(lastCreatedID);
+        }
+        this.$sciris.succeed(this, '')  // No green popup.
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not load projects', error);
+      }
     },
 
     addDemoProject() {
@@ -285,8 +268,11 @@ var ProjectMixin = {
       // Find the project that matches the UID passed in.
       let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
       console.log('openProject() called for ' + matchProject.project.name)
-      this.$store.commit('newActiveProject', matchProject) // Set the active project to the matched project.
-      this.$sciris.succeed(this, 'Project "'+matchProject.project.name+'" loaded') // Success popup.
+      this.$store.commit('newActiveProject', matchProject); // Set the active project to the matched project.
+      this.projectSummaries.forEach(proj => proj.loaded = false); // Flag all projects as not loaded
+      matchProject.loaded = true; // Set the loaded project
+      // this.$sciris.succeed(this, 'Project "'+matchProject.project.name+'" loaded') // Success popup.
+      this.$sciris.succeed(this, '')  // No green popup.
     },
 
     copyProject(uid) {
@@ -308,60 +294,40 @@ var ProjectMixin = {
         })
     },
 
-    finishRename(event) {
-      // Grab the element of the open textbox for the project name to be renamed.
-      let renameboxElem = document.querySelector('.renamebox')
-
-      // If the click is outside the textbox, rename the remembered project.
-      if (!renameboxElem.contains(event.target)) {
-        this.renameProject(this.projectToRename)
-      }
+    startRename(projectSummary){
+      // Display the projectSummary edit name text box
+      console.log('renaming');
+      console.log(projectSummary);
+      projectSummary.renaming = true;
+      projectSummary.new_name = projectSummary.project.name;
     },
 
-    renameProject(projectSummary) {
-      console.log('renameProject() called for ' + projectSummary.project.name)
-      if (projectSummary.renaming === '') { // If the project is not in a mode to be renamed, make it so.
-        projectSummary.renaming = projectSummary.project.name
-        // Add a click listener to run the rename when outside the input box is click, and remember
-        // which project needs to be renamed.
-//        window.addEventListener('click', this.finishRename)
-        this.projectToRename = projectSummary
-      } else { // Otherwise (it is to be renamed)...
-        // Remove the listener for reading the clicks outside the input box, and null out the project
-        // to be renamed.
-//        window.removeEventListener('click', this.finishRename)
-        this.projectToRename = null
-        // Make a deep copy of the projectSummary object by
-        // JSON-stringifying the old object, and then parsing
-        // the result back into a new object.
+    cancelRename(projectSummary){
+      // Hide the edit name box without changing anything
+      projectSummary.renaming = false;
+    },
 
-        let newProjectSummary = _.cloneDeep(projectSummary)
-        // Rename the project name in the client list from what's in the textbox.
-        newProjectSummary.project.name = projectSummary.renaming
-        this.$sciris.start(this)
+    async renameProject(projectSummary) {
 
-        // Have the server change the name of the project by passing in the new copy of the summary.
-        this.$sciris.rpc('rename_project', [newProjectSummary])
-          .then(response => {
-            // Update the project summaries so the rename shows up on the list.
-            this.updateProjectSummaries(newProjectSummary.project.id)
+      // UNCOMMENT TO PREVENT DUPLICATE NAMES
+      // Actually perform the renaming. But first check for collisions on the client's end to speed things up
+      // and allow the user to continue editing without losing their partial edit
+      // for (let i = 0; i < this.projectSummaries.length; i++){
+      //   if (projectSummary.new_name === this.projectSummaries[i].name){
+      //     this.$sciris.fail(this, 'Duplicate name already exists');
+      //     return
+      //   }
+      // }
 
-            // Turn off the renaming mode.
-            projectSummary.renaming = ''
-            this.$sciris.succeed(this, '')
-          })
-          .catch(error => {
-            this.$sciris.fail(this, 'Could not rename project', error)
-          })
+      this.$sciris.start(this);
+      projectSummary.renaming = false; // End renaming even if there is a server-side error
+      try{
+        await this.$sciris.rpc('rename_project', [projectSummary.project.id, projectSummary.new_name]); // This function will error for any DB failure, so if it succeeds then we must have successfully renamed
+        projectSummary.project.name = projectSummary.new_name; // Update the table, no need to refresh the entire page
+        this.$sciris.succeed(this, '')  // No green popup.
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not rename project', error)
       }
-
-      // This silly hack is done to make sure that the Vue component gets updated by this function call.
-      // Something about resetting the project name informs the Vue component it needs to
-      // update, whereas the renaming attribute fails to update it.
-      // We should find a better way to do this.
-      let theName = projectSummary.project.name
-      projectSummary.project.name = 'newname'
-      projectSummary.project.name = theName
     },
 
     downloadProjectFile(uid) {
