@@ -498,10 +498,10 @@ def jsonify_projects(username, verbose=False):
 
 
 @RPC()
-def rename_project(project_json):
+def rename_project(project_id, new_name):
     ''' Given the passed in project json, update the underlying project accordingly. ''' 
-    proj = load_project(project_json['project']['id']) # Load the project corresponding with this json.
-    proj.name = project_json['project']['name'] # Use the json to set the actual project.
+    proj = load_project(project_id) # Load the project corresponding with this json.
+    proj.name = new_name # Use the json to set the actual project.
     save_project(proj) # Save the changed project to the DataStore.
     return None
 
@@ -3058,12 +3058,14 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
         if limits[1] is None and optim_type == 'money':
             # Money minimization requires an absolute upper bound. Limit it to 5x default spend by default
             limits[1] = 10 * default_spend[prog_name]
+        elif limits[1] is None:
+            limits[1] = np.inf
 
         # Determine initial value - use the upper limit as the initial spend for money minimization
         if optim_type == 'money':
             initial_spend = limits[1]
         else:
-            initial_spend = default_spend[prog_name]
+            initial_spend = np.clip(default_spend[prog_name], limits[0], limits[1])
 
         # Instantiate the adjustable
         adjustments.append(at.SpendingAdjustment(prog_name, t=adjustment_year, limit_type='abs', lower=limits[0], upper=limits[1], initial=initial_spend))
@@ -3071,7 +3073,7 @@ def make_optimization(proj: at.Project, json: dict) -> at.Optimization:
     if optim_type == 'outcome':
         # Add a total spending constraint with the given budget scale up
         # For money minimization we do not need to do this
-        constraints = [at.TotalSpendConstraint(budget_factor=budget_factor)]
+        constraints = [at.TotalSpendConstraint(t=adjustment_year, total_spend=sum(x[0] for x in default_spend.values()), budget_factor=budget_factor)]
     else:
         constraints = None
 
