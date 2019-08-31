@@ -231,7 +231,9 @@ Last update: 2019-06-06
            height="auto"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
 
       <div class="dialog-content">
         <div class="dialog-c-title">

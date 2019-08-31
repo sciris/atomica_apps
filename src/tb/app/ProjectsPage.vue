@@ -147,7 +147,9 @@ Last update: 2019Aug23
            :classes="['v--modal', 'vue-dialog']"
            :width="400"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
       <div class="dialog-content">
         <div class="dialog-c-title">
           Create demo project
@@ -179,7 +181,9 @@ Last update: 2019Aug23
            :classes="['v--modal', 'vue-dialog']"
            :width="400"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
 
       <!-- ### Start: TB demo project modal ### -->
       <div class="dialog-content">
@@ -225,7 +229,9 @@ Last update: 2019Aug23
            height="auto"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
 
       <div class="dialog-content">
         <div class="dialog-c-title">

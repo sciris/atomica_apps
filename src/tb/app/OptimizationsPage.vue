@@ -15,13 +15,13 @@ Last update: 2019-06-03
 
     <div v-else-if="!hasData">
       <div style="font-style:italic">
-        <p>Data not yet uploaded for the project.  Please upload a databook in the Projects page.</p>
+        <p>Data not yet uploaded for the project. Please upload a databook in the Projects page.</p>
       </div>
     </div>
 
     <div v-else-if="!hasPrograms">
       <div style="font-style:italic">
-        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>
+        <p>Programs not yet uploaded for the project. Please upload a program book in the Projects page.</p>
       </div>
     </div>
 
@@ -95,7 +95,7 @@ Last update: 2019-06-03
               <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
               <button class="btn" @click="reloadGraphs(displayResultDatastoreId, true)">Refresh</button>
               <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true; scaleFigs(0.8)">Show plot selection</button>
-              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>              
+              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>
               <button class="btn" @click="exportGraphs()">Export graphs</button>
               <button class="btn" @click="exportResults(displayResultDatastoreId)">Export data</button>
               <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="this.$globaltool=='tb'" -->
@@ -112,7 +112,7 @@ Last update: 2019-06-03
               <div class="calib-graphs">
                 <div class="outcome-graphs">
                   <!-- multiple figs may be inserted here -->
-                </div>               
+                </div>
                 <div class="budget-graphs">
                   <!-- multiple figs may be inserted here -->
                 </div>
@@ -164,16 +164,16 @@ Last update: 2019-06-03
                       {{ item.group_name }}
                       </span>
                       &nbsp;&nbsp;
-                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>                    
+                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>
                     </th>
                   </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
-                      <td>
-                        {{ name }}
-                      </td>
-                    </tr>
+                  <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
+                    <td>
+                      {{ name }}
+                    </td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -193,7 +193,9 @@ Last update: 2019-06-03
            :width="800"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
 
       <div class="dialog-content">
         <div class="dialog-c-title" v-if="addEditDialogMode=='add'">
@@ -301,20 +303,20 @@ Last update: 2019-06-03
 
 
 <script>
-import { mixins } from '../../common';
+  import {mixins} from '../../common';
 
-export default {
-  name: 'OptimizationsPage',
-  mixins: [
-    mixins.OptimizationMixin
-  ],
-  methods: {
-    toolName: function(){
-      return this.$toolName; 
-    },
-    getOptimizationRPCName: function(){
-      return 'run_tb_optimization';
+  export default {
+    name: 'OptimizationsPage',
+    mixins: [
+      mixins.OptimizationMixin
+    ],
+    methods: {
+      toolName: function () {
+        return this.$toolName;
+      },
+      getOptimizationRPCName: function () {
+        return 'run_tb_optimization';
+      }
     }
   }
-}
 </script>

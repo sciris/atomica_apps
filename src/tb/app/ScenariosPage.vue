@@ -15,15 +15,15 @@ Last update: 2019-06-04
 
     <div v-else-if="!hasData">
       <div style="font-style:italic">
-        <p>Data not yet uploaded for the project.  Please upload a databook in the Projects page.</p>
+        <p>Data not yet uploaded for the project. Please upload a databook in the Projects page.</p>
       </div>
     </div>
 
-<!--    <div v-else-if="!hasPrograms">-->
-<!--      <div style="font-style:italic">-->
-<!--        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>-->
-<!--      </div>-->
-<!--    </div>-->
+    <!--    <div v-else-if="!hasPrograms">-->
+    <!--      <div style="font-style:italic">-->
+    <!--        <p>Programs not yet uploaded for the project.  Please upload a program book in the Projects page.</p>-->
+    <!--      </div>-->
+    <!--    </div>-->
 
     <div v-else>
 
@@ -63,7 +63,7 @@ Last update: 2019-06-04
           <button class="btn __green" :disabled="!scenariosLoaded" @click="runScens()">Run scenarios</button>
           <button class="btn __blue" :disabled="!scenariosLoaded || !hasPrograms" @click="addScenModal('budget')">Add budget scenario</button>
           <button class="btn __blue" :disabled="!scenariosLoaded || !hasPrograms" @click="addScenModal('coverage')">Add coverage scenario</button>
-          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('parameter')">Add parameter scenario</button>          
+          <button class="btn __blue" :disabled="!scenariosLoaded" @click="addScenModal('parameter')">Add parameter scenario</button>
         </div>
       </div>
       <!-- ### End: scenarios card ### -->
@@ -95,7 +95,7 @@ Last update: 2019-06-04
               <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
               <button class="btn" @click="reloadGraphs(true)">Refresh</button>
               <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true; scaleFigs(0.8)">Show plot selection</button>
-              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>              
+              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>
               <button class="btn" @click="exportGraphs()">Export graphs</button>
               <button class="btn" @click="exportResults(serverDatastoreId)">Export data</button>
               <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="$globaltool=='tb'" -->
@@ -112,7 +112,7 @@ Last update: 2019-06-04
               <div class="calib-graphs">
                 <div class="outcome-graphs">
                   <!-- multiple figs may be inserted here -->
-                </div>               
+                </div>
                 <div class="budget-graphs">
                   <!-- multiple figs may be inserted here -->
                 </div>
@@ -164,16 +164,16 @@ Last update: 2019-06-04
                       {{ item.group_name }}
                       </span>
                       &nbsp;&nbsp;
-                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>                    
+                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>
                     </th>
                   </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
-                      <td>
-                        {{ name }}
-                      </td>
-                    </tr>
+                  <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
+                    <td>
+                      {{ name }}
+                    </td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -193,7 +193,9 @@ Last update: 2019-06-04
            :width="1000"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
 
       <div class="dialog-content">
         <div class="dialog-c-title" v-if="addEditModal.mode=='add'">
@@ -207,7 +209,7 @@ Last update: 2019-06-04
           <input type="text"
                  class="txbox"
                  v-model="addEditModal.scenSummary.name"/><br>
-                      
+
           <div style="display:inline-block; padding-right:10px">
             <b>Parameter set</b><br>
             <select v-model="addEditModal.scenSummary.parsetname">
@@ -291,16 +293,18 @@ Last update: 2019-06-04
           </template>
 
           <br>
-          
+
           <div v-if="addEditModal.scenSummary.scentype == 'budget'">
             <div class="scrolltable" style="max-height: 80vh;">
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
                 <tr>
-                  <th colspan=100><div class="dialog-header">
-                    Program spending
-                  </div></th>
-                </tr>                
+                  <th colspan=100>
+                    <div class="dialog-header">
+                      Program spending
+                    </div>
+                  </th>
+                </tr>
                 <tr>
                   <th>Program</th>
                   <th v-for="(val, index) in addEditModal.scenSummary.budgetyears">
@@ -308,15 +312,15 @@ Last update: 2019-06-04
                       <option v-for='year in validSimYears'>
                         {{ year }}
                       </option>
-                    </select> 
+                    </select>
                     <button @click="modalRemoveBudgetYear(index)" class='btn-small' style="display:inline-block">
                       <i class="ti-trash"></i>
-                    </button>         
-                  </th>                  
+                    </button>
+                  </th>
                   <th>
                     <button @click="modalAddBudgetYear()" class='btn-small' style="display:inline-block">
                       +
-                    </button>                                    
+                    </button>
                   </th>
                 </tr>
                 </thead>
@@ -338,16 +342,18 @@ Last update: 2019-06-04
               </table>
             </div>
           </div>
-          
+
           <div v-if="addEditModal.scenSummary.scentype == 'coverage'">
             <div class="scrolltable" style="max-height: 80vh;">
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
                 <tr>
-                  <th colspan=100><div class="dialog-header">
-                    Program coverages (%)
-                  </div></th>
-                </tr>                
+                  <th colspan=100>
+                    <div class="dialog-header">
+                      Program coverages (%)
+                    </div>
+                  </th>
+                </tr>
                 <tr>
                   <th>Program</th>
                   <th v-for="(val, index) in addEditModal.scenSummary.coverageyears">
@@ -355,15 +361,15 @@ Last update: 2019-06-04
                       <option v-for='year in validSimYears'>
                         {{ year }}
                       </option>
-                    </select> 
+                    </select>
                     <button @click="modalRemoveCoverageYear(index)" class='btn_small' style="display:inline-block">
                       <i class="ti-trash"></i>
-                    </button>         
-                  </th>                  
+                    </button>
+                  </th>
                   <th>
                     <button @click="modalAddCoverageYear()" class='btn_small' style="display:inline-block">
                       +
-                    </button>                                       
+                    </button>
                   </th>
                 </tr>
                 </thead>
@@ -383,16 +389,18 @@ Last update: 2019-06-04
               </table>
             </div>
           </div>
-          
+
           <div v-if="addEditModal.scenSummary.scentype == 'parameter'">
-            <div v-if="addEditModal.scenSummary.paramoverwrites.length > 0" class="scrolltable" style="max-height: 80vh;">        
+            <div v-if="addEditModal.scenSummary.paramoverwrites.length > 0" class="scrolltable" style="max-height: 80vh;">
               <table class="table table-bordered table-hover table-striped" style="width: 100%">
                 <thead>
                 <tr>
-                  <th colspan=100><div class="dialog-header">
-                    Parameter modifications
-                  </div></th>
-                </tr>                
+                  <th colspan=100>
+                    <div class="dialog-header">
+                      Parameter modifications
+                    </div>
+                  </th>
+                </tr>
                 <tr>
                   <th>Parameter</th>
                   <th>Parameter group</th>
@@ -402,20 +410,20 @@ Last update: 2019-06-04
                       <option v-for='year in validSimYears'>
                         {{ year }}
                       </option>
-                    </select> 
+                    </select>
                     <button @click="modalRemoveParamYear(index)" class='btn_small' style="display:inline-block">
                       <i class="ti-trash"></i>
-                    </button>         
-                  </th>                  
+                    </button>
+                  </th>
                   <th>
                     <button @click="modalAddParamYear()" class='btn_small' style="display:inline-block">
                       +
-                    </button>                                       
+                    </button>
                   </th>
                 </tr>
                 </thead>
                 <tbody>
-<!--                <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites"> -->
+                <!--                <tr v-for="paramoverwrite in addEditModal.scenSummary.paramoverwrites"> -->
                 <tr v-for="paramoverwrite in sortedParamOverwrites">
                   <td>
                     <select v-model="paramoverwrite.paramname">
@@ -433,7 +441,7 @@ Last update: 2019-06-04
                         {{ popname }}
                       </option>
                     </select>
-                  </td>                  
+                  </td>
                   <td v-for="(val, index) in paramoverwrite.paramvals">
                     <input type="text"
                            class="txbox"
@@ -443,14 +451,14 @@ Last update: 2019-06-04
                   <td>
                     <button @click="modalDeleteParameter(paramoverwrite)" class="btn_small">
                       <i class="ti-trash"></i>
-                    </button>                   
+                    </button>
                   </td>
                 </tr>
                 </tbody>
               </table>
             </div>
           </div>
-             
+
         </div>
         <div style="text-align:justify">
           <button @click="modalSave()" class='btn __green' style="display:inline-block">
@@ -474,18 +482,18 @@ Last update: 2019-06-04
 </template>
 
 <script>
-import { mixins } from '../../common';
+  import {mixins} from '../../common';
 
-export default {
-  name: 'ScenariosPage',
-  mixins: [
-    mixins.ScenarioMixin
-  ],
-  methods: {
-    toolName: function(){
-      return this.$toolName; 
+  export default {
+    name: 'ScenariosPage',
+    mixins: [
+      mixins.ScenarioMixin
+    ],
+    methods: {
+      toolName: function () {
+        return this.$toolName;
+      }
     }
-  }
 
-}
+  }
 </script>

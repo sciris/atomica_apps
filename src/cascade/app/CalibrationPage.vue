@@ -15,7 +15,7 @@ Last update: 2019-06-03
 
     <div v-else-if="!hasData">
       <div style="font-style:italic">
-        <p>Data not yet uploaded for the project.  Please upload a databook in the Projects page.</p>
+        <p>Data not yet uploaded for the project. Please upload a databook in the Projects page.</p>
       </div>
     </div>
 
@@ -23,7 +23,9 @@ Last update: 2019-06-03
 
       <!-- ### Start: calibration card ### -->
       <div class="card">
-        <div><help reflink="bl-overview" label="Calibration and reconciliation"></help></div>
+        <div>
+          <help reflink="bl-overview" label="Calibration and reconciliation"></help>
+        </div>
         <div class="controls-box">
           <button class="btn __green" @click="saveParTable()">Run</button>
           <button class="btn" @click="toggleParams()">
@@ -107,29 +109,31 @@ Last update: 2019-06-03
       <div class="PageSection" v-if="hasGraphs">
         <div class="card">
           <!-- ### Start: plot controls ### -->
-          <div class="calib-title"><help reflink="bl-results" label="Results"></help></div>
-              <div class="controls-box">
-              <b>Year: &nbsp;</b>
-              <select v-model="simEndYear" @change="reloadGraphs(true)">
-                <option v-for='year in simYears'>
-                  {{ year }}
-                </option>
-              </select>
-              &nbsp;&nbsp;&nbsp;
-              <b>Population: &nbsp;</b>
-              <select v-model="activePop" @change="reloadGraphs(true)">
-                <option v-for='pop in activePops'>{{ pop }}</option>
-              </select>&nbsp;&nbsp;&nbsp;
-              <button class="btn btn-icon" @click="scaleFigs(0.9)" data-tooltip="Zoom out">&ndash;</button>
-              <button class="btn btn-icon" @click="scaleFigs(1.0)" data-tooltip="Reset zoom"><i class="ti-zoom-in"></i></button>
-              <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
-              <button class="btn" @click="reloadGraphs(true)">Refresh</button>
-              <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true; scaleFigs(0.8)">Show plot selection</button>
-              <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>               
-              <button class="btn" @click="exportGraphs()">Export graphs</button>
-              <button class="btn" @click="exportResults(serverDatastoreId)">Export data</button>
-              <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="$globaltool=='tb'" -->
-            </div>
+          <div class="calib-title">
+            <help reflink="bl-results" label="Results"></help>
+          </div>
+          <div class="controls-box">
+            <b>Year: &nbsp;</b>
+            <select v-model="simEndYear" @change="reloadGraphs(true)">
+              <option v-for='year in simYears'>
+                {{ year }}
+              </option>
+            </select>
+            &nbsp;&nbsp;&nbsp;
+            <b>Population: &nbsp;</b>
+            <select v-model="activePop" @change="reloadGraphs(true)">
+              <option v-for='pop in activePops'>{{ pop }}</option>
+            </select>&nbsp;&nbsp;&nbsp;
+            <button class="btn btn-icon" @click="scaleFigs(0.9)" data-tooltip="Zoom out">&ndash;</button>
+            <button class="btn btn-icon" @click="scaleFigs(1.0)" data-tooltip="Reset zoom"><i class="ti-zoom-in"></i></button>
+            <button class="btn btn-icon" @click="scaleFigs(1.1)" data-tooltip="Zoom in">+</button>&nbsp;&nbsp;&nbsp;
+            <button class="btn" @click="reloadGraphs(true)">Refresh</button>
+            <button v-if="!showPlotControls" class="btn" @click="showPlotControls = true; scaleFigs(0.8)">Show plot selection</button>
+            <button v-else class="btn" @click="showPlotControls = false; scaleFigs(1.0)">Hide plot selection</button>
+            <button class="btn" @click="exportGraphs()">Export graphs</button>
+            <button class="btn" @click="exportResults(serverDatastoreId)">Export data</button>
+            <button v-if="false" class="btn btn-icon" @click="togglePlotControls()"><i class="ti-settings"></i></button> <!-- When popups are working: v-if="$globaltool=='tb'" -->
+          </div>
           <!-- ### End: plot controls ### -->
 
 
@@ -141,7 +145,7 @@ Last update: 2019-06-03
               <div class="calib-graphs">
                 <div class="outcome-graphs">
                   <!-- multiple figs may be inserted here -->
-                </div>               
+                </div>
                 <div class="budget-graphs">
                   <!-- multiple figs may be inserted here -->
                 </div>
@@ -187,16 +191,16 @@ Last update: 2019-06-03
                       {{ item.group_name }}
                       </span>
                       &nbsp;&nbsp;
-                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>                    
+                      <input type="checkbox" @click="plotGroupActiveToggle(item.group_name, item.active)" v-model="item.active"/>
                     </th>
                   </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
-                      <td>
-                        {{ name }}
-                      </td>
-                    </tr>
+                  <tr v-if="!plotGroupsListCollapsed[index]" v-for="name in getPlotsFromPlotGroup(item.group_name)">
+                    <td>
+                      {{ name }}
+                    </td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -214,7 +218,9 @@ Last update: 2019-06-03
            height="auto"
            :classes="['v--modal', 'vue-dialog']"
            :pivot-y="0.3"
-           :adaptive="true">
+           :adaptive="true"
+           :clickToClose="false"
+    >
 
       <div class="dialog-content">
         <div class="dialog-c-title">
@@ -244,17 +250,17 @@ Last update: 2019-06-03
 </template>
 
 <script>
-import { mixins } from '../../common';
+  import {mixins} from '../../common';
 
-export default {
-  name: 'CalibrationPage',
-  mixins: [
-    mixins.CalibrationMixin 
-  ],
-  methods: {
-    toolName: function(){
-      return this.$toolName; 
+  export default {
+    name: 'CalibrationPage',
+    mixins: [
+      mixins.CalibrationMixin
+    ],
+    methods: {
+      toolName: function () {
+        return this.$toolName;
+      }
     }
   }
-}
 </script>
