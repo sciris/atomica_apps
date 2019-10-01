@@ -31,10 +31,15 @@ CLIENT_DIR = os.getenv('CLIENT_DIR', '../dist/cascade')
 # Sciris in the webapp.
 USE_DATASTORE = True
 
-# URL for the Redis database that the web app will use to manage
-# persistence.  Note that the /N/ number at the end should match the
-# database number you want to use.  (N=0 is the default Redis database.)
+# The REDIS_URL is used for Celery, and the DATASTORE_URL is used for the main webapp.
+# The DATASTORE_URL falls back to REDIS_URL at the moment for backwards compatibility
 REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/8')
+
+datastore = os.getenv('DATASTORE_URL', None)
+if datastore is not None:
+    DATASTORE_URL = datastore
+else:
+    DATASTORE_URL = REDIS_URL
 
 # Flag for setting whether we use the users functionality provided by
 # Sciris in the webapp.
