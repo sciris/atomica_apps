@@ -1567,7 +1567,7 @@ def customize_fig(fig=None, output=None, plotdata=None, xlims=None, figsize=None
 
 def get_budget_plots(results, year):
 
-    output = {'graphs': [], 'legends': []}
+    output = {'graphs': [], 'legends': [], 'types': []}
     figs = []
     legends = []
 
@@ -1600,7 +1600,7 @@ def get_budget_plots(results, year):
 
 def get_coverage_plots(results):
 
-    output = {'graphs': [], 'legends': []}
+    output = {'graphs': [], 'legends': [], 'types': []}
     figs = []
     legends = []
 
