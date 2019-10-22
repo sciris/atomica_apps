@@ -72,6 +72,7 @@ Last update: 2019Aug23
               <button
                   class="btn btn-icon"
                   data-tooltip="Rename"
+                  :disabled="projectSummary.renaming"
                   @click="startRename(projectSummary)">
                 <i class="ti-pencil"></i>
               </button>
@@ -199,25 +200,29 @@ Last update: 2019Aug23
             Project name:<br>
             <input type="text"
                    class="txbox"
-                   v-model="proj_name"/><br>
+                   v-model="newProjectData.name"/><br>
             Framework:<br>
-            <select v-model="currentFramework">
-              <option v-for='frameworkSummary in frameworkSummaries'>
-                {{ frameworkSummary.framework.name }}
+            <select v-model="newProjectData.frameworkID">
+              <option v-for='frameworkSummary in frameworkSummaries' :value="frameworkSummary.id">
+                {{ frameworkSummary.name }}
               </option>
             </select><br><br>
             Number of populations:<br>
             <input type="text"
                    class="txbox"
-                   v-model="num_pops"/><br>
+                   v-model.number="newProjectData.num_pops"/><br>
+            Number of transfers:<br>
+            <input type="text"
+                   class="txbox"
+                   v-model.number="newProjectData.num_transfers"/><br>
             First year for data entry:<br>
             <input type="text"
                    class="txbox"
-                   v-model="data_start"/><br>
+                   v-model="newProjectData.data_start"/><br>
             Final year for data entry:<br>
             <input type="text"
                    class="txbox"
-                   v-model="data_end"/><br>
+                   v-model="newProjectData.data_end"/><br>
           </div>
           <div style="text-align:justify">
             <button @click="createNewProject()" class='btn __green' style="display:inline-block">
@@ -310,28 +315,13 @@ Last update: 2019Aug23
     ],
     data() {
       return {
-        data_start: 2015, // For creating a new project: number of populations
-        data_end: 2018, // For creating a new project: number of populations
+        frameworkSummaries: [],
+        num_progs: 5,
       }
     },
 
-    methods: {
-      toolName: function () {
-        return this.$toolName;
-      },
-      getFrameworkID: function () {
-        let matchFramework = this.frameworkSummaries.find(
-            theFrame => theFrame.framework.name === this.currentFramework
-        )
-        return matchFramework.framework.id;
-      },
-      getAppRouter: function () {
-        return router;
-      },
-    },
-
     created() {
-      let projectID = null
+      let projectID = null;
       // If we have no user logged in, automatically redirect to the login page.
       if (this.$store.state.currentUser.displayname === undefined) {
         this.getAppRouter().push('/login')
@@ -340,13 +330,50 @@ Last update: 2019Aug23
         if (this.$store.state.activeProject.project !== undefined) {
           projectID = this.$store.state.activeProject.project.id
         }
-        this.getDefaultPrograms()
-        this.getDemoOptions()
-        // Load the frameworks so the new project dialog is populated
-        this.updateFrameworkSummaries()
-        // Load the project summaries of the current user.
-        this.updateProjectSummaries(projectID)
+        this.data_start = 2015;
+        this.data_end = 2018;
+        this.newProjectData.num_transfers = 0; // Default to 0 in CAT
+        this.getDefaultPrograms();
+        this.getDemoOptions();
+        this.updateFrameworkSummaries();
+        this.updateProjectSummaries(projectID);
       }
+    },
+
+    methods: {
+      toolName: function () {
+        return this.$toolName;
+      },
+
+      getAppRouter: function () {
+        return router;
+      },
+
+      async createProgbook() {
+        // Find the project that matches the UID passed in.
+        let uid = this.activeuid;
+        console.log('createProgbook() called');
+        this.$modal.hide('create-progbook');
+        this.$sciris.start(this, 'Creating program book...');
+        try {
+          let response = await this.$sciris.download('create_progbook', [uid, this.num_progs, this.progStartYear, this.progEndYear]);
+          this.$sciris.succeed(this, '');
+        } catch (error) {
+          this.$sciris.fail(this, 'Could not create program book', error);
+        }
+      },
+
+      async updateFrameworkSummaries() {
+        try {
+          let response = await this.$sciris.rpc('jsonify_frameworks', [this.userName]);
+          this.frameworkSummaries = response.data;
+          if (this.frameworkSummaries.length) {
+            this.newProjectData.frameworkID = this.frameworkSummaries[0].id;
+          }
+        } catch (error) {
+          this.$sciris.fail(this, 'Could not load frameworks', error)
+        }
+      },
     },
   }
 </script>
