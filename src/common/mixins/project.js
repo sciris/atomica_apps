@@ -169,7 +169,7 @@ var ProjectMixin = {
           // Note: There's no easy way to get the new project UID to tell the
           // project update to choose the new project because the RPC cannot pass it back.
           this.updateProjectSummaries(null)
-          this.$sciris.succeed(this, 'New project "' + this.proj_name + '" created')
+          this.$sciris.succeed(this, 'New project "' + this.newProjectData.name + '" created')
         })
         .catch(error => {
           this.$sciris.fail(this, 'Could not add new project:' + error.message)

@@ -371,7 +371,7 @@ Last update: 2018oct04
         // First check for collisions on the client's end to speed things up
         // and allow the user to continue editing without losing their partial edit
         for (let i = 0; i < this.frameworkSummaries.length; i++) {
-          if (frameworkSummary.new_name === this.frameworkSummaries[i].name) {
+          if ((frameworkSummary !== this.frameworkSummaries[i]) && (frameworkSummary.new_name === this.frameworkSummaries[i].name)) {
             this.$sciris.fail(this, 'Duplicate name already exists');
             return
           }

@@ -350,7 +350,7 @@ Last update: 2019Aug23
         return router;
       },
 
-      async createProgbook() {
+      async projeProgbook() {
         // Find the project that matches the UID passed in.
         let uid = this.activeuid;
         console.log('createProgbook() called');
