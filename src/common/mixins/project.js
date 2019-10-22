@@ -9,12 +9,15 @@ var ProjectMixin = {
       sortColumn: 'name',  // Column of table used for sorting the projects: name, country, creationTime, updatedTime, dataUploadTime
       sortReverse: false, // Sort in reverse order?
       projectSummaries: [], // List of summary objects for projects the user has
-      proj_name:  'New project', // For creating a new project: number of populations
-      num_pops:   5, // For creating a new project: number of populations
-      num_progs:  5, // For creating a new project: number of populations
+      newProjectData: {
+        frameworkID: null,
+        name: 'New project',
+        num_pops: 1,
+        num_transfers: 0,
+        data_start: 2015,
+        data_end: 2018 ,
+      },
       activeuid:  [], // WARNING, kludgy to get create progbook working
-      frameworkSummaries: [],
-      currentFramework: '',
       demoOptions: [],
       demoOption: '',
       defaultPrograms: [],
@@ -64,28 +67,7 @@ var ProjectMixin = {
       }
     },
 
-    updateFrameworkSummaries() {
-      console.log('updateFrameworkSummaries() called')
 
-      // Get the current user's framework summaries from the server.
-      this.$sciris.rpc('jsonify_frameworks', [this.userName])
-        .then(response => {
-          // Set the frameworks to what we received.
-          this.frameworkSummaries = response.data.frameworks
-
-          if (this.frameworkSummaries.length) {
-            console.log('Framework summaries found')
-            console.log(this.frameworkSummaries)
-            this.currentFramework = this.frameworkSummaries[0].framework.name
-            console.log('Current framework: '+this.currentFramework)
-          } else {
-            console.log('No framework summaries found')
-          }
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not load frameworks', error)
-        })
-    },
 
     async updateProjectSummaries(setActiveID) {
       console.log('updateProjectSummaries() called');
@@ -175,16 +157,10 @@ var ProjectMixin = {
       console.log('createNewProject() called')
       this.$modal.hide('create-project')
       this.$sciris.start(this)
-      var frameworkID = this.getFrameworkID()
       this.$sciris.download('create_new_project',  // Have the server create a new project.
         [
           this.userName,
-          frameworkID,
-          this.proj_name,
-          this.num_pops,
-          this.num_progs,
-          this.data_start,
-          this.data_end
+          this.newProjectData,
         ], {
           tool: this.toolName()
         })
@@ -374,9 +350,9 @@ var ProjectMixin = {
 
     downloadProgbook(uid) {
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
-      console.log('downloadProgbook() called for ' + matchProject.project.name)
-      this.$sciris.start(this, 'Downloading program book...')
+      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid);
+      console.log('downloadProgbook() called for ' + matchProject.project.name);
+      this.$sciris.start(this, 'Downloading program book...');
       this.$sciris.download('download_progbook', [uid])
         .then(response => {
           this.$sciris.succeed(this, '')
@@ -386,20 +362,7 @@ var ProjectMixin = {
         })
     },
 
-    createProgbook() {
-      // Find the project that matches the UID passed in.
-      let uid = this.activeuid
-      console.log('createProgbook() called')
-      this.$modal.hide('create-progbook')
-      this.$sciris.start(this, 'Creating program book...')
-      this.$sciris.download('create_progbook', [uid, this.num_progs, this.progStartYear, this.progEndYear])
-        .then(response => {
-          this.$sciris.succeed(this, '')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not create program book', error)
-        })
-    },
+
 
     createDefaultProgbook() {
       // Find the project that matches the UID passed in.

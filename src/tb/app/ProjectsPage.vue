@@ -71,6 +71,7 @@ Last update: 2019Aug23
               <button
                   class="btn btn-icon"
                   data-tooltip="Rename"
+                  :disabled="projectSummary.renaming"
                   @click="startRename(projectSummary)">
                 <i class="ti-pencil"></i>
               </button>
@@ -190,19 +191,23 @@ Last update: 2019Aug23
           Project name:<br>
           <input type="text"
                  class="txbox"
-                 v-model="proj_name"/><br>
+                 v-model="newProjectData.name"/><br>
           Number of populations:<br>
           <input type="text"
                  class="txbox"
-                 v-model="num_pops"/><br>
+                 v-model.number="newProjectData.num_pops"/><br>
+          Number of transfers:<br>
+          <input type="text"
+                 class="txbox"
+                 v-model.number="newProjectData.num_transfers"/><br>
           First year for data entry:<br>
           <input type="text"
                  class="txbox"
-                 v-model="data_start"/><br>
+                 v-model="newProjectData.data_start"/><br>
           Final year for data entry:<br>
           <input type="text"
                  class="txbox"
-                 v-model="data_end"/><br>
+                 v-model="newProjectData.data_end"/><br>
         </div>
         <div style="text-align:justify">
           <button @click="createNewProject()" class='btn __green' style="display:inline-block">
@@ -296,10 +301,7 @@ Last update: 2019Aug23
       mixins.ProjectMixin
     ],
     data() {
-      return {
-        data_start: 2000, // For creating a new project: number of populations
-        data_end: 2017, // For creating a new project: number of populations
-      }
+      return {}
     },
 
     methods: {
@@ -324,10 +326,12 @@ Last update: 2019Aug23
         if (this.$store.state.activeProject.project !== undefined) {
           projectID = this.$store.state.activeProject.project.id
         }
+        this.newProjectData.data_start = 2000;
+        this.newProjectData.data_end = 2017;
+        this.newProjectData.num_pops = 5; // Default to 5 in TB
+        this.newProjectData.num_transfers = 1; // Default to 1 in TB
         this.getDefaultPrograms()
         this.getDemoOptions()
-        // Load the frameworks so the new project dialog is populated
-        this.updateFrameworkSummaries()
         // Load the project summaries of the current user.
         this.updateProjectSummaries(projectID)
       }

@@ -543,10 +543,17 @@ def add_demo_project(username, model, tool):
 
 
 @RPC(call_type='download')
-def create_new_project(username, framework_id, proj_name, num_pops, num_progs, data_start, data_end, tool=None):
+def create_new_project(username, new_project_json, tool=None):
     '''
     Create a new project.
     '''
+
+    framework_id = new_project_json['frameworkID']
+    proj_name = new_project_json['name']
+    num_pops = new_project_json['num_pops']
+    num_transfers = new_project_json['num_transfers']
+    data_start = new_project_json['data_start']
+    data_end = new_project_json['data_end']
 
     if tool == 'tb':
         sim_dt = 0.5
@@ -565,18 +572,19 @@ def create_new_project(username, framework_id, proj_name, num_pops, num_progs, d
     data_dt = 1.0
     data_tvec = np.arange(int(data_start), int(data_end) + data_dt, data_dt)
 
+
     if tool == 'tb':
         pops = sc.odict()
         transfers = sc.odict()
-        for i in range(1, 1+int(num_pops)):
-            pops['pop_%d' % (i)] = {'label':'Population %d' % (i),'type':'ind'}
+        for i in range(1, 1 + int(num_pops)):
+            pops['pop_%d' % (i)] = {'label': 'Population %d' % (i), 'type': 'ind'}
+        for i in range(1, 1 + int(num_transfers)):
+            transfers['transfer %d' % (i)] = {'label': 'Transfer %d' % (i), 'type': 'ind'}
         for env in ['best', 'low', 'high']:
             pops['Total (%s)' % (env)] = {'label':'Total population (%s)' % (env), 'type':'env'}
-        for i in range(1, 1+1):
-            transfers['transfer %d' % (i)] = {'label':'Transfer %d' % (i),'type':'ind'}
     else:
         pops = int(num_pops)
-        transfers = None
+        transfers = int(num_transfers)
 
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     data = at.ProjectData.new(frame, data_tvec, pops, transfers) # Return the databook
@@ -724,22 +732,20 @@ def jsonify_framework(framework_id, verbose=False):
     ''' Return the framework json, given the framework UID. ''' 
     frame = load_framework(framework_id) # Load the framework record matching the UID of the framework passed in.
     json = {
-        'framework': sc.odict({
-            'id':           str(frame.uid),
-            'name':         frame.name,
-            'username':     frame.webapp.username,
-            'creationTime': frame.created,
-            'updatedTime':  frame.modified,
-        })
+        'id':           str(frame.uid),
+        'name':         frame.name,
+        'username':     frame.webapp.username,
+        'creationTime': frame.created,
+        'updatedTime':  frame.modified,
     }
     if verbose: sc.pp(json)
     return json
     
 
 @RPC()
-def jsonify_frameworks(username, verbose=False):
+def jsonify_frameworks(username, verbose=True):
     ''' Return framework jsons for all frameworks the user has to the client. ''' 
-    output = {'frameworks':[]}
+    output = []
     user = get_user(username)
     for framework_key in user.frameworks:
         try:
@@ -748,7 +754,7 @@ def jsonify_frameworks(username, verbose=False):
             print('Framework load failed, removing: %s' % str(E))
             user.projects.remove(framework_key)
             datastore.saveuser(user)
-        output['frameworks'].append(json)
+        output.append(json)
     if verbose: sc.pp(output)
     return output
 
@@ -770,10 +776,10 @@ def add_demo_framework(username, framework_name):
 
 
 @RPC()
-def rename_framework(framework_json):
+def rename_framework(framework_id, new_name):
     ''' Given the passed in framework summary, update the underlying framework accordingly. ''' 
-    frame = load_framework(framework_json['framework']['id']) # Load the framework corresponding with this summary.
-    frame.name = framework_json['framework']['name']
+    frame = load_framework(framework_id) # Load the framework corresponding with this summary.
+    frame.name = new_name
     save_framework(frame) # Save the changed framework to the DataStore.
     return None
 
