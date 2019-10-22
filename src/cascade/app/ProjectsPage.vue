@@ -332,6 +332,7 @@ Last update: 2019Aug23
         }
         this.data_start = 2015;
         this.data_end = 2018;
+        this.newProjectData.num_pops = 1; // Default to 1 in CAT
         this.newProjectData.num_transfers = 0; // Default to 0 in CAT
         this.getDefaultPrograms();
         this.getDemoOptions();

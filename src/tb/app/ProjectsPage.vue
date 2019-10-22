@@ -328,6 +328,7 @@ Last update: 2019Aug23
         }
         this.newProjectData.data_start = 2000;
         this.newProjectData.data_end = 2017;
+        this.newProjectData.num_pops = 5; // Default to 5 in TB
         this.newProjectData.num_transfers = 1; // Default to 1 in TB
         this.getDefaultPrograms()
         this.getDemoOptions()

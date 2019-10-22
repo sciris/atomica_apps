@@ -585,7 +585,7 @@ def create_new_project(username, new_project_json, tool=None):
     else:
         pops = int(num_pops)
         transfers = int(num_transfers)
-        
+
     file_name = '%s.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     data = at.ProjectData.new(frame, data_tvec, pops, transfers) # Return the databook
     proj.databook = data.to_spreadsheet()
