@@ -104,7 +104,7 @@ Last update: 2019Aug23
             <td style="text-align:left">
               <button
                   class="btn __blue btn-icon"
-                  @click="uploadDatabook(projectSummary.project.id)"
+                  @click="uploadDatabookModal(projectSummary.project.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>

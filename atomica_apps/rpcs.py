@@ -1263,7 +1263,11 @@ def supported_framework_plots_func(framework):
     if 'plots' not in framework.sheets:
         return (sc.odict(), sc.odict())
     else:
-        df = framework.sheets['plots'][0]
+        df = framework.sheets['plots'][0].copy()
+        if 'plot group' not in df.columns:
+            df['plot group'] = df['name']
+        else:
+            df['plot group'].fillna(df['name'], inplace=True)
         plots = sc.odict()
         plot_groups = sc.odict()
         for name, output, plotgroup in zip(df['name'], df['quantities'], df['plot group']):
