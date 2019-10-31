@@ -110,12 +110,14 @@ Last update: 2019Aug23
             <td style="white-space: nowrap; text-align:left">
               <button
                   class="btn btn-icon"
+                  :disabled="!projectSummary.project.hasData"
                   @click="createProgbookModal(projectSummary.project.id)"
                   data-tooltip="New">
                 <i class="ti-plus"></i>
               </button>
               <button
                   class="btn __blue btn-icon"
+                  :disabled="!projectSummary.project.hasData"
                   @click="uploadProgbookModal(projectSummary.project.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
