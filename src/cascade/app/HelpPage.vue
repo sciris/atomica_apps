@@ -4,11 +4,13 @@
       <div style="display:inline-block; margin:auto; text-align:left" v-model="getVersionInfo">
         <div>
           <p>
-            For instructions on how to use the Cascade Analysis Tool, 
+            For instructions on how to use the Cascade Analysis Tool,
             please see the user guide: <a href="https://cascade.tools/user-guide" target="_blank">https://cascade.tools/user-guide</a>.
           </p>
-          <p>For assistance in the mean time, please <a href="mailto:robyn@math.ku.dk">contact us</a>.</p>
-
+          <p>
+            We welcome your feedback on the tool - please email or provide comments <a href="https://cascade.tools/comments-and-feedback/2019/12/4/we-want-your-feedback">here</a>.
+          </p>
+          <p>For assistance in using the tool, please contact us.</p>
           <p>Please copy and paste the table below into your email, along with any error messages.</p>
         </div>
 
