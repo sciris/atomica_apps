@@ -304,7 +304,6 @@ Last update: 2019Aug23
 
 <script>
   import {mixins} from '../../common';
-  import sciris from 'sciris-js';
   import router from '../router.js'
 
   export default {
@@ -329,24 +328,14 @@ Last update: 2019Aug23
     },
 
     created() {
-      let projectID = null;
-      // If we have no user logged in, automatically redirect to the login page.
-      if (this.$store.state.currentUser.displayname === undefined) {
-        this.getAppRouter().push('/login')
-      } else {
-        // Get the active project ID if there is an active project.
-        if (this.$store.state.activeProject !== undefined) {
-          projectID = this.$store.state.activeProject.id
-        }
-        this.newProjectData.data_start = 2000;
-        this.newProjectData.data_end = 2017;
-        this.newProjectData.num_pops = 5; // Default to 5 in TB
-        this.newProjectData.num_transfers = 1; // Default to 1 in TB
-        this.getDefaultPrograms();
-        this.getDemoOptions();
-        // Load the project summaries of the current user.
-        this.updateProjectSummaries(projectID)
-      }
-    },
+      this.newProjectData.data_start = 2000;
+      this.newProjectData.data_end = 2017;
+      this.newProjectData.num_pops = 5; // Default to 5 in TB
+      this.newProjectData.num_transfers = 1; // Default to 1 in TB
+      this.getDefaultPrograms();
+      this.getDemoOptions();
+      // Load the project summaries of the current user.
+      this.updateProjectSummaries(this.projectID)
+    }
   }
 </script>

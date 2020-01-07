@@ -45,6 +45,7 @@ var OptimizationMixin = {
 
   computed: {
     projectID()    { return utils.projectID(this) },
+    projectOpen()  { return this.$store.getters.projectOpen },
     hasData()      { return utils.hasData(this) },
     hasPrograms()  { return utils.hasPrograms(this) },
     simStart()     { return utils.simStart(this) },

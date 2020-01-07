@@ -7,7 +7,7 @@ Last update: 2019-06-04
 <template>
   <div class="SitePage">
 
-    <div v-if="projectID ==''">
+    <div v-if="!projectOpen">
       <div style="font-style:italic">
         <p>No project is loaded.</p>
       </div>

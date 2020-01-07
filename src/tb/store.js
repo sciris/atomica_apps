@@ -29,7 +29,7 @@ const persist = store => {
 const store = new Vuex.Store({
   state: {
     currentUser: {},
-    activeProject: undefined,
+    activeProject: null,
     helpLinks: {
       baseURL: 'https://docs.google.com/document/d/1UGcq-UDQKBsdmPAyYBDsxvOERI-gNF3usSrYrP16tnw/edit#heading=',
       linkMap: {
@@ -118,6 +118,7 @@ const store = new Vuex.Store({
   },
   getters: {
     isLoggedIn: state => state.currentUser.displayname !== undefined,
+    projectOpen: state => state.activeProject !== null,
   },
 });
 

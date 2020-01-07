@@ -27,6 +27,7 @@ var ProjectMixin = {
 
   computed: {
     projectID()    { return utils.projectID(this) },
+    projectOpen()  { return this.$store.getters.projectOpen },
     userName()     { return this.$store.state.currentUser.username },
     simYears()     { return utils.simYears(this) },
     progStartYear(){ return this.simYears[0] },
@@ -104,7 +105,7 @@ var ProjectMixin = {
       // Return early if there are no valid projects
       let valid_summaries = this.projectSummaries.filter(x => !x.updateRequired); // Projects that can be opened
       if (valid_summaries.length === 0) {
-        this.$store.commit('newActiveProject', {});
+        this.$store.commit('newActiveProject', null);
         return;
       }
 
@@ -214,7 +215,7 @@ var ProjectMixin = {
 
     projectIsActive(uid) {
       // If the project is undefined, it is not active.
-      if (this.$store.state.activeProject === undefined) {
+      if (!this.$store.getters.projectOpen) {
         return false
       } else { // Otherwise, the project is active if the UIDs match.
         return (this.$store.state.activeProject.id === uid)
