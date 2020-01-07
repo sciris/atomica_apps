@@ -335,7 +335,6 @@ Last update: 2019Aug23
         this.getAppRouter().push('/login')
       } else {
         // Get the active project ID if there is an active project.
-        this.$store.commit('loadStorage');
         if (this.$store.state.activeProject !== undefined) {
           projectID = this.$store.state.activeProject.id
         }

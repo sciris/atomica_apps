@@ -62,13 +62,22 @@ Last update: 2019Aug23
               </div>
             </td>
             <td style="text-align:left">
+
               <button
-                  v-if="sortedFilteredProjectSummaries.length>1"
+                  v-if="projectSummary.updateRequired"
+                  class="btn __red"
+                  :data-tooltip="projectSummary.updateString"
+                  @click="updateProject(projectSummary)">
+                <span>Update</span>
+              </button>
+              <button
+                  v-else
                   class="btn __green"
                   :disabled="projectSummary.loaded"
                   @click="openProject(projectSummary)">
                 <span>Open</span>
               </button>
+
               <button
                   class="btn btn-icon"
                   data-tooltip="Rename"
@@ -77,6 +86,7 @@ Last update: 2019Aug23
                 <i class="ti-pencil"></i>
               </button>
               <button
+                  v-if="!projectSummary.updateRequired"
                   class="btn btn-icon"
                   data-tooltip="Copy"
                   @click="copyProject(projectSummary)">
@@ -85,16 +95,16 @@ Last update: 2019Aug23
               <button
                   class="btn btn-icon"
                   data-tooltip="Download"
-                  @click="downloadProjectFile(projectSummary.id)">
+                  @click="downloadProjectFile(projectSummary)">
                 <i class="ti-download"></i>
               </button>
             </td>
             <td style="text-align:left">
-              {{ projectSummary.updatedTime ? projectSummary.updatedTime:
-              'No modification' }}
+              {{ projectSummary.updatedTimeString }}
             </td>
             <td style="text-align:left">
               <button class="btn btn-icon"
+                      :disabled="projectSummary.updateRequired"
                       @click="downloadFramework(projectSummary.id)"
                       data-tooltip="Download">
                 <i class="ti-download"></i>
@@ -104,13 +114,14 @@ Last update: 2019Aug23
             <td style="text-align:left">
               <button
                   class="btn __blue btn-icon"
+                  :disabled="projectSummary.updateRequired"
                   @click="uploadDatabookModal(projectSummary.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.hasData"
+                  :disabled="!projectSummary.hasData || projectSummary.updateRequired"
                   @click="downloadDatabook(projectSummary.id)"
                   data-tooltip="Download">
                 <i class="ti-download"></i>
@@ -119,21 +130,21 @@ Last update: 2019Aug23
             <td style="white-space: nowrap; text-align:left">
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.hasData"
+                  :disabled="!projectSummary.hasData || projectSummary.updateRequired"
                   @click="createProgbookModal(projectSummary.id)"
                   data-tooltip="New">
                 <i class="ti-plus"></i>
               </button>
               <button
                   class="btn __blue btn-icon"
-                  :disabled="!projectSummary.hasData"
+                  :disabled="!projectSummary.hasData || projectSummary.updateRequired"
                   @click="uploadProgbook(projectSummary.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.hasPrograms"
+                  :disabled="!projectSummary.hasPrograms || projectSummary.updateRequired"
                   @click="downloadProgbook(projectSummary.id)"
                   data-tooltip="Download">
                 <i class="ti-download"></i>
@@ -329,7 +340,6 @@ Last update: 2019Aug23
         this.getAppRouter().push('/login')
       } else {
         // Get the active project ID if there is an active project.
-        this.$store.commit('loadStorage');
         if (this.$store.state.activeProject !== undefined) {
           projectID = this.$store.state.activeProject.id
         }

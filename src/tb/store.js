@@ -3,22 +3,21 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
-
 const persist = store => {
   store.subscribe((mutation, state) => {
-    if ('newActiveProject' === mutation.type) {
+    if (mutation.type !== 'loadStorage'){
       try {
-        sessionStorage.setItem('activeProject', JSON.stringify(state.activeProject));
+        sessionStorage.setItem('appdata', JSON.stringify(state));
       } catch (e) {
       }
-    }
-    if ('loadStorage' === mutation.type) {
-      let storage = false;
+    } else {
+      console.log('Loading storage')
       try {
-        storage = sessionStorage.getItem('activeProject') || false;
+        let storage = sessionStorage.getItem('appdata') || false;
         if (storage) {
           storage = JSON.parse(storage);
-          store.commit('newActiveProject', storage);
+          store.commit('newUser', storage.currentUser);
+          store.commit('newActiveProject', storage.activeProject);
         }
       } catch (e) {
       }
@@ -32,7 +31,7 @@ const store = new Vuex.Store({
     currentUser: {},
     activeProject: undefined,
     helpLinks: {
-      baseURL: 'https://docs.google.com/document/d/1UGcq-UDQKBsdmPAyYBDsxvOERI-gNF3usSrYrP16tnw/edit#heading=', 
+      baseURL: 'https://docs.google.com/document/d/1UGcq-UDQKBsdmPAyYBDsxvOERI-gNF3usSrYrP16tnw/edit#heading=',
       linkMap: {
         'create-projects': 'h.mok29y1bw52s',
         'manage-projects': 'h.3whwml4',
@@ -112,11 +111,17 @@ const store = new Vuex.Store({
     },
     newUser(state, user) {
       state.currentUser = user
-    }, 
+    },
     newActiveProject(state, project) {
       state.activeProject = project
     }
   },
+  getters: {
+    isLoggedIn: state => state.currentUser.displayname !== undefined,
+  },
 });
+
+// Comment out line below to quickly disable persistent storage
+store.commit('loadStorage');
 
 export default store

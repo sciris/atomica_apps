@@ -65,7 +65,6 @@ var ScenarioMixin = {
   async created() {
     this.$sciris.addListener(this)
     this.$sciris.createDialogs(this)
-    this.$store.commit('loadStorage');
     if ((this.$store.state.activeProject !== undefined) &&
       (this.$store.state.activeProject.hasData)) {
       console.log('created() called')

@@ -56,7 +56,6 @@ var OptimizationMixin = {
   created() {
     this.$sciris.addListener(this)
     this.$sciris.createDialogs(this)
-    this.$store.commit('loadStorage');
     if ((this.$store.state.activeProject !== undefined) &&
       (this.$store.state.activeProject.hasData) &&
       (this.$store.state.activeProject.hasPrograms)) {
