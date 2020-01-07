@@ -8,7 +8,7 @@ import OptimizationsPage from './app/OptimizationsPage.vue';
 import AboutPage from './app/AboutPage.vue';
 import HelpPage from './app/HelpPage.vue';
 import ContactPage from './app/ContactPage.vue';
-mport NotFoundPage from './app/NotFoundPage.vue';
+import NotFoundPage from './app/NotFoundPage.vue';
 import { views } from '../common';
 import store from './store.js'
 
