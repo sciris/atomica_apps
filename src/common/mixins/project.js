@@ -68,46 +68,65 @@ var ProjectMixin = {
     },
 
 
-
     async updateProjectSummaries(setActiveID) {
+      // Update project summaries and open a project if possible
+      // - If there are no migrated projects, don't open any project
+      // - If setActiveID is provided and the project exists and is migrated, open it
+      // - Otherwise, open the most recent migrated project
+
+      // Retrieve the updated project summaries
       console.log('updateProjectSummaries() called');
       this.$sciris.start(this);
       try {
         let response = await this.$sciris.rpc('jsonify_projects', [this.userName]); // Get the current user's project summaries from the server.
-        for (let i = 0; i < response.data.projects.length; i++) {
-          response.data.projects[i].new_name = ''; // Store the string in the edit text box for renaming (create the property here so that the text boxes can bind to it)
-          response.data.projects[i].selected = false; // Flag whether the checkbox is checked or not
-          response.data.projects[i].renaming = false; // Flag whether to show the edit text box or not
-          response.data.projects[i].loaded = false; // Flag whether this project is open (and thus needs to have its row highlighted)
-        }
-        this.projectSummaries = response.data.projects; // Set the projects to what we received.
+        for (let i = 0; i < response.data.length; i++) {
+          response.data[i].new_name = ''; // Store the string in the edit text box for renaming (create the property here so that the text boxes can bind to it)
+          response.data[i].selected = false; // Flag whether the checkbox is checked or not
+          response.data[i].renaming = false; // Flag whether to show the edit text box or not
+          response.data[i].loaded = false; // Flag whether this project is open (and thus needs to have its row highlighted)
 
-        if (setActiveID !== null) {
-          this.openProject(setActiveID);
-        } else if (this.projectSummaries.length > 0) {
-          // Determine the last-created project and open it
-          let creationTimeDate = null;
-          let lastCreationTimeDate = new Date(this.projectSummaries[0].project.creationTime);
-          let lastCreatedID = this.projectSummaries[0].project.id;
-          for (let i = 0; i < this.projectSummaries.length; i++) {
-            creationTimeDate = new Date(this.projectSummaries[i].project.creationTime);
-            if (creationTimeDate >= lastCreationTimeDate) { // Update the last creation time and ID if what we see is later.
-              lastCreationTimeDate = creationTimeDate;
-              lastCreatedID = this.projectSummaries[i].project.id;
-            }
-          }
-          this.openProject(lastCreatedID);
+          // Convert times to JS objects
+          response.data[i].creationTime = new Date(response.data[i].creationTime);
+          response.data[i].updatedTime = new Date(response.data[i].updatedTime);
+
+          // Use `toLocaleString` to convert the project's UTC timestamp to the browser's local time and formatting
+          let options = { year: 'numeric', month: 'short', day: 'numeric' , hour:'numeric',minute:'numeric',second:'numeric', timeZoneName:'short'};
+          response.data[i].creationTimeString = response.data[i].creationTime.toLocaleString(undefined, options);
+          response.data[i].updatedTimeString = response.data[i].updatedTime.toLocaleString(undefined, options);
         }
-        this.$sciris.succeed(this, '')  // No green popup.
+        this.projectSummaries = response.data; // Set the projects to what we received.
+        this.$sciris.succeed(this, '');  // No green popup.
       } catch (error) {
         this.$sciris.fail(this, 'Could not load projects', error);
+        return;
       }
+
+      // Return early if there are no valid projects
+      let valid_summaries = this.projectSummaries.filter(x => !x.updateRequired); // Projects that can be opened
+      if (valid_summaries.length === 0) {
+        this.$store.commit('newActiveProject', {});
+        return;
+      }
+
+      // Try to open the requested project (noting that it may not exist if the project has been deleted in the meantime)
+      if (setActiveID !== null) {
+        let matchProject = valid_summaries.find(theProj => theProj.id === setActiveID);
+        if (matchProject !== undefined) {
+          this.openProject(matchProject);
+          return;
+        }
+      }
+
+      // Otherwise, open the most recent project (by modification time)
+      let latest = Math.max(...Array.from(valid_summaries, x => x.updatedTime.getTime()));
+      let matchProject = valid_summaries.find(x => x.updatedTime.getTime() === latest);
+      this.openProject(matchProject);
     },
 
     addDemoProject() {
-      console.log('addDemoProject() called')
-      this.$modal.hide('demo-project')
-      this.$sciris.start(this)
+      console.log('addDemoProject() called');
+      this.$modal.hide('demo-project');
+      this.$sciris.start(this);
 
       if (this.toolName() === 'cascade') {
         var demoOption = this.demoOption
@@ -124,7 +143,7 @@ var ProjectMixin = {
       ])
       .then(response => {
         // Update the project summaries so the new project shows up on the list.
-        this.updateProjectSummaries(response.data.projectID)
+        this.updateProjectSummaries(response.data.projectID);
         // Already have notification from project
         this.$sciris.succeed(this, '')
       })
@@ -148,8 +167,8 @@ var ProjectMixin = {
     createProgbookModal(uid) {
       this.activeuid = uid
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
-      console.log('createProgbookModal() called for ' + matchProject.project.name)
+      let matchProject = this.projectSummaries.find(theProj => theProj.id === uid)
+      console.log('createProgbookModal() called for ' + matchProject.name)
       this.$modal.show('create-progbook');
     },
 
@@ -195,10 +214,10 @@ var ProjectMixin = {
 
     projectIsActive(uid) {
       // If the project is undefined, it is not active.
-      if (this.$store.state.activeProject.project === undefined) {
+      if (this.$store.state.activeProject === undefined) {
         return false
       } else { // Otherwise, the project is active if the UIDs match.
-        return (this.$store.state.activeProject.project.id === uid)
+        return (this.$store.state.activeProject.id === uid)
       }
     },
 
@@ -220,7 +239,7 @@ var ProjectMixin = {
 
     applyNameFilter(projects) {
       return projects.filter(
-        theProject => theProject.project.name.toLowerCase().indexOf(
+        theProject => theProject.name.toLowerCase().indexOf(
           this.filterText.toLowerCase()
         ) !== -1)
     },
@@ -230,44 +249,50 @@ var ProjectMixin = {
         {
           let sortDir = this.sortReverse ? -1: 1
           if (this.sortColumn === 'name'){
-            return (proj1.project.name.toLowerCase() > proj2.project.name.toLowerCase() ? sortDir: -sortDir)
+            return (proj1.name.toLowerCase() > proj2.name.toLowerCase() ? sortDir: -sortDir)
           } else if (this.sortColumn === 'creationTime') {
-            return (proj1.project.creationTime > proj2.project.creationTime ? sortDir: -sortDir)
+            return (proj1.creationTime > proj2.creationTime ? sortDir: -sortDir)
           } else if (this.sortColumn === 'updatedTime')  {
-            return (proj1.project.updatedTime > proj2.project.updatedTime ? sortDir: -sortDir)
+            return (proj1.updatedTime > proj2.updatedTime ? sortDir: -sortDir)
           }
         }
       )
     },
 
-    openProject(uid) {
+    openProject(projectSummary) {
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
-      console.log('openProject() called for ' + matchProject.project.name)
-      this.$store.commit('newActiveProject', matchProject); // Set the active project to the matched project.
-      this.projectSummaries.forEach(proj => proj.loaded = false); // Flag all projects as not loaded
-      matchProject.loaded = true; // Set the loaded project
-      // this.$sciris.succeed(this, 'Project "'+matchProject.project.name+'" loaded') // Success popup.
-      this.$sciris.succeed(this, '')  // No green popup.
+      if (projectSummary.updateRequired) {
+        this.$sciris.fail(this, 'Project "' + projectSummary.name + '" must be updated before it can be opened', error)
+      } else {
+        console.log('openProject() called for ' + projectSummary.name);
+        this.$store.commit('newActiveProject', projectSummary); // Set the active project to the matched project.
+        this.projectSummaries.forEach(proj => proj.loaded = false); // Flag all projects as not loaded
+        projectSummary.loaded = true; // Set the loaded project
+        this.$sciris.succeed(this, '')  // No green popup.
+      }
     },
 
-    copyProject(uid) {
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid) // Find the project that matches the UID passed in.
-      console.log('copyProject() called for ' + matchProject.project.name)
-      this.$sciris.start(this)
-      this.$sciris.rpc('copy_project', [uid]) // Have the server copy the project, giving it a new name.
-        .then(response => {
-          // Update the project summaries so the copied program shows up on the list.
-          this.updateProjectSummaries(response.data.projectID)
+    async updateProject(projectSummary) {
+      // Update project by saving a migrated copy of the project
+      this.$sciris.start(this);
+      try {
+        let response = await this.$sciris.rpc('update_project', [projectSummary.id]);
+        this.updateProjectSummaries(response.data.projectID);
+        this.$sciris.succeed(this, 'Project "' + projectSummary.name + '" updated');
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not update project', error)
+      }
+    },
 
-          // Indicate success.
-          this.$sciris.succeed(
-            this, 'Project "'+matchProject.project.name+'" copied'
-          )
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not copy project', error)
-        })
+    async copyProject(projectSummary) {
+      this.$sciris.start(this);
+      try{
+        let response = await this.$sciris.rpc('copy_project', [projectSummary.id]);
+        this.updateProjectSummaries(response.data.projectID);
+        this.$sciris.succeed(this, 'Project "'+projectSummary.name+'" copied');
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not update project', error)
+      }
     },
 
     startRename(projectSummary){
@@ -275,7 +300,7 @@ var ProjectMixin = {
       console.log('renaming');
       console.log(projectSummary);
       projectSummary.renaming = true;
-      projectSummary.new_name = projectSummary.project.name;
+      projectSummary.new_name = projectSummary.name;
     },
 
     cancelRename(projectSummary){
@@ -298,22 +323,21 @@ var ProjectMixin = {
       this.$sciris.start(this);
       projectSummary.renaming = false; // End renaming even if there is a server-side error
       try{
-        await this.$sciris.rpc('rename_project', [projectSummary.project.id, projectSummary.new_name]); // This function will error for any DB failure, so if it succeeds then we must have successfully renamed
-        projectSummary.project.name = projectSummary.new_name; // Update the table, no need to refresh the entire page
+        await this.$sciris.rpc('rename_project', [projectSummary.id, projectSummary.new_name]); // This function will error for any DB failure, so if it succeeds then we must have successfully renamed
+        projectSummary.name = projectSummary.new_name; // Update the table, no need to refresh the entire page
         this.$sciris.succeed(this, '')  // No green popup.
       } catch (error) {
         this.$sciris.fail(this, 'Could not rename project', error)
       }
     },
 
-    downloadProjectFile(uid) {
+    downloadProjectFile(projectSummary) {
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
-      console.log('downloadProjectFile() called for ' + matchProject.project.name)
-      this.$sciris.start(this)
+      console.log('downloadProjectFile() called for ' + projectSummary.name);
+      this.$sciris.start(this);
 
       // Make the server call to download the project to a .prj file.
-      this.$sciris.download('download_project', [uid])
+      this.$sciris.download('download_project', [projectSummary.id])
         .then(response => { // Indicate success.
           this.$sciris.succeed(this, '')
         })
@@ -324,9 +348,9 @@ var ProjectMixin = {
 
     downloadFramework(uid) {
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid)
-      console.log('downloadFramework() called for ' + matchProject.project.name)
-      this.$sciris.start(this, 'Downloading framework...')
+      let matchProject = this.projectSummaries.find(theProj => theProj.id === uid);
+      console.log('downloadFramework() called for ' + matchProject.name);
+      this.$sciris.start(this, 'Downloading framework...');
       this.$sciris.download('download_framework_from_project', [uid])
         .then(response => {
           this.$sciris.succeed(this, '')
@@ -350,8 +374,8 @@ var ProjectMixin = {
 
     downloadProgbook(uid) {
       // Find the project that matches the UID passed in.
-      let matchProject = this.projectSummaries.find(theProj => theProj.project.id === uid);
-      console.log('downloadProgbook() called for ' + matchProject.project.name);
+      let matchProject = this.projectSummaries.find(theProj => theProj.id === uid);
+      console.log('downloadProgbook() called for ' + matchProject.name);
       this.$sciris.start(this, 'Downloading program book...');
       this.$sciris.download('download_progbook', [uid])
         .then(response => {
@@ -445,7 +469,7 @@ var ProjectMixin = {
       // Pull out the names of the projects that are selected.
       let selectProjectsUIDs = this.projectSummaries.filter(
         theProj => theProj.selected
-      ).map(theProj => theProj.project.id)
+      ).map(theProj => theProj.id)
 
       if (selectProjectsUIDs.length > 0) { // Only if something is selected...
         var obj = { // Alert object data
@@ -464,7 +488,7 @@ var ProjectMixin = {
       let selectProjectsUIDs = this.projectSummaries.filter(
         theProj => theProj.selected
       ).map(
-        theProj => theProj.project.id
+        theProj => theProj.id
       )
       console.log('deleteSelectedProjects() called for ', selectProjectsUIDs)
       // Have the server delete the selected projects.
@@ -473,7 +497,7 @@ var ProjectMixin = {
         this.$sciris.rpc('delete_projects', [selectProjectsUIDs, this.userName])
           .then(response => {
             // Get the active project ID.
-            let activeProjectId = this.$store.state.activeProject.project.id
+            let activeProjectId = this.$store.state.activeProject.id
             if (activeProjectId === undefined) {
               activeProjectId = null
             }
@@ -499,7 +523,7 @@ var ProjectMixin = {
       // Pull out the names of the projects that are selected.
       let selectProjectsUIDs = this.projectSummaries.filter(
         theProj => theProj.selected
-      ).map(theProj => theProj.project.id)
+      ).map(theProj => theProj.id)
       console.log('downloadSelectedProjects() called for ', selectProjectsUIDs)
       // Have the server download the selected projects.
       if (selectProjectsUIDs.length > 0) {

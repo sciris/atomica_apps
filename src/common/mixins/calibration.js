@@ -58,14 +58,14 @@ var CalibrationMixin = {
     async created() {
       this.$sciris.addListener(this)
       this.$sciris.createDialogs(this)
-      if ((this.$store.state.activeProject.project !== undefined) &&
-        (this.$store.state.activeProject.project.hasData) ) {
+      if ((this.$store.state.activeProject !== undefined) &&
+        (this.$store.state.activeProject.hasData) ) {
         console.log('created() called')
         this.simStartYear = this.simStart
         this.simEndYear = this.dataEnd
         this.popOptions = this.activePops
-        this.serverDatastoreId = this.$store.state.activeProject.project.id + ':calibration'
-        await Promise.all([this.getPlotOptions(this.$store.state.activeProject.project.id), this.updateSets()]); // These don't depend on each other
+        this.serverDatastoreId = this.$store.state.activeProject.id + ':calibration'
+        await Promise.all([this.getPlotOptions(this.$store.state.activeProject.id), this.updateSets()]); // These don't depend on each other
         await this.loadParTable()
         this.reloadGraphs(false)
       }

@@ -55,10 +55,10 @@ Last update: 2019Aug23
             </td>
             <td v-else>
               <div v-if="projectSummary.loaded">
-                <b>{{ projectSummary.project.name }}</b>
+                <b>{{ projectSummary.name }}</b>
               </div>
               <div v-else>
-                {{ projectSummary.project.name }}
+                {{ projectSummary.name }}
               </div>
             </td>
             <td style="text-align:left">
@@ -66,7 +66,7 @@ Last update: 2019Aug23
                   v-if="sortedFilteredProjectSummaries.length>1"
                   class="btn __green"
                   :disabled="projectSummary.loaded"
-                  @click="openProject(projectSummary.project.id)">
+                  @click="openProject(projectSummary)">
                 <span>Open</span>
               </button>
               <button
@@ -79,39 +79,39 @@ Last update: 2019Aug23
               <button
                   class="btn btn-icon"
                   data-tooltip="Copy"
-                  @click="copyProject(projectSummary.project.id)">
+                  @click="copyProject(projectSummary)">
                 <i class="ti-files"></i>
               </button>
               <button
                   class="btn btn-icon"
                   data-tooltip="Download"
-                  @click="downloadProjectFile(projectSummary.project.id)">
+                  @click="downloadProjectFile(projectSummary.id)">
                 <i class="ti-download"></i>
               </button>
             </td>
             <td style="text-align:left">
-              {{ projectSummary.project.updatedTime ? projectSummary.project.updatedTime:
+              {{ projectSummary.updatedTime ? projectSummary.updatedTime:
               'No modification' }}
             </td>
             <td style="text-align:left">
               <button class="btn btn-icon"
-                      @click="downloadFramework(projectSummary.project.id)"
+                      @click="downloadFramework(projectSummary.id)"
                       data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
-              {{ projectSummary.project.framework }}
+              {{ projectSummary.framework }}
             </td>
             <td style="text-align:left">
               <button
                   class="btn __blue btn-icon"
-                  @click="uploadDatabookModal(projectSummary.project.id)"
+                  @click="uploadDatabookModal(projectSummary.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.project.hasData"
-                  @click="downloadDatabook(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasData"
+                  @click="downloadDatabook(projectSummary.id)"
                   data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
@@ -119,22 +119,22 @@ Last update: 2019Aug23
             <td style="white-space: nowrap; text-align:left">
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.project.hasData"
-                  @click="createProgbookModal(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasData"
+                  @click="createProgbookModal(projectSummary.id)"
                   data-tooltip="New">
                 <i class="ti-plus"></i>
               </button>
               <button
                   class="btn __blue btn-icon"
-                  :disabled="!projectSummary.project.hasData"
-                  @click="uploadProgbook(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasData"
+                  @click="uploadProgbook(projectSummary.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.project.hasPrograms"
-                  @click="downloadProgbook(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasPrograms"
+                  @click="downloadProgbook(projectSummary.id)"
                   data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
@@ -329,8 +329,8 @@ Last update: 2019Aug23
         this.getAppRouter().push('/login')
       } else {
         // Get the active project ID if there is an active project.
-        if (this.$store.state.activeProject.project !== undefined) {
-          projectID = this.$store.state.activeProject.project.id
+        if (this.$store.state.activeProject !== undefined) {
+          projectID = this.$store.state.activeProject.id
         }
         this.data_start = 2015;
         this.data_end = 2018;

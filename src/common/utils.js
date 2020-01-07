@@ -12,54 +12,54 @@ function validateYears(vm) {
 }
 
 function projectID(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    let projectID = vm.$store.state.activeProject.project.id
+    let projectID = vm.$store.state.activeProject.id
     return projectID
   }
 }
 
 function hasData(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return false
   }
   else {
-    return vm.$store.state.activeProject.project.hasData
+    return vm.$store.state.activeProject.hasData
   }
 }
 
 function hasPrograms(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return false
   }
   else {
-    return vm.$store.state.activeProject.project.hasPrograms
+    return vm.$store.state.activeProject.hasPrograms
   }
 }
 
 function simStart(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    return vm.$store.state.activeProject.project.sim_start
+    return vm.$store.state.activeProject.sim_start
   }
 }
 
 function simEnd(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    return vm.$store.state.activeProject.project.sim_end
+    return vm.$store.state.activeProject.sim_end
   }
 }
 
 function simYears(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return []
   } else {
-    var sim_start = vm.$store.state.activeProject.project.sim_start
-    var sim_end = vm.$store.state.activeProject.project.sim_end
+    var sim_start = vm.$store.state.activeProject.sim_start
+    var sim_end = vm.$store.state.activeProject.sim_end
     var years = []
     for (var i = sim_start; i <= sim_end; i++) {
       years.push(i);
@@ -70,36 +70,36 @@ function simYears(vm) {
 }
 
 function simCascades(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    return vm.$store.state.activeProject.project.cascades
+    return vm.$store.state.activeProject.cascades
   }
 }
 
 function dataStart(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    return vm.$store.state.activeProject.project.data_start
+    return vm.$store.state.activeProject.data_start
   }
 }
 
 function dataEnd(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    console.log('dataEnd: ' + vm.$store.state.activeProject.project.data_end)
-    return vm.$store.state.activeProject.project.data_end
+    console.log('dataEnd: ' + vm.$store.state.activeProject.data_end)
+    return vm.$store.state.activeProject.data_end
   }
 }
 
 function dataYears(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return []
   } else {
-    let data_start = vm.$store.state.activeProject.project.data_start
-    let data_end = vm.$store.state.activeProject.project.data_end
+    let data_start = vm.$store.state.activeProject.data_start
+    let data_end = vm.$store.state.activeProject.data_end
     let years = []
     for (let i = data_start; i <= data_end; i++) {
       years.push(i);
@@ -111,11 +111,11 @@ function dataYears(vm) {
 
 // projection years are used for scenario and optimization plot year dropdowns
 function projectionYears(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return []
   } else {
-    let data_end = vm.$store.state.activeProject.project.data_end
-    let sim_end = vm.$store.state.activeProject.project.sim_end
+    let data_end = vm.$store.state.activeProject.data_end
+    let sim_end = vm.$store.state.activeProject.sim_end
     let years = []
     for (let i = data_end; i <= sim_end; i++) {
       years.push(i);
@@ -126,10 +126,10 @@ function projectionYears(vm) {
 }
 
 function activePops(vm) {
-  if (vm.$store.state.activeProject.project === undefined) {
+  if (vm.$store.state.activeProject === undefined) {
     return ''
   } else {
-    let pop_pairs = vm.$store.state.activeProject.project.pops
+    let pop_pairs = vm.$store.state.activeProject.pops
     let pop_list = ["All"]
     for(let i = 0; i < pop_pairs.length; ++i) {
       pop_list.push(pop_pairs[i][1]);

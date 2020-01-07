@@ -100,10 +100,10 @@ Last update: 2018sep23
 
       activeProjectName() {
         console.log(this.links);
-        if (this.$store.state.activeProject.project === undefined) {
+        if (this.$store.state.activeProject === undefined) {
           return 'none'
         } else {
-          return this.$store.state.activeProject.project.name
+          return this.$store.state.activeProject.name
         }
       },
 

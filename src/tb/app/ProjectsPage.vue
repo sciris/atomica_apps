@@ -54,20 +54,29 @@ Last update: 2019Aug23
             </td>
             <td v-else>
               <div v-if="projectSummary.loaded">
-                <b>{{ projectSummary.project.name }}</b>
+                <b>{{ projectSummary.name }}</b>
               </div>
               <div v-else>
-                {{ projectSummary.project.name }}
+                {{ projectSummary.name }}
               </div>
             </td>
             <td style="text-align:left">
+
               <button
-                  v-if="sortedFilteredProjectSummaries.length>1"
+                  v-if="projectSummary.updateRequired"
+                  class="btn __red"
+                  :data-tooltip="projectSummary.updateString"
+                  @click="updateProject(projectSummary)">
+                <span>Update</span>
+              </button>
+              <button
+                  v-else
                   class="btn __green"
                   :disabled="projectSummary.loaded"
-                  @click="openProject(projectSummary.project.id)">
+                  @click="openProject(projectSummary)">
                 <span>Open</span>
               </button>
+
               <button
                   class="btn btn-icon"
                   data-tooltip="Rename"
@@ -76,33 +85,34 @@ Last update: 2019Aug23
                 <i class="ti-pencil"></i>
               </button>
               <button
+                  v-if="!projectSummary.updateRequired"
                   class="btn btn-icon"
                   data-tooltip="Copy"
-                  @click="copyProject(projectSummary.project.id)">
+                  @click="copyProject(projectSummary)">
                 <i class="ti-files"></i>
               </button>
               <button
                   class="btn btn-icon"
                   data-tooltip="Download"
-                  @click="downloadProjectFile(projectSummary.project.id)">
+                  @click="downloadProjectFile(projectSummary)">
                 <i class="ti-download"></i>
               </button>
             </td>
             <td style="text-align:left">
-              {{ projectSummary.project.updatedTime ? projectSummary.project.updatedTime:
-              'No modification' }}
+              {{ projectSummary.updatedTimeString }}
             </td>
             <td style="text-align:left">
               <button
+                  :disabled="projectSummary.updateRequired"
                   class="btn __blue btn-icon"
-                  @click="uploadDatabookModal(projectSummary.project.id)"
+                  @click="uploadDatabookModal(projectSummary.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.project.hasData"
-                  @click="downloadDatabook(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasData || projectSummary.updateRequired"
+                  @click="downloadDatabook(projectSummary.id)"
                   data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
@@ -110,22 +120,22 @@ Last update: 2019Aug23
             <td style="white-space: nowrap; text-align:left">
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.project.hasData"
-                  @click="createProgbookModal(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasData || projectSummary.updateRequired"
+                  @click="createProgbookModal(projectSummary.id)"
                   data-tooltip="New">
                 <i class="ti-plus"></i>
               </button>
               <button
                   class="btn __blue btn-icon"
-                  :disabled="!projectSummary.project.hasData"
-                  @click="uploadProgbookModal(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasData || projectSummary.updateRequired"
+                  @click="uploadProgbookModal(projectSummary.id)"
                   data-tooltip="Upload">
                 <i class="ti-upload"></i>
               </button>
               <button
                   class="btn btn-icon"
-                  :disabled="!projectSummary.project.hasPrograms"
-                  @click="downloadProgbook(projectSummary.project.id)"
+                  :disabled="!projectSummary.hasPrograms || projectSummary.updateRequired"
+                  @click="downloadProgbook(projectSummary.id)"
                   data-tooltip="Download">
                 <i class="ti-download"></i>
               </button>
@@ -319,21 +329,21 @@ Last update: 2019Aug23
     },
 
     created() {
-      let projectID = null
+      let projectID = null;
       // If we have no user logged in, automatically redirect to the login page.
       if (this.$store.state.currentUser.displayname === undefined) {
         this.getAppRouter().push('/login')
       } else {
         // Get the active project ID if there is an active project.
-        if (this.$store.state.activeProject.project !== undefined) {
-          projectID = this.$store.state.activeProject.project.id
+        if (this.$store.state.activeProject !== undefined) {
+          projectID = this.$store.state.activeProject.id
         }
         this.newProjectData.data_start = 2000;
         this.newProjectData.data_end = 2017;
         this.newProjectData.num_pops = 5; // Default to 5 in TB
         this.newProjectData.num_transfers = 1; // Default to 1 in TB
-        this.getDefaultPrograms()
-        this.getDemoOptions()
+        this.getDefaultPrograms();
+        this.getDemoOptions();
         // Load the project summaries of the current user.
         this.updateProjectSummaries(projectID)
       }

@@ -56,14 +56,14 @@ var OptimizationMixin = {
   created() {
     this.$sciris.addListener(this)
     this.$sciris.createDialogs(this)
-    if ((this.$store.state.activeProject.project !== undefined) &&
-      (this.$store.state.activeProject.project.hasData) &&
-      (this.$store.state.activeProject.project.hasPrograms)) {
+    if ((this.$store.state.activeProject !== undefined) &&
+      (this.$store.state.activeProject.hasData) &&
+      (this.$store.state.activeProject.hasPrograms)) {
       console.log('created() called')
       this.simStartYear = this.simStart
       this.simEndYear = this.simEnd
       this.popOptions = this.activePops
-      this.getPlotOptions(this.$store.state.activeProject.project.id)
+      this.getPlotOptions(this.$store.state.activeProject.id)
       this.updateSets()
       this.getOptimSummaries()
     }
@@ -317,7 +317,7 @@ var OptimizationMixin = {
       // an RPC, they will generally be missing the status/time fields - they may be present due to not
       // explicitly stripping them out, but in that case they would be out of date anyway
       this.optimSummaries.forEach(optimSum => { // For each of the optimization summaries...
-        optimSum.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + optimSum.name // Build a task and results cache ID from the project's hex UID and the optimization name.
+        optimSum.serverDatastoreId = this.$store.state.activeProject.id + ':opt-' + optimSum.name // Build a task and results cache ID from the project's hex UID and the optimization name.
         optimSum.status = 'not started' // Set the status to 'not started' by default, and the pending and execution times to '--'.
         optimSum.pendingTime = '--'
         optimSum.executionTime = '--'
@@ -383,7 +383,7 @@ var OptimizationMixin = {
       try{
         let response = await this.$sciris.rpc('update_optim', [this.projectID, this.modalOptim, this.addEditDialogOldName]);
         var newOptim = response.data;
-        newOptim.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + newOptim.name;  // Give it a Datastore ID
+        newOptim.serverDatastoreId = this.$store.state.activeProject.id + ':opt-' + newOptim.name;  // Give it a Datastore ID
       } catch (error) {
         this.$sciris.fail(this, 'Could not save optimization', error);
         return
@@ -440,7 +440,7 @@ var OptimizationMixin = {
       this.$sciris.start(this);
       var newOptim = _.cloneDeep(optimSummary);
       newOptim.name = this.$sciris.getUniqueName(newOptim.name, this.optimSummaries.map(o => o.name));
-      newOptim.serverDatastoreId = this.$store.state.activeProject.project.id + ':opt-' + newOptim.name;
+      newOptim.serverDatastoreId = this.$store.state.activeProject.id + ':opt-' + newOptim.name;
 
       try {
         await Promise.all([this.getOptimTaskState(newOptim), this.$sciris.rpc('update_optim', [this.projectID, newOptim])]); // Safe to do both at once, because the task state doesn't matter to the Project

@@ -6,7 +6,7 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     currentUser: {},
-    activeProject: {},
+    activeProject: undefined,
     helpLinks: {
       baseURL: 'https://docs.google.com/document/d/1UGcq-UDQKBsdmPAyYBDsxvOERI-gNF3usSrYrP16tnw/edit#heading=', 
       linkMap: {

@@ -65,8 +65,8 @@ var ScenarioMixin = {
   async created() {
     this.$sciris.addListener(this)
     this.$sciris.createDialogs(this)
-    if ((this.$store.state.activeProject.project !== undefined) &&
-      (this.$store.state.activeProject.project.hasData)) {
+    if ((this.$store.state.activeProject !== undefined) &&
+      (this.$store.state.activeProject.hasData)) {
       console.log('created() called')
       this.simStartYear = this.simStart
       this.simEndYear = this.simEnd
@@ -75,8 +75,8 @@ var ScenarioMixin = {
         this.validSimYears.push(year)
       }      
       this.popOptions = this.activePops
-      this.serverDatastoreId = this.$store.state.activeProject.project.id + ':scenario'
-      await Promise.all([this.getPlotOptions(this.$store.state.activeProject.project.id), this.updateSets()]); // These don't depend on each other
+      this.serverDatastoreId = this.$store.state.activeProject.id + ':scenario'
+      await Promise.all([this.getPlotOptions(this.$store.state.activeProject.id), this.updateSets()]); // These don't depend on each other
       // The order of these doesn't matter
       this.getDataEndYear()
       this.getScenSummaries()

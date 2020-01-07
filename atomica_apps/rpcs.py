@@ -249,26 +249,26 @@ def admin_upload_db(pw, filename=None, host=None):
 ##################################################################################
 ### Datastore functions
 ##################################################################################
-    
-def load_project(project_key, die=None):
+
+# Migration now automatically happens for all of these
+def load_project(project_key, die=None, safe_migration=False):
+    """
+    Return a Project object
+
+    Optionally skip migration
+
+    :param project_key:
+    :param die:
+    :param safe_migration: If ``True`` and the project has the `_update_required` flag set, migration will be skipped (i.e. migrations will be performed
+                           only if the results won't change)
+
+    :return:
+    """
     proj = datastore.loadblob(project_key, objtype='project', die=die)
-
-    if sc.compareversions(proj.version, at.version) < 0:
-        # Need to migrate - load in separate results first though
-
-        original_results = sc.dcp(proj.results.values()) # This is a list of redis keys
-
-        for i in range(len(proj.results)):
-            proj.results[i] = load_result(original_results[i]) # Retrieve result by redis key and store it in the project
-
-        proj = at.migrate(proj)
-
-        for i in range(len(proj.results)):
-            save_result(proj.results[i], key=original_results[i])
-            proj.results[i] = original_results[i]
-
-        save_project(proj)
-
+    if safe_migration and proj._update_required:
+        at.migration.SKIP_MIGRATION = True
+        proj = datastore.loadblob(project_key, objtype='project', die=die)
+        at.migration.SKIP_MIGRATION = False
     return proj
 
 def load_framework(framework_key, die=None):
@@ -279,13 +279,14 @@ def load_result(result_key, die=False):
     output = datastore.loadblob(result_key, objtype='result', die=die)
     return output
 
-def save_project(project, die=None, verbose=True): # NB, only for saving an existing project
-    if verbose: print('Saving project %s...' % project.uid)
+def save_project(project, die=None):
+    if project._update_required:
+        raise Exception('Cannot save an un-migrated project, create an updated copy first')
     project.modified = sc.now()
     output = datastore.saveblob(obj=project, objtype='project', die=die, forcetype=True)
     return output
 
-def save_framework(framework, die=None): # NB, only for saving an existing project
+def save_framework(framework, die=None):
     framework.modified = sc.now()
     output = datastore.saveblob(obj=framework, objtype='framework', die=die, forcetype=True)
     return output
@@ -323,7 +324,7 @@ def save_new_project(proj, username=None, uid=None, verbose=True):
     new_project.webapp.username = username # Make sure we have the current username
     
     # Save all the things
-    key = save_project(new_project, verbose=verbose)
+    key = save_project(new_project)
     if key not in user.projects: # Let's not allow multiple copies
         user.projects.append(key)
         datastore.saveuser(user)
@@ -441,58 +442,62 @@ def del_result(result_key, project_key, die=None):
 
 @RPC()
 def jsonify_project(project_id, verbose=False):
-    ''' Return the project json, given the Project UID. ''' 
-    proj = load_project(project_id) # Load the project record matching the UID of the project passed in.
-    try:    
+    ''' Return the project json, given the Project UID. '''
+    proj = load_project(project_id)  # Load the project record matching the UID of the project passed in.
+    if proj._update_required:
+        orig_proj = load_project(project_id, safe_migration=True)
+        update_string = 'Update from %s to %s, results may change' % (orig_proj.version, proj.version)
+    else:
+        update_string = ''
+
+    try:
         framework_name = proj.framework.name
-    except: 
+    except:
         print('Could not load framework name for project')
         framework_name = 'N/A'
     try:
         n_pops = len(proj.data.pops)
         pop_pairs = [[key, val['label']] for key, val in proj.data.pops.items() if val['type'] != 'env']  # Pull out population keys and names. # TODO - deal with pop types properly
-    except: 
+    except:
         print('Could not load populations for project')
         n_pops = 'N/A'
         pop_pairs = []
-    json = {
-        'project': sc.odict({
-                'id':           str(proj.uid),
-                'name':         proj.name,
-                'username':     proj.webapp.username,
-                'creationTime': sc.getdate(proj.created),
-                'updatedTime':  sc.getdate(proj.modified),
-                'hasData':      proj.data is not None,
-                'hasPrograms':  len(proj.progsets)>0,
-                'n_pops':       n_pops,
-                'sim_start':    proj.settings.sim_start,
-                'sim_end':      proj.settings.sim_end,
-                'data_start':   proj.data.start_year if proj.data else None,
-                'data_end':     proj.data.end_year if proj.data else None,
-                'framework':    framework_name,
-                'pops':         pop_pairs,
-                'cascades':     list(proj.framework.cascades.keys()),
-                'n_results':    len(proj.results),
-                'n_tasks':      len(proj.webapp.tasks)
-            })
-    }
+    json = sc.odict({
+        'id': str(proj.uid),
+        'name': proj.name,
+        'username': proj.webapp.username,
+        'creationTime': proj.created,
+        'updatedTime': proj.modified,
+        'hasData': proj.data is not None,
+        'hasPrograms': len(proj.progsets) > 0,
+        'n_pops': n_pops,
+        'sim_start': proj.settings.sim_start,
+        'sim_end': proj.settings.sim_end,
+        'data_start': proj.data.start_year if proj.data else None,
+        'data_end': proj.data.end_year if proj.data else None,
+        'framework': framework_name,
+        'pops': pop_pairs,
+        'cascades': list(proj.framework.cascades.keys()),
+        'n_results': len(proj.results),
+        'n_tasks': len(proj.webapp.tasks),
+        'updateRequired': proj._update_required,
+        'updateString': update_string
+    })
     if verbose: sc.pp(json)
     return json
     
 
 @RPC()
-def jsonify_projects(username, verbose=False):
+def jsonify_projects(username, verbose=False) -> list:
     ''' Return project jsons for all projects the user has to the client. ''' 
-    output = {'projects':[]}
+    output = []
     user = get_user(username)
     for project_key in user.projects:
         try:
             json = jsonify_project(project_key)
+            output.append(json)
         except Exception as E:
-            print('Project load failed, removing: %s' % str(E))
-            user.projects.remove(project_key)
-            datastore.saveuser(user)
-        output['projects'].append(json)
+            print('Project load failed, skipping: %s' % str(E))
     if verbose: sc.pp(output)
     return output
 
@@ -608,6 +613,22 @@ def copy_project(project_key):
     copy_project_id = new_project.uid # Remember the new project UID (created in save_project_as_new()).
     return { 'projectID': copy_project_id } # Return the UID for the new projects record.
 
+@RPC()
+def update_project(project_key):
+    '''
+    Save a migrated copy of the project
+    Given a project UID, creates a copy of the project with a new UID and
+    returns that UID.
+    '''
+    proj = load_project(project_key, die=True) # Get the Project object for the project to be upgraded.
+    proj._update_required = False
+    proj.results.clear()
+    proj.name += ' (updated)'
+    print(">> update_project %s" % (proj.name))  # Display the call information.
+    key,new_project = save_new_project(proj, proj.webapp.username) # Save a DataStore projects record for the copy project.
+    copy_project_id = new_project.uid # Remember the new project UID (created in save_project_as_new()).
+    return { 'projectID': copy_project_id } # Return the UID for the new projects record.
+
 
 
 ##################################################################################
@@ -637,7 +658,8 @@ def download_project(project_id):
     For the passed in project UID, get the Project on the server, save it in a 
     file, minus results, and pass the full path of this file back.
     '''
-    proj = load_project(project_id, die=True) # Load the project with the matching UID.
+    proj = load_project(project_id, die=True, safe_migration=True) # Load the project with the matching UID.
+
     # For convenience, construct Optimizations for each FE optimization when downloading to facilitate BE usage
     for json in proj.optim_jsons:
         proj.optims.append(make_optimization(proj,json)[0])
@@ -658,7 +680,7 @@ def download_projects(project_keys, username):
     basedir = get_path('', username) # Use the downloads directory to put the file in.
     project_paths = []
     for project_key in project_keys:
-        proj = load_project(project_key)
+        proj = load_project(project_key, safe_migration=True)
         project_path = proj.save(folder=basedir)
         project_paths.append(project_path)
     zip_fname = 'Projects %s.zip' % sc.getdate() # Make the zip file name and the full server file path version of the same..
