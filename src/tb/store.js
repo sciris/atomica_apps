@@ -3,6 +3,30 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
+
+const persist = store => {
+  store.subscribe((mutation, state) => {
+    if ('newActiveProject' === mutation.type) {
+      try {
+        sessionStorage.setItem('activeProject', JSON.stringify(state.activeProject));
+      } catch (e) {
+      }
+    }
+    if ('loadStorage' === mutation.type) {
+      let storage = false;
+      try {
+        storage = sessionStorage.getItem('activeProject') || false;
+        if (storage) {
+          storage = JSON.parse(storage);
+          store.commit('newActiveProject', storage);
+        }
+      } catch (e) {
+      }
+    }
+  });
+};
+
+
 const store = new Vuex.Store({
   state: {
     currentUser: {},
@@ -80,9 +104,12 @@ const store = new Vuex.Store({
         name: 'Optimizations',
         path: '/optimizations'
       }
-    ]
+    ],
   },
+  plugins: [persist],
   mutations: {
+    loadStorage(state) {
+    },
     newUser(state, user) {
       state.currentUser = user
     }, 
