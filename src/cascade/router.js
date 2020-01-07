@@ -79,7 +79,7 @@ let router = new Router({
         },
         {
           path: 'help',
-          name: 'Help and feedback',
+          name: 'Help',
           component: HelpPage
         },
         {
