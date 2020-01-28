@@ -10,7 +10,7 @@ import HelpPage from './app/HelpPage.vue';
 import ContactPage from './app/ContactPage.vue';
 import FrameworksPage from './app/FrameworksPage.vue';
 import NotFoundPage from './app/NotFoundPage.vue';
-import { views } from '../common';
+import {views} from '../common';
 import store from './store.js'
 
 Vue.use(Router);
@@ -31,13 +31,13 @@ let router = new Router({
       path: '/login',
       name: 'Login',
       component: views.LoginPage,
-      props: appProps 
+      props: appProps
     },
     {
       path: '/register',
       name: 'Registration',
       component: views.RegisterPage,
-      props: appProps 
+      props: appProps
     },
     {
       path: '/',
@@ -48,25 +48,25 @@ let router = new Router({
           path: 'optimizations',
           name: 'Create optimizations',
           component: OptimizationsPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: '/changepassword',
           name: 'Change password',
           component: views.ChangePasswordPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: '/changeinfo',
           name: 'Edit account',
           component: views.UserChangeInfoPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: 'projects',
           name: 'Manage projects',
           component: ProjectsPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: 'frameworks',  // CASCADE-TB DIFFERENCE
@@ -77,47 +77,47 @@ let router = new Router({
           path: 'calibration',
           name: 'Baseline', // CASCADE-TB DIFFERENCE
           component: CalibrationPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: 'scenarios',
           name: 'Create scenarios',
           component: ScenariosPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: 'help',
           name: 'Help',
           component: HelpPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: 'contact',
           name: 'Contact',
           component: ContactPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
         {
           path: 'about',
           name: 'About',
           component: AboutPage,
-          meta: { requiresAuth: true }
+          meta: {requiresAuth: true}
         },
-      ] 
+      ]
     },
-    { path: '*', component: NotFoundPage }
+    {path: '*', component: NotFoundPage}
   ]
 });
 
 router.beforeEach((to, from, next) => {
-  if(to.matched.some(record => record.meta.requiresAuth)) {
+  if (to.matched.some(record => record.meta.requiresAuth)) {
     if (store.getters.isLoggedIn) {
       next()
       return
     }
     next({
       name: "Login",
-      query: { loginRequired: to.fullPath }
+      query: {loginRequired: to.fullPath}
     })
   } else {
     next()
