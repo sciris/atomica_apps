@@ -70,10 +70,10 @@ export default {
     },
 
     activeProjectName() {
-      if (this.$store.state.activeProject.project === undefined) {
+      if (!this.$store.getters.projectOpen) {
         return 'none'
       } else {
-        return this.$store.state.activeProject.project.name
+        return this.$store.state.activeProject.name
       }
     },
 

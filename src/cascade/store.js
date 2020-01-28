@@ -3,10 +3,33 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
+const persist = store => {
+  store.subscribe((mutation, state) => {
+    if (mutation.type !== 'loadStorage'){
+      try {
+        sessionStorage.setItem('appdata', JSON.stringify(state));
+      } catch (e) {
+      }
+    } else {
+      console.log('Loading storage')
+      try {
+        let storage = sessionStorage.getItem('appdata') || false;
+        if (storage) {
+          storage = JSON.parse(storage);
+          store.commit('newUser', storage.currentUser);
+          store.commit('newActiveProject', storage.activeProject);
+        }
+      } catch (e) {
+      }
+    }
+  });
+};
+
+
 const store = new Vuex.Store({
   state: {
     currentUser: {},
-    activeProject: {},
+    activeProject: null,
     helpLinks: {
       baseURL: 'https://docs.google.com/document/d/1x4Kb3hyB8NwVziE95UhT6bXpO1uRDFxJlN8QxvrLgvg/edit#heading=', 
       linkMap: {
@@ -84,9 +107,12 @@ const store = new Vuex.Store({
         name: 'Optimizations',
         path: '/optimizations'
       }
-    ]
+    ],
   },
+  plugins: [persist],
   mutations: {
+    loadStorage(state) {
+    },
     newUser(state, user) {
       state.currentUser = user
     }, 
@@ -94,6 +120,13 @@ const store = new Vuex.Store({
       state.activeProject = project
     }
   },
+  getters: {
+    isLoggedIn: state => state.currentUser.displayname !== undefined,
+    projectOpen: state => state.activeProject !== null,
+  },
 });
+
+// Comment out line below to quickly disable persistent storage
+store.commit('loadStorage');
 
 export default store
