@@ -282,12 +282,12 @@ def load_result(result_key, die=False):
 def save_project(project, die=None):
     if project._update_required:
         raise Exception('Cannot save an un-migrated project, create an updated copy first')
-    project.modified = sc.now()
+    project.modified = sc.now(utc=True)
     output = datastore.saveblob(obj=project, objtype='project', die=die, forcetype=True)
     return output
 
 def save_framework(framework, die=None):
-    framework.modified = sc.now()
+    framework.modified = sc.now(utc=True)
     output = datastore.saveblob(obj=framework, objtype='framework', die=die, forcetype=True)
     return output
 
