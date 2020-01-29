@@ -196,21 +196,16 @@ var ProjectMixin = {
         })
     },
 
-    uploadProjectFromFile() {
-      console.log('uploadProjectFromFile() called')
-      this.$sciris.upload('upload_project', [this.userName], {}, '.prj')
-        // Have the server upload the project.
-        .then(response => {
-          // This line needs to be here to avoid the spinner being up during the user modal.
-          this.$sciris.start(this)
-
-          // Update the project summaries so the new project shows up on the list.
-          this.updateProjectSummaries(response.data.projectID)
-          this.$sciris.succeed(this, 'New project uploaded')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not upload file', error)
-        })
+    async uploadProjectFromFile() {
+      console.log('uploadProjectFromFile() called');
+      try {
+        let response = await this.$sciris.upload('upload_project', [this.userName], {}, '.prj');
+        this.$sciris.start(this);
+        this.updateProjectSummaries(response.data.projectID);
+        this.$sciris.succeed(this, 'New project uploaded');
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not upload project', error);
+      }
     },
 
     projectIsActive(uid) {

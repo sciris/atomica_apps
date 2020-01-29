@@ -642,12 +642,9 @@ def upload_project(prj_filename, username):
     with a new UID and return the new UID.
     '''
     print(">> create_project_from_prj_file '%s'" % prj_filename) # Display the call information.
-    try: # Try to open the .prj file, and return an error message if this fails.
-        proj = at.Project.load(prj_filename) # NB. load via Project() method which automatically calls migration
-        if not hasattr(proj,'optim_jsons'):
-            proj.optim_jsons = list() # Add the FE's optimization JSON storage attribute if it doesn't have one yet
-    except Exception:
-        return { 'error': 'BadFileFormatError' }
+    proj = at.Project.load(prj_filename) # NB. load via Project() method which automatically calls migration
+    if not hasattr(proj,'optim_jsons'):
+        proj.optim_jsons = list() # Add the FE's optimization JSON storage attribute if it doesn't have one yet
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
     return {'projectID': str(proj.uid)} # Return the new project UID in the return message.
 
