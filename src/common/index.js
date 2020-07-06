@@ -64,6 +64,7 @@ function install(Vue, options={}) {
   EventBus.$on(events.EVENT_PASSWORD_CHANGE_SUCCESS, (user) => {
     options.router.push(afterPasswordChangePath);
   });
+
 };
 
 // Automatic installation if Vue has been added to the global scope.

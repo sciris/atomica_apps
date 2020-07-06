@@ -176,8 +176,8 @@ Last update: 2019Aug23
         </div>
         <div class="dialog-c-text">
           <select v-model="demoOption">
-            <option v-for='project in demoOptions'>
-              {{ project }}
+            <option v-for='project in demoOptions' :value="project.id">
+              {{ project.name }}
             </option>
           </select><br><br>
         </div>
@@ -329,6 +329,24 @@ Last update: 2019Aug23
       return {
         frameworkSummaries: [],
         num_progs: 5,
+
+        demoOptions: [
+          {id: 'udt', name: 'Undiagnosed-diagnosed-treated'},
+          {id: 'usdt', name: 'Undiagnosed-screened-diagnosed-treated'},
+          {id: 'cervicalcancer', name: 'Cervical cancer'},
+          {id: 'sir', name: 'SIR model'},
+          {id: 'diabetes', name: 'Diabetes'},
+          {id: 'hypertension', name: 'Hypertension'},
+          {id: 'hypertension_dyn', name: 'Hypertension with demography'},
+          {id: 'hiv', name: 'HIV care cascade'},
+          {id: 'hiv_dyn', name: 'HIV care cascade with demography'},
+          {id: 'tb_simple', name: 'Tuberculosis'},
+          {id: 'tb_simple_dyn', name: 'Tuberculosis with demography'},
+          {id: 'environment', name: 'SIR model with environment'},
+          {id: 'tb', name: 'Tuberculosis with transmission dynamics'},
+        ],
+        demoOption: 'udt',
+
       }
     },
 
@@ -338,7 +356,6 @@ Last update: 2019Aug23
       this.newProjectData.num_pops = 1; // Default to 1 in CAT
       this.newProjectData.num_transfers = 0; // Default to 0 in CAT
       this.getDefaultPrograms();
-      this.getDemoOptions();
       this.updateFrameworkSummaries();
       this.updateProjectSummaries(this.projectID);
     },
@@ -377,6 +394,25 @@ Last update: 2019Aug23
           this.$sciris.fail(this, 'Could not load frameworks', error)
         }
       },
+
+
+      addDemoProjectModal() {
+        // Open a model dialog for creating a new project
+        console.log('addDemoProjectModal() called');
+        this.$modal.show('demo-project');
+      },
+
+      async addDemoProject() {
+        this.$sciris.start(this);
+        try {
+          let response = await this.$sciris.rpc('add_demo_project', [this.userName, this.demoOption, this.toolName()]);
+          this.updateProjectSummaries(response.data.projectID);
+          this.$sciris.succeed(this, '');
+        } catch (error) {
+          this.$sciris.fail(this, 'Could not add demo project', error)
+        }
+      },
+
     },
   }
 </script>

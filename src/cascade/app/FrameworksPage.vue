@@ -98,8 +98,8 @@ Last update: 2018oct04
         </p>
         <div class="dialog-c-text">
           <select v-model="currentFramework">
-            <option v-for='framework in frameworkOptions'>
-              {{ framework }}
+            <option v-for='framework in frameworkOptions' :value="framework.id">
+              {{ framework.name }}
             </option>
           </select><br><br>
         </div>
@@ -166,8 +166,22 @@ Last update: 2018oct04
         frameworkSummaries: [], // List of summary objects for frameworks the user has
         frame_name: 'New framework', // For creating a new framework: number of populations
         num_comps: 5, // For creating a new framework: number of populations
-        frameworkOptions: [],
-        currentFramework: '',
+        frameworkOptions: [
+            {id:'udt', name:'Undiagnosed-diagnosed-treated'},
+            {id:'usdt', name:'Undiagnosed-screened-diagnosed-treated'},
+            {id:'cervicalcancer', name:'Cervical cancer'},
+            {id:'sir', name:'SIR model'},
+            {id:'diabetes', name:'Diabetes'},
+            {id:'hypertension', name:'Hypertension'},
+            {id:'hypertension_dyn', name:'Hypertension with demography'},
+            {id:'hiv', name:'HIV care cascade'},
+            {id:'hiv_dyn', name:'HIV care cascade with demography'},
+            {id:'tb_simple', name:'Tuberculosis'},
+            {id:'tb_simple_dyn', name:'Tuberculosis with demography'},
+            {id:'environment', name:'SIR model with environment'},
+            {id:'tb', name:'Tuberculosis with transmission dynamics'},
+        ],
+        currentFramework: 'udt',
         advancedFramework: 0
       }
     },
@@ -188,7 +202,6 @@ Last update: 2018oct04
       else {
         // Load the framework summaries of the current user.
         this.updateFrameworkSummaries();
-        this.getFrameworkOptions();
       }
     },
 
@@ -208,18 +221,6 @@ Last update: 2018oct04
         }
       },
 
-      getFrameworkOptions() {
-        console.log('getFrameworkOptions() called');
-        sciris.rpc('get_framework_options') // Get the current user's framework summaries from the server.
-            .then(response => {
-              this.frameworkOptions = response.data;// Set the frameworks to what we received.
-              this.currentFramework = this.frameworkOptions[0];
-              console.log(this.frameworkOptions);
-            })
-            .catch(error => {
-              sciris.fail(this, 'Could not load framework options', error)
-            })
-      },
 
       async updateFrameworkSummaries() {
         try {
@@ -289,14 +290,6 @@ Last update: 2018oct04
             })
             .finally(response => {
             })
-      },
-
-      frameworkIsActive(uid) {
-        if (this.$store.state.activeFramework.framework === undefined) { // If the framework is undefined, it is not active.
-          return false
-        } else { // Otherwise, the framework is active if the UIDs match.
-          return (this.$store.state.activeFramework.id === uid)
-        }
       },
 
       selectAll() {

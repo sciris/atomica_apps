@@ -512,15 +512,6 @@ def rename_project(project_id, new_name):
 
 
 @RPC()
-def get_demo_project_options():
-    '''
-    Return the available demo frameworks
-    '''
-    options = at.default_project(show_options=True).values()
-    return options
-
-
-@RPC()
 def add_demo_project(username, model, tool):
     """
     Add a demo project
@@ -539,7 +530,7 @@ def add_demo_project(username, model, tool):
         proj.load_progbook(ROOTDIR+'optima_tb_progbook.xlsx')
         at.make_demo_scenarios(proj)  # Add example scenarios
     else:
-        proj = at.demo(which=model, do_run=False, do_plot=False)  # Create the project, loading in the desired spreadsheets.
+        proj = at.demo(which=model, do_run=False)  # Create the project, loading in the desired spreadsheets.
     proj.optim_jsons = [default_optim_json(proj,tool=tool)] # Add a default optimization JSON
     proj.name = 'Demo project'
     key,proj = save_new_project(proj, username) # Save the new project in the DataStore.
@@ -777,18 +768,11 @@ def jsonify_frameworks(username, verbose=True):
     if verbose: sc.pp(output)
     return output
 
-
-@RPC()
-def get_framework_options():
-    ''' Return the available demo frameworks '''
-    options = at.default_framework(show_options=True).values()
-    return options
-
-
 @RPC()
 def add_demo_framework(username, framework_name):
     ''' Add a demo framework '''
-    frame = at.demo(kind='framework', which=framework_name)  # Create the framework, loading in the desired spreadsheets.
+
+    frame = at.ProjectFramework(at.LIBRARY_PATH/f'{framework_name}_framework.xlsx')
     save_new_framework(frame, username) # Save the new framework in the DataStore.
     print(">> add_demo_framework %s" % (frame.name))  
     return {'frameworkID': str(frame.uid) } # Return the new framework UID in the return message.
@@ -1141,7 +1125,7 @@ def get_tb_default_program_list() -> list:
 
     '''
 
-    df = pd.read_excel(ROOTDIR + "optima_tb_default_programs.xlsx",usecols=1,header=1)
+    df = pd.read_excel(ROOTDIR + "optima_tb_default_programs.xlsx",usecols=[1],header=1)
     active = df['Display name'].str.contains('[Inactive]', regex=False)
     names = df['Display name'].str.split(']').str[1].str.strip()
     return [{'name':name,'included':act} for name, act in zip(names,active)]

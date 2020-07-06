@@ -153,39 +153,6 @@ Last update: 2019Aug23
     </div>
     <!-- ### End: Projects table ### -->
 
-
-    <!-- ### Start: demo project modal (only visible for Cascade) ### -->
-    <modal name="demo-project"
-           height="auto"
-           :classes="['v--modal', 'vue-dialog']"
-           :width="400"
-           :pivot-y="0.3"
-           :adaptive="true">
-      <div class="dialog-content">
-        <div class="dialog-c-title">
-          Create demo project
-        </div>
-        <div class="dialog-c-text">
-          <select v-model="demoOption">
-            <option v-for='project in demoOptions'>
-              {{ project }}
-            </option>
-          </select><br><br>
-        </div>
-        <div style="text-align:justify">
-          <button @click="addDemoProject()" class='btn __green' style="display:inline-block">
-            Add selected
-          </button>
-
-          <button @click="$modal.hide('demo-project')" class='btn __red' style="display:inline-block">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </modal>
-    <!-- ### End: demo project modal ### -->
-
-
     <!-- ### Start: create project modal ### -->
     <modal name="create-project"
            height="auto"
@@ -325,6 +292,18 @@ Last update: 2019Aug23
       getAppRouter: function () {
         return router;
       },
+
+      async addDemoProject() {
+        this.$sciris.start(this);
+        try{
+          let response = await this.$sciris.rpc('add_demo_project', [this.userName,'tb',this.toolName()]);
+          this.updateProjectSummaries(response.data.projectID);
+          this.$sciris.succeed(this, '');
+        } catch (error) {
+          this.$sciris.fail(this, 'Could not add demo project', error)
+        }
+      },
+
     },
 
     created() {
@@ -333,8 +312,6 @@ Last update: 2019Aug23
       this.newProjectData.num_pops = 5; // Default to 5 in TB
       this.newProjectData.num_transfers = 1; // Default to 1 in TB
       this.getDefaultPrograms();
-      this.getDemoOptions();
-      // Load the project summaries of the current user.
       this.updateProjectSummaries(this.projectID)
     }
   }
