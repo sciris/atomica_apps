@@ -18,8 +18,7 @@ var ProjectMixin = {
         data_end: 2018 ,
       },
       activeuid:  [], // WARNING, kludgy to get create progbook working
-      demoOptions: [],
-      demoOption: '',
+
       defaultPrograms: [],
       simplertModalUid: '',
     }
@@ -40,21 +39,6 @@ var ProjectMixin = {
   methods: {
 
     updateSorting(column) { return utils.updateSorting(this, column) },
-
-    getDemoOptions() {
-      console.log('getDemoOptions() called')
-      this.$sciris.rpc('get_demo_project_options') // Get the current user's framework summaries from the server.
-        .then(response => {
-          this.demoOptions = response.data // Set the frameworks to what we received.
-          this.demoOption = this.demoOptions[0]
-          console.log('Loaded demo options:')
-          console.log(this.demoOptions)
-          console.log(this.demoOption)
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not load demo project options', error)
-        })
-    },
 
     async getDefaultPrograms() {
       console.log('getDefaultPrograms() called')
@@ -124,40 +108,6 @@ var ProjectMixin = {
       this.openProject(matchProject);
     },
 
-    addDemoProject() {
-      console.log('addDemoProject() called');
-      this.$modal.hide('demo-project');
-      this.$sciris.start(this);
-
-      if (this.toolName() === 'cascade') {
-        var demoOption = this.demoOption
-      }
-      else {
-        var demoOption = 'tb'
-      }
-
-      // Have the server create a new project.
-      this.$sciris.rpc('add_demo_project', [
-        this.userName,
-        demoOption,
-        this.toolName(),
-      ])
-      .then(response => {
-        // Update the project summaries so the new project shows up on the list.
-        this.updateProjectSummaries(response.data.projectID);
-        // Already have notification from project
-        this.$sciris.succeed(this, '')
-      })
-      .catch(error => {
-        this.$sciris.fail(this, 'Could not add demo project', error)
-      })
-    },
-
-    addDemoProjectModal() {
-      // Open a model dialog for creating a new project
-      console.log('addDemoProjectModal() called');
-      this.$modal.show('demo-project');
-    },
 
     createNewProjectModal() {
       console.log('createNewProjectModal() called')
@@ -196,21 +146,16 @@ var ProjectMixin = {
         })
     },
 
-    uploadProjectFromFile() {
-      console.log('uploadProjectFromFile() called')
-      this.$sciris.upload('upload_project', [this.userName], {}, '.prj')
-        // Have the server upload the project.
-        .then(response => {
-          // This line needs to be here to avoid the spinner being up during the user modal.
-          this.$sciris.start(this)
-
-          // Update the project summaries so the new project shows up on the list.
-          this.updateProjectSummaries(response.data.projectID)
-          this.$sciris.succeed(this, 'New project uploaded')
-        })
-        .catch(error => {
-          this.$sciris.fail(this, 'Could not upload file', error)
-        })
+    async uploadProjectFromFile() {
+      console.log('uploadProjectFromFile() called');
+      try {
+        let response = await this.$sciris.upload('upload_project', [this.userName], {}, '.prj');
+        this.$sciris.start(this);
+        this.updateProjectSummaries(response.data.projectID);
+        this.$sciris.succeed(this, 'New project uploaded');
+      } catch (error) {
+        this.$sciris.fail(this, 'Could not upload project', error);
+      }
     },
 
     projectIsActive(uid) {
