@@ -407,6 +407,7 @@ Last update: 2019Aug23
         try {
           let response = await this.$sciris.rpc('add_demo_project', [this.userName, this.demoOption, this.toolName()]);
           this.updateProjectSummaries(response.data.projectID);
+          this.$modal.hide('demo-project');
           this.$sciris.succeed(this, '');
         } catch (error) {
           this.$sciris.fail(this, 'Could not add demo project', error)
