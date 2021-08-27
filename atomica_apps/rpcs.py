@@ -1,6 +1,6 @@
 '''
 Atomica remote procedure calls (RPCs)
-    
+
 Last update: 2019may30
 '''
 
@@ -67,7 +67,7 @@ def get_version_info():
     })
     print('Version info:\n%s' % version_info)
     return version_info
-      
+
 
 def get_user(username=None):
     ''' Ensure it's a valid user -- which for Atomica means has lists for projects and frameworks '''
@@ -86,7 +86,7 @@ def get_user(username=None):
 
 def find_datastore(config):
     '''
-    Ensure the datastore is loaded -- note, must be called externally since config 
+    Ensure the datastore is loaded -- note, must be called externally since config
     is required as an input argument.
     '''
     global datastore
@@ -116,7 +116,7 @@ def to_float(raw, blank_ok=False, die=False):
         output = float(raw)
     except Exception as E:
         errormsg = 'NUMBER WARNING, number conversion on "%s" failed, returning None: %s' % (raw, str(E))
-        if raw not in [None, ''] and not blank_ok: 
+        if raw not in [None, ''] and not blank_ok:
             if die: raise Exception(errormsg)
             else:   print(errormsg)
         output = None
@@ -142,6 +142,7 @@ def from_number(raw, sf=3, die=False):
 
 @RPC()
 def run_query(token, query):
+    raise Exception("Query function disabled")
     globalsdict = globals()
     localsdict  = locals()
     localsdict['output'] = 'Output not specified'
@@ -219,20 +220,20 @@ def admin_upload_db(pw, filename=None, host=None):
             if nosshpass():
                 output = 'Could not find or install sshpass:\n%s' % '\n'.join([cmd1, output1, cmd2, output2])
                 return output
-    
+
     # Check the pw
     if host is None and sc.sha(pw).hexdigest() != 'b9c00e83ab3d4b62b6f67f6b540041475978de9f9a5a9af62e0831b1':
         output = 'You may wish to reconsider "%s"' % pw
         return output
-    
+
     # Check the host
     if host is None:
         host = 'optima@203.0.141.220:/home/optima/google_cloud_db_backups'
-    
+
     # Get the filename
     if filename is None:
         filename = sc.runcommand('ls -t *.dump | awk "NR == 1"').strip() # Get most recent dump file
-    
+
     # Check the filename
     if not os.path.isfile(filename):
         output = 'File %s does not exist: try again' % filename
@@ -243,7 +244,7 @@ def admin_upload_db(pw, filename=None, host=None):
     output = sc.runcommand(command)
     if not output:
         output = 'Success! %s uploaded to %s.' % (filename, host)
-    
+
     return output
 
 ##################################################################################
@@ -305,7 +306,7 @@ def save_new_project(proj, username=None, uid=None, verbose=True):
     if verbose: print('Saving project %s as new...' % proj.uid)
     new_project = sc.dcp(proj) # Copy the project..
     new_project.uid = sc.uuid(uid) # Optionally allow the project to be saved with an explicit UID
-    
+
     # Get unique name
     user = get_user(username)
     current_project_names = []
@@ -314,7 +315,7 @@ def save_new_project(proj, username=None, uid=None, verbose=True):
         current_project_names.append(proj.name)
     new_project_name = sc.uniquename(new_project.name, namelist=current_project_names)
     new_project.name = new_project_name
-    
+
     # Ensure it's a valid webapp project
     if not hasattr(new_project, 'webapp'):
         if verbose: print('Adding webapp attribute for username %s' % username)
@@ -322,7 +323,7 @@ def save_new_project(proj, username=None, uid=None, verbose=True):
         new_project.webapp.username = username
         new_project.webapp.tasks = []
     new_project.webapp.username = username # Make sure we have the current username
-    
+
     # Save all the things
     key = save_project(new_project)
     if key not in user.projects: # Let's not allow multiple copies
@@ -335,11 +336,11 @@ def save_new_framework(framework, username=None):
     '''
     If we're creating a new framework, we need to do some operations on it to
     make sure it's valid for the webapp.
-    ''' 
+    '''
     # Preliminaries
     new_framework = sc.dcp(framework) # Copy the project, only save what we want...
     new_framework.uid = sc.uuid()
-    
+
     # Get unique name
     user = get_user(username)
     current_framework_names = []
@@ -348,12 +349,12 @@ def save_new_framework(framework, username=None):
         current_framework_names.append(proj.name)
     new_framework_name = sc.uniquename(new_framework.name, namelist=current_framework_names)
     new_framework.name = new_framework_name
-    
+
     # Ensure it's a valid webapp framework -- store username
     if not hasattr(new_framework, 'webapp'):
         new_framework.webapp = sc.prettyobj()
         new_framework.webapp.username = username
-    
+
     # Save all the things
     key = save_framework(new_framework)
     user.frameworks.append(key)
@@ -395,8 +396,8 @@ def del_framework(framework_key, username=None, die=None):
     except Exception as E:
         print('Warning: deleting framework %s, but not found in user "%s" framework (%s)' % (framework_key, username, str(E)))
     return output
-    
-    
+
+
 @RPC()
 def delete_projects(project_keys, username=None):
     ''' Delete one or more projects '''
@@ -485,11 +486,11 @@ def jsonify_project(project_id, verbose=False):
     })
     if verbose: sc.pp(json)
     return json
-    
+
 
 @RPC()
 def jsonify_projects(username, verbose=False) -> list:
-    ''' Return project jsons for all projects the user has to the client. ''' 
+    ''' Return project jsons for all projects the user has to the client. '''
     output = []
     user = get_user(username)
     for project_key in user.projects:
@@ -504,7 +505,7 @@ def jsonify_projects(username, verbose=False) -> list:
 
 @RPC()
 def rename_project(project_id, new_name):
-    ''' Given the passed in project json, update the underlying project accordingly. ''' 
+    ''' Given the passed in project json, update the underlying project accordingly. '''
     proj = load_project(project_id) # Load the project corresponding with this json.
     proj.name = new_name # Use the json to set the actual project.
     save_project(proj) # Save the changed project to the DataStore.
@@ -594,7 +595,7 @@ def create_new_project(username, new_project_json, tool=None):
 @RPC()
 def copy_project(project_key):
     '''
-    Given a project UID, creates a copy of the project with a new UID and 
+    Given a project UID, creates a copy of the project with a new UID and
     returns that UID.
     '''
     proj = load_project(project_key, die=True) # Get the Project object for the project to be copied.
@@ -629,7 +630,7 @@ def update_project(project_key):
 @RPC(call_type='upload')
 def upload_project(prj_filename, username):
     '''
-    Given a .prj file name and a user UID, create a new project from the file 
+    Given a .prj file name and a user UID, create a new project from the file
     with a new UID and return the new UID.
     '''
     print(">> create_project_from_prj_file '%s'" % prj_filename) # Display the call information.
@@ -640,10 +641,10 @@ def upload_project(prj_filename, username):
     return {'projectID': str(proj.uid)} # Return the new project UID in the return message.
 
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def download_project(project_id):
     '''
-    For the passed in project UID, get the Project on the server, save it in a 
+    For the passed in project UID, get the Project on the server, save it in a
     file, minus results, and pass the full path of this file back.
     '''
     proj = load_project(project_id, die=True, safe_migration=True) # Load the project with the matching UID.
@@ -662,7 +663,7 @@ def download_project(project_id):
 @RPC(call_type='download')
 def download_projects(project_keys, username):
     '''
-    Given a list of project UIDs, make a .zip file containing all of these 
+    Given a list of project UIDs, make a .zip file containing all of these
     projects as .prj files, and return the full path to this file.
     '''
     basedir = get_path('', username) # Use the downloads directory to put the file in.
@@ -678,7 +679,7 @@ def download_projects(project_keys, username):
     return server_zip_fname # Return the server file name.
 
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def download_framework_from_project(project_id):
     ''' Download the framework Excel file from a project '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
@@ -689,21 +690,21 @@ def download_framework_from_project(project_id):
     return full_file_name # Return the full filename.
 
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def download_databook(project_id):
     ''' Download databook '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s_databook.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     return proj.databook.tofile(), file_name
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def download_progbook(project_id):
     ''' Download program book '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
     file_name = '%s_program_book.xlsx' % proj.name # Create a filename containing the project name followed by a .prj suffix.
     return proj.progbook.tofile(), file_name
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def create_progbook(project_id, num_progs, start_year, end_year):
     ''' Create program book -- only used for Cascades '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
@@ -739,7 +740,7 @@ def upload_progbook(progbook_filename, project_id):
 
 @RPC()
 def jsonify_framework(framework_id, verbose=False):
-    ''' Return the framework json, given the framework UID. ''' 
+    ''' Return the framework json, given the framework UID. '''
     frame = load_framework(framework_id) # Load the framework record matching the UID of the framework passed in.
     json = {
         'id':           str(frame.uid),
@@ -750,11 +751,11 @@ def jsonify_framework(framework_id, verbose=False):
     }
     if verbose: sc.pp(json)
     return json
-    
+
 
 @RPC()
 def jsonify_frameworks(username, verbose=True):
-    ''' Return framework jsons for all frameworks the user has to the client. ''' 
+    ''' Return framework jsons for all frameworks the user has to the client. '''
     output = []
     user = get_user(username)
     for framework_key in user.frameworks:
@@ -774,20 +775,20 @@ def add_demo_framework(username, framework_name):
 
     frame = at.ProjectFramework(at.LIBRARY_PATH/f'{framework_name}_framework.xlsx')
     save_new_framework(frame, username) # Save the new framework in the DataStore.
-    print(">> add_demo_framework %s" % (frame.name))  
+    print(">> add_demo_framework %s" % (frame.name))
     return {'frameworkID': str(frame.uid) } # Return the new framework UID in the return message.
 
 
 @RPC()
 def rename_framework(framework_id, new_name):
-    ''' Given the passed in framework summary, update the underlying framework accordingly. ''' 
+    ''' Given the passed in framework summary, update the underlying framework accordingly. '''
     frame = load_framework(framework_id) # Load the framework corresponding with this summary.
     frame.name = new_name
     save_framework(frame) # Save the changed framework to the DataStore.
     return None
 
 
-@RPC()    
+@RPC()
 def copy_framework(framework_id):
     ''' Given a framework UID, creates a copy of the framework with a new UID and returns that UID. '''
     frame = load_framework(framework_id, die=True) # Load the project with the matching UID.
@@ -796,7 +797,7 @@ def copy_framework(framework_id):
     print(">> copy_framework %s" % (new_framework.name))  # Display the call information.
     return {'frameworkID': str(new_framework.uid)} # Return the UID for the new frameworks record.
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def download_framework(framework_id):
     ''' Download the framework Excel file from a project '''
     frame = load_framework(framework_id, die=True) # Load the project with the matching UID.
@@ -805,7 +806,7 @@ def download_framework(framework_id):
 @RPC(call_type='download')
 def download_frameworks(framework_keys, username):
     '''
-    Given a list of framework UIDs, make a .zip file containing all of these 
+    Given a list of framework UIDs, make a .zip file containing all of these
     frameworks as .frw files, and return the full path to this file.
     '''
     basedir = get_path('', username) # Use the downloads directory to put the file in.
@@ -852,7 +853,7 @@ def upload_new_frameworkbook(filename, username):
     else:
         for cascade in frame.cascades:
             at.validate_cascade(frame, cascade)
-    if frame.name is None: 
+    if frame.name is None:
         frame.name = os.path.basename(filename) # Ensure that it's not None
         if frame.name.endswith('.xlsx'):
             frame.name = frame.name[:-5]
@@ -969,7 +970,7 @@ def set_y_factors(project_id, parsetname=-1, parlist=None, tool=None, verbose=Fa
     return None
 
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def reconcile(project_id, parsetname=None, progsetname=-1, year=2018, unit_cost_bounds=0.2, outcome_bounds=0.2):
     ''' Reconcile parameter set and program set '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
@@ -985,7 +986,7 @@ def reconcile(project_id, parsetname=None, progsetname=-1, year=2018, unit_cost_
 ### Parameter set RPCs
 ##################################################################################
 
-@RPC() 
+@RPC()
 def get_parset_names(project_id):
     print('Returning parset info...')
     proj = load_project(project_id, die=True)
@@ -993,7 +994,7 @@ def get_parset_names(project_id):
     return parset_names
 
 
-@RPC() 
+@RPC()
 def rename_parset(project_id, parsetname=None, new_name=None):
     print('Renaming parset from %s to %s...' % (parsetname, new_name))
     proj = load_project(project_id, die=True)
@@ -1003,7 +1004,7 @@ def rename_parset(project_id, parsetname=None, new_name=None):
     return None
 
 
-@RPC() 
+@RPC()
 def copy_parset(project_id, parsetname=None):
     print('Copying parset %s...' % parsetname)
     proj = load_project(project_id, die=True)
@@ -1017,7 +1018,7 @@ def copy_parset(project_id, parsetname=None):
     return new_name
 
 
-@RPC() 
+@RPC()
 def delete_parset(project_id, parsetname=None):
     print('Deleting parset %s...' % parsetname)
     proj = load_project(project_id, die=True)
@@ -1032,10 +1033,10 @@ def delete_parset(project_id, parsetname=None):
     return None
 
 
-@RPC(call_type='download')   
+@RPC(call_type='download')
 def download_parset(project_id, parsetname=None):
     '''
-    For the passed in project UID, get the Project on the server, save it in a 
+    For the passed in project UID, get the Project on the server, save it in a
     file, minus results, and pass the full path of this file back.
     '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
@@ -1045,12 +1046,12 @@ def download_parset(project_id, parsetname=None):
     sc.saveobj(full_file_name, parset) # Write the object to a Gzip string pickle file.
     print(">> download_parset %s" % (full_file_name)) # Display the call information.
     return full_file_name # Return the full filename.
-    
-    
-@RPC(call_type='upload')   
+
+
+@RPC(call_type='upload')
 def upload_parset(parset_filename, project_id):
     '''
-    For the passed in project UID, get the Project on the server, save it in a 
+    For the passed in project UID, get the Project on the server, save it in a
     file, minus results, and pass the full path of this file back.
     '''
     proj = load_project(project_id, die=True) # Load the project with the matching UID.
@@ -1067,7 +1068,7 @@ def upload_parset(parset_filename, project_id):
 ##################################################################################
 
 
-@RPC() 
+@RPC()
 def get_progset_names(project_id):
     print('Returning progset info...')
     proj = load_project(project_id, die=True)
@@ -1075,7 +1076,7 @@ def get_progset_names(project_id):
     return progset_names
 
 
-@RPC() 
+@RPC()
 def rename_progset(project_id, progsetname=None, new_name=None):
     print('Renaming progset from %s to %s...' % (progsetname, new_name))
     proj = load_project(project_id, die=True)
@@ -1085,7 +1086,7 @@ def rename_progset(project_id, progsetname=None, new_name=None):
     return None
 
 
-@RPC() 
+@RPC()
 def copy_progset(project_id, progsetname=None):
     print('Copying progset %s...' % progsetname)
     proj = load_project(project_id, die=True)
@@ -1099,7 +1100,7 @@ def copy_progset(project_id, progsetname=None):
     return None
 
 
-@RPC() 
+@RPC()
 def delete_progset(project_id, progsetname=None):
     print('Deleting progset %s...' % progsetname)
     proj = load_project(project_id, die=True)
@@ -1133,7 +1134,7 @@ def get_tb_default_program_list() -> list:
 @RPC()
 def get_tb_default_progset(fulloutput=False, verbose=True):
     ''' Only used for TB '''
-    
+
     # Get programs
     if verbose: print('get_default_programs(): Creating framework...')
     F = at.ProjectFramework(ROOTDIR+"optima_tb_framework.xlsx")
@@ -1156,12 +1157,12 @@ def get_tb_default_progset(fulloutput=False, verbose=True):
             progs[prog_label.replace('[Inactive]','').strip()] = False
         else:
             progs[prog_label.replace('[Active]','').strip()] = True
-    
+
     # Frontendify
     output = []
     for key,val in progs.items():
         output.append({'name':key, 'included':val})
-    
+
     if verbose: sc.pp(output)
 
     if fulloutput: return output, default_progset
@@ -1177,11 +1178,11 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
     # - active_progs : a dict of {program_label:0/1} for whether to include a program or not (obtained via get_default_programs())
 
     proj = load_project(project_id, die=True)
-    
+
     default_active_progs, default_progset = get_tb_default_progset(fulloutput=True)
     if default_active_progs is None:
         active_progs = default_active_progs
-    
+
     # Validate years
     try:
         start_year = float(start_year)
@@ -1190,12 +1191,12 @@ def create_default_progbook(project_id, start_year, end_year, active_progs):
     except Exception as E:
         print('Converting program years "%s, %s" failed: %s' % (start_year, end_year, str(E)))
         program_years = [2015,2018]
-        
+
     # Convert from list back to odict
     active_progs_dict = sc.odict()
     for prog in active_progs:
         active_progs_dict[prog['name']] = prog['included']
-    
+
     progs = sc.odict()
     for prog in default_progset.programs.values():
         prog.label = prog.label.replace('[Active]','').strip()
@@ -1279,7 +1280,7 @@ def supported_framework_plots_func(framework):
         return plots, plot_groups
 
 
-@RPC()    
+@RPC()
 def get_supported_plots(project_id, tool, calibration_page=False, only_keys=False):
     proj = load_project(project_id, die=True)
     supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)  # Get the framework plots
@@ -1352,7 +1353,7 @@ def download_graphs(username):
 def get_atomica_plots(proj, results=None, plot_names=None, plot_options=None, pops='all', outputs=None, do_plot_data=None, replace_nans=True, stacked=False, xlims=None, figsize=None, calibration=False):
     results = sc.promotetolist(results)
     supported_plots, supported_plot_groups = supported_framework_plots_func(proj.framework)
-    if plot_names is None: 
+    if plot_names is None:
         if plot_options is not None:
             plot_names = []
             for item in plot_options['plots']:
@@ -1644,12 +1645,12 @@ def get_coverage_plots(results):
 
 
 def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=False):
-    
+
     if results is None:
         results = proj.results[-1]
     if year    is None:
         year    = proj.settings.sim_end
-    
+
     figs = []
     legends = []
     figjsons = []
@@ -1664,7 +1665,7 @@ def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=Fals
         figjsons.append(customize_fig(fig=fig, output=None, plotdata=None, xlims=None, figsize=None, is_epi=False))
         figs.append(fig)
         legends.append(sc.emptyfig()) # No figure, but still useful to have a plot
-    
+
     for fig in legends: # Different enough to warrant its own block, although ugly
         try:
             ax = fig.get_axes()[0]
@@ -1674,7 +1675,7 @@ def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=Fals
         graph_dict = sw.mpld3ify(fig, jsonify=False)
         legendjsons.append(graph_dict)
         pl.close(fig)
-    
+
     # jsondata,jsoncolors = get_json_cascade(results=results, data=proj.data)
     # output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'jsondata':jsondata, 'jsoncolors':jsoncolors, 'types':['cascade']*len(figjsons)}
     output = {'graphs':figjsons, 'legends':legendjsons, 'table':table, 'types':['cascade']*len(figjsons)}
@@ -1686,19 +1687,19 @@ def get_cascade_plots(proj, results=None, pops=None, year=None, plot_budget=Fals
 def get_json_cascade(results, data):
     '''
     Return all data to render cascade in FE, for multiple results
-   
+
     INPUTS
     - results - A Result, or list of Results
     - data - A ProjectData instance (e.g. proj.data)
-   
+
     OUTPUTS
     - dict/json containing the data required to make the cascade plot on the FE
       The dict has the following structure. Suppose we have
-   
+
       cascade_data = get_json_cascade(results,data)
-   
+
       Then the output of this function is (JSON equivalent of?):
-   
+
       cascade_data['results'] - List of names of all results included (could render as checkboxes)
       cascade_data['pops'] - List of names of all pops included (could render as checkboxes)
       cascade_data['cascades'] - List of names of all cascades included (could render as dropdown)
@@ -1707,7 +1708,7 @@ def get_json_cascade(results, data):
       cascade_data['model'][result_name][cascade_name][pop_name][stage_name] - Array of values, same size as cascade_data['t'][result_name] (this contains the values that end up in the bar)
       cascade_data['data_t'] - Array of time values for the data
       cascade_data['data'][cascade_name][pop_name][stage_name] - Array of values, same size as cascade_data['data_t'] (this contains the values to be plotted as scatter points)
-   
+
       Note - the data values entered in the databook are sparse (typically there isn't a data point at every time). The arrays all have
       the same size as cascade_data['data_t'], but contain `NaN` if the data was missing
     '''
@@ -1746,14 +1747,14 @@ def get_json_cascade(results, data):
         for pop_name, pop_label in zip(results[0].pop_names, results[0].pop_labels):
             cascade_data['data'][name][pop_label],t = at.get_cascade_data(data,results[0].framework, cascade=cascade,pops=pop_name)
     cascade_data['data_t'] = t
-    
+
     jsondata = sc.sanitizejson(cascade_data)
     ncolors = len(result.pop_names)
     jsoncolors = sc.gridcolors(ncolors, ashex=True)
     return jsondata, jsoncolors
 
 
-@RPC()  
+@RPC()
 def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, plotyear=None, pops=None, tool=None, dosave=True):
     print('Running "manual calibration"...')
     proj = load_project(project_id, die=True)
@@ -1763,7 +1764,7 @@ def manual_calibration(project_id, cache_id, parsetname=-1, plot_options=None, p
     return output
 
 
-@RPC()    
+@RPC()
 def automatic_calibration(project_id, cache_id, parsetname=-1, max_time=20, saveresults=True, plot_options=None, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running automatic calibration for parset %s...' % parsetname)
     proj = load_project(project_id, die=True)
@@ -2045,7 +2046,7 @@ def get_param_groups(project_id, tool:str, verbose:bool=False) -> dict:
         pops = tb_indpops(proj)
     else:
         pops = all_pops(proj.data)
-    
+
     param_groups['popnames'] = pops
 
     if verbose:
@@ -2081,7 +2082,7 @@ def set_scen_info(project_id, scenario_jsons, verbose=True):
     return None
 
 
-@RPC()    
+@RPC()
 def new_scen(project_id, scentype) -> dict:
     """
     Instantiate a new temporary scenario and return JS representation
@@ -2243,7 +2244,7 @@ def scen_reset_values(js_scen:dict, project_id, overwrite:bool =True) -> dict:
     return js_scen
 
 
-@RPC()    
+@RPC()
 def run_scenarios(project_id, cache_id, plot_options, saveresults=True, tool=None, plotyear=None, pops=None, dosave=True):
     print('Running scenarios...')
     proj = load_project(project_id, die=True)
@@ -2286,9 +2287,9 @@ def js_to_py_optim(js_optim):
         this = json['prog_spending'][subkey]
         json['prog_spending'][subkey] = (to_float(this['min']), to_float(this['max']))
     return json
-    
 
-@RPC()    
+
+@RPC()
 def get_optim_info(project_id, verbose=False):
     print('Getting optimization info...')
     proj = load_project(project_id, die=True)
@@ -2305,7 +2306,7 @@ def get_default_optim(project_id, tool=None, optim_type=None, verbose=True):
     return js_optim
 
 
-@RPC()    
+@RPC()
 def update_optim(project_id, json: dict, old_name:str = None) -> list:
     """
     Add or update a single optim json
@@ -2355,7 +2356,7 @@ def update_optim(project_id, json: dict, old_name:str = None) -> list:
         proj.optim_jsons.append(json)
 
     print('Saving project...')
-    save_project(proj)   
+    save_project(proj)
     return json
 
 @RPC()
@@ -2389,7 +2390,7 @@ def run_optimization(project_id, cache_id, optim_name=None, plot_options=None, m
     print('Running Cascade optimization...')
     sc.printvars(locals(), ['project_id', 'optim_name', 'plot_options', 'maxtime', 'tool', 'plotyear', 'pops', 'dosave'], color='blue')
     proj = load_project(project_id, die=True)
-        
+
     # Actually run the optimization and get its results (list of baseline and optimized Result objects).
     results = proj.run_optimization(optim_name, maxtime=float(maxtime), store_results=False)
     cache_result(proj, results, cache_id)
@@ -2448,7 +2449,7 @@ def clear_cached_results(proj, project_id, spare_calibration=False, verbose=True
     return proj
 
 
-@RPC() 
+@RPC()
 def plot_results(project_id, cache_id, plot_options, tool=None, plotyear=None, pops=None, dosave=True, plotbudget=False, calibration=False):
     print('Plotting cached results...')
     proj = load_project(project_id, die=True)
@@ -2457,7 +2458,7 @@ def plot_results(project_id, cache_id, plot_options, tool=None, plotyear=None, p
         return { 'error': 'Failed to load plot results from cache' }
     output = make_plots(proj, results, tool=tool, year=plotyear, pops=pops, plot_options=plot_options, dosave=dosave, plot_budget=plotbudget, calibration=calibration)
     return output
-    
+
 
 @RPC(call_type='download')
 def export_results(cache_id, username):
@@ -2475,31 +2476,31 @@ def export_results(cache_id, username):
 ###############################################################
 ### TB custom plotting functions
 ###############################################################
-    
+
 def tb_add_confidence(P, fig, labels_to_use=[], pops=None, datapars=None):
     '''
     Add confidence intervals and/or data points (possibly with error bars) to a figure after checking years etc are appropriate
     labels should be a list of the form ['Data line label', 'Label for confidence interval', 'Label for data estimate']
     '''
     legendsettings = {'loc': 'center left', 'bbox_to_anchor': (1.05, 0.5), 'ncol': 1, 'framealpha':0}
-    
+
     if not datapars is None:
         if pops is None:
             pops = ['Total (best)', 'Total (low)', 'Total (high)']
         elif type(pops)==type('string'):
             pops = [pops, pops, pops] #best, low high use the same population, different parameters
         assert len(pops)==3 #must be best, low high pops
-        
-        
+
+
         if type(datapars)==type('string'):
             if pops[0]==pops[1] and pops[0]==pops[2]:
                 datapars = [datapars, None, None] #getting best low and high from the same parameter
             else:
                 datapars = [datapars, datapars, datapars] #getting best low and high from the same parameter, using different 'populations'
         assert len(datapars)==3 #must be best, low high pops
-        
+
         y_limit = fig.axes[0].get_ylim()[1] #current max based on data, may need to extend y_limit upper bound based on data input
-        
+
         bestp, lowp, highp = pops
         bestd, lowd, highd = datapars
         ibest = P.data.tdve[bestd]
@@ -2507,10 +2508,10 @@ def tb_add_confidence(P, fig, labels_to_use=[], pops=None, datapars=None):
         lows = []
         highs = []
         #for each year that is in both low and high estimates of incidence
-        if not (lowd is None or highd is None):    
+        if not (lowd is None or highd is None):
             ilow  = P.data.tdve[lowd]
             ihigh = P.data.tdve[highd]
-            
+
             for yl, year in enumerate(ilow.ts[lowp].t):
                 if year in ihigh.ts[highp].t:
                     yh = ihigh.ts[highp].t.index(year)
@@ -2527,7 +2528,7 @@ def tb_add_confidence(P, fig, labels_to_use=[], pops=None, datapars=None):
                     labels_to_use+= ['Data (uncertainty range)']
                     fig.axes[0].fill_between(years, lows, highs, facecolor='lightblue', interpolate=True)
                 y_limit = max(y_limit, max(highs)*1.05)
-            
+
         #plot the best data points - do this after the range so it appears on top!
         if len(ibest.ts[bestp].t)>0:
             y_limit = max(y_limit, max(ibest.ts[bestp].vals)*1.05)
@@ -2537,7 +2538,7 @@ def tb_add_confidence(P, fig, labels_to_use=[], pops=None, datapars=None):
             else:
                 fig.axes[0].scatter(ibest.ts[bestp].t,ibest.ts[bestp].vals, marker='o', s=40, linewidths=3,edgecolor=sc.gridcolors(1),facecolor='none')
             labels_to_use+= ['Data (best estimate)']
-        
+
         fig.axes[0].set_ylim(top=y_limit)
 
     fig.axes[0].legend(labels_to_use, **legendsettings)
@@ -2555,34 +2556,34 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
     'data_pops': either a pop name or a list of pops used for data in [best, low, high] form
     'ylabel': label for the y axis,
     """
-    
+
     if outputs is None: outputs = { 'graphs': [], 'legends': [], 'types': []}
     if figs is None: figs = []
     if legends is None: legends = []
-    
+
     plot_outputs = data_pars if type(data_pars)==dict else [{ylabel: sc.promotetolist(res_pars)}]
     plot_pops = res_pops if type(res_pops)==dict else [{'Total': sc.promotetolist(res_pops)}]
-    
+
     legends = ['Model (calibrated)']
     if not sampled_results is None:  #include uncertainty as sampled
         baseline = sc.dcp(result)
         mapping_function = lambda x: at.PlotData(x,outputs=plot_outputs, pops= plot_pops, pop_aggregation=pop_aggregation)
         ensemble = at.Ensemble(mapping_function=mapping_function)
-    
+
         baseline.name = sampled_results[0][0].name # baseline name needs to match sampled results name
         ensemble.update(sampled_results)
-        legends += ['Model (uncertainty range)']        
-        
+        legends += ['Model (uncertainty range)']
+
         ensemble.set_baseline(baseline)
         ensemble.name = str(res_pars)
-    
+
         fig = ensemble.plot_series()
     else:  #just use the best result and plot as lines
         d = at.PlotData(result, outputs=plot_outputs, pops=plot_pops, pop_aggregation=pop_aggregation)
         fig = at.plot_series(d, axis='outputs', plot_type='line')[0]
 
     fig = tb_add_confidence(P, fig, labels_to_use = legends, pops=data_pops, datapars=data_pars) #may add further entries to the legend
-    
+
     fig.axes[0].set_ylim(bottom=0.)
     if not xlims is None: fig.axes[0].set_xlim(xlims)
     if not ylabel is None: fig.axes[0].set_ylabel(ylabel)
@@ -2590,7 +2591,7 @@ def tb_standard_plot(P, result, res_pars=None, data_pars=None, pop_aggregation='
 
 #    label = str(res_pars).replace(':','-')
 #     if save_figs: at.save_figs([fig], path=results_folder, prefix='plots_', fnames=[title])
-    
+
     legend = sc.emptyfig()
 
     # Resize the figure to be larger than the default.
@@ -2616,95 +2617,95 @@ def tb_natpops(P):
 def tb_key_calibration_plots(proj, results=None, pops=None, xlims=None):
     allpops = tb_indpops(proj)
     blhpops  = tb_natpops(proj)
-    
+
     outputs = { 'graphs': [], 'legends': [], 'types': []}
     figs = []
     legends = []
-    
+
     result = sc.promotetolist(results) #TODO if this is a list should be a loop for result in results:? or better still pass as results and make standard_plot plot multiple results gracefully for scenario use?
     pops = sc.promotetolist(pops)
 
     if pops==allpops:
         pops = allpops
-        
+
         #active incidence
         outputs, figs, legends = tb_standard_plot(proj, res_pars='ac_incidence_epc', data_pars='nat_est_incidence', res_pops=allpops,
-                  data_pops=blhpops, ylabel='Incident TB cases', title='TB incidence including extrapulmonary - total cases', 
+                  data_pops=blhpops, ylabel='Incident TB cases', title='TB incidence including extrapulmonary - total cases',
                       result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-    
+
         #DR incidence
         outputs, figs, legends = tb_standard_plot(proj, res_pars='dr_incidence_epc', data_pars='nat_est_dr_incidence', res_pops=allpops,
-                      data_pops=blhpops, ylabel='Incident DR-TB cases', title='DR-TB incidence including extrapulmonary  - total cases', 
+                      data_pops=blhpops, ylabel='Incident DR-TB cases', title='DR-TB incidence including extrapulmonary  - total cases',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-        
+
         #Incidence per 100K
         outputs, figs, legends = tb_standard_plot(proj, res_pars='inc_per100k_epc', data_pars='nat_est_incidence_per100K', res_pops=allpops, data_pops=blhpops,
-                      pop_aggregation='weighted', ylabel='Incident TB cases per 100K', title='Incidence of TB per 100K including extrapulmonary - total', 
+                      pop_aggregation='weighted', ylabel='Incident TB cases per 100K', title='Incidence of TB per 100K including extrapulmonary - total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-        
-        #prevalence per 100K (total)  
+
+        #prevalence per 100K (total)
         outputs, figs, legends = tb_standard_plot(proj, res_pars='prev_per100k', data_pars='nat_est_prevalence_per100K', res_pops=allpops, data_pops=blhpops,
-                      pop_aggregation='weighted', ylabel='Prevalent TB cases per 100K', title='Prevalence of pulmonary TB per 100K - total', 
+                      pop_aggregation='weighted', ylabel='Prevalent TB cases per 100K', title='Prevalence of pulmonary TB per 100K - total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-        
+
         #Latent TB prevalence
         outputs, figs, legends = tb_standard_plot(proj, res_pars='lt_prev', data_pars='nat_est_lat_prev', res_pops=allpops, pop_aggregation='weighted',
                   data_pops=blhpops, ylabel='Latent TB prevalence', title='Latent TB prevalence - total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-        
-        #TB-related deaths 
+
+        #TB-related deaths
         outputs, figs, legends = tb_standard_plot(proj, res_pars=':ddis', data_pars='nat_est_deaths', res_pops=allpops,
-                  data_pops=blhpops, ylabel='TB-related deaths', title='TB-related deaths - total', 
+                  data_pops=blhpops, ylabel='TB-related deaths', title='TB-related deaths - total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-        
-        #TB-related deaths per 100K (total)  
+
+        #TB-related deaths per 100K (total)
         outputs, figs, legends = tb_standard_plot(proj, res_pars='mort_per100k', data_pars='nat_est_mort_per100k', res_pops=allpops, data_pops=blhpops,
-                          pop_aggregation='weighted',  ylabel='TB-related deaths per 100K', title='TB-related deaths per 100K - total', 
+                          pop_aggregation='weighted',  ylabel='TB-related deaths per 100K', title='TB-related deaths per 100K - total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-    
-    
+
+
         #case fatality ratio
         outputs, figs, legends = tb_standard_plot(proj, res_pars='case_fatality_ratio', data_pars='nat_est_case_fatality_ratio', res_pops=allpops, data_pops=blhpops,
-                          pop_aggregation='weighted',  ylabel='Proportion of TB cases resulting in death', title='Case fatality ratio (TB-related deaths/TB incidence) - pulmonary TB total', 
+                          pop_aggregation='weighted',  ylabel='Proportion of TB cases resulting in death', title='Case fatality ratio (TB-related deaths/TB incidence) - pulmonary TB total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
 
 
         #Case detection rate
         outputs, figs, legends = tb_standard_plot(proj, res_pars='case_detection_rate', data_pars='nat_est_case_detection_rate', res_pops=allpops, data_pops=blhpops,
-                      pop_aggregation='weighted', ylabel='Pulmonary TB case detection rate', title='Pulmonary TB case detection rate - total', 
+                      pop_aggregation='weighted', ylabel='Pulmonary TB case detection rate', title='Pulmonary TB case detection rate - total',
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
 
-    else:    
+    else:
         for pop in pops:
             #active incidence
             outputs, figs, legends = tb_standard_plot(proj, res_pars='ac_incidence_epc', data_pars=['est_incidence_best', 'est_incidence_low', 'est_incidence_high'],
                           res_pops=pop, data_pops=pop, ylabel='Incident cases', title='TB incidence including extrapulmonary - %s'%(pop),
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-            
+
             #active prevalence
             outputs, figs, legends = tb_standard_plot(proj, res_pars='ac_prev', data_pars=['est_prevalence_best', 'est_prevalence_low', 'est_prevalence_high'],
                           res_pops=pop, data_pops=pop, ylabel='TB prevalence', title='Active pulmonary TB prevalence - %s'%(pop),
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
             #active DR prevalence
             outputs, figs, legends = tb_standard_plot(proj, res_pars='dr_prev', data_pars=['est_dr_prevalence_best', 'est_dr_prevalence_low', 'est_dr_prevalence_high'],
-                          res_pops=pop, data_pops=pop, ylabel='DR-TB prevalence', title='Active pulmonary DR-TB prevalence - %s'%(pop), 
+                          res_pops=pop, data_pops=pop, ylabel='DR-TB prevalence', title='Active pulmonary DR-TB prevalence - %s'%(pop),
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-            #prevalence per 100K (by pop)  
+            #prevalence per 100K (by pop)
             outputs, figs, legends = tb_standard_plot(proj, res_pars='prev_per100k', data_pars='prev_per100k', res_pops=pop, data_pops=pop,
-                          pop_aggregation='weighted', ylabel='Prevalent TB cases per 100K', title='Prevalence of pulmonary TB per 100K - %s'%(pop), 
+                          pop_aggregation='weighted', ylabel='Prevalent TB cases per 100K', title='Prevalence of pulmonary TB per 100K - %s'%(pop),
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-            
+
             #TB-related deaths
             outputs, figs, legends = tb_standard_plot(proj, res_pars=':ddis', data_pars=['est_deaths_best', 'est_deaths_low', 'est_deaths_high'],
-                      res_pops=pop, data_pops=pop, ylabel='TB-related deaths', title='TB-related deaths - %s'%(pop), 
+                      res_pops=pop, data_pops=pop, ylabel='TB-related deaths', title='TB-related deaths - %s'%(pop),
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
-            
+
             #Notifications
             ss_mapping = {'pd':'SP-DS', 'nd':'SN-DS', 'pm':'SP-MDR', 'nm':'SN-MDR', 'px':'SP-XDR', 'nx':'SN-XDR'}
             for ss in ss_mapping.keys():
                 outputs, figs, legends = tb_standard_plot(proj, res_pars='mod_%s_nnotif'%ss, data_pars='%s_nnotif'%ss, res_pops=pop, data_pops=pop,
                               pop_aggregation='sum', ylabel='Notifications',
-                              title='Number of %s notifications (including extrapulmonary notifications and excluding unreported diagnoses) - %s'%(ss_mapping[ss], pop), 
+                              title='Number of %s notifications (including extrapulmonary notifications and excluding unreported diagnoses) - %s'%(ss_mapping[ss], pop),
                           result=result, outputs=outputs, figs=figs, legends=legends, xlims=xlims)
 
     outputs['types'] = len(outputs['graphs'])*['tb-calibration']
@@ -2717,7 +2718,7 @@ def tb_probability_cascade(P, results=None, pops=None, xlims=None, year=2018):
     allfigs = []
     if len(pops) > 1:
         pops=[{'Total':pops}]
-    
+
     result=sc.promotetolist(results) #TODO if this is a list should be a loop for result in results:?
     #cascade (probabilistic outcomes)
 #    plot_single_cascade(result=None, cascade=None, pops=None, year=None, data=None, title=False):
@@ -2746,7 +2747,7 @@ def tb_probability_cascade(P, results=None, pops=None, xlims=None, year=2018):
 
 
     for ss in ['pd', 'nd', 'pm', 'nm', 'px', 'nx']:
-        
+
         d = at.PlotData(result, pops=pops, outputs=[
                 {'New active cases':ss+'_div:flow', 'Diagnosed':ss+'_prob_udiag', 'Undiagnosed recovery':ss+'_prob_urec', 'Undiagnosed death':ss+'_prob_uterm',
                  'Initiate treatment':ss+'_prob_dtreat', 'Diagnosed recovery':ss+'_prob_drec', 'Diagnosed death':ss+'_prob_dterm' ,
@@ -2772,7 +2773,7 @@ def tb_probability_cascade(P, results=None, pops=None, xlims=None, year=2018):
 #            fig.axes[0].legend(['Cascade progression', 'TB-related death', 'Other outcome (natural recovery, treatment failure/LTFU)'])
 #        if save_figs:
 #            at.save_figs(fig, path=results_folder, prefix='cascade_probable_'+ss+'_')
-    
+
     ss = 'all'
     d = at.PlotData(result, pops=pops, outputs=[
                 {'New active cases':'acj:', 'Diagnosed':ss+'_prob_udiag', 'Undiagnosed recovery':ss+'_prob_urec', 'Undiagnosed death':ss+'_prob_uterm',
@@ -2814,15 +2815,15 @@ def tb_probability_cascade(P, results=None, pops=None, xlims=None, year=2018):
     alllegends = len(allfigs)*[sc.emptyfig()]
     return outputs, allfigs, alllegends
 
-"""TODO OUTPUTS FIGS LEGENDS"""    
+"""TODO OUTPUTS FIGS LEGENDS"""
 def tb_advanced_plots(P, results=None, pops=None, xlims=None): #(P, result, results_folder, save_figs, plot_years, **kwargs):
 
     allpops = tb_indpops(P)
 #    blhpops  = natpops(P)
-    
+
     allfigs = []
     alllegends = []
-    
+
     if pops==allpops:
         pops=[{'Total':allpops}]
 
@@ -2831,10 +2832,10 @@ def tb_advanced_plots(P, results=None, pops=None, xlims=None): #(P, result, resu
     #deaths by source
     d = at.PlotData(result, pops=[{'Total':allpops}], outputs=[
             {'Untreated SP-DS': ['pd_term:flow'],
-             'Untreated SN-DS': ['nd_term:flow'], 
-             'Untreated DR': ['pm_term:flow','px_term:flow','nm_term:flow','nx_term:flow'], 
+             'Untreated SN-DS': ['nd_term:flow'],
+             'Untreated DR': ['pm_term:flow','px_term:flow','nm_term:flow','nx_term:flow'],
              'SP-DS during treatment': ['pd_sad_div:flow'],
-             'SN-DS during treatment': ['nd_sad_div:flow'], 
+             'SN-DS during treatment': ['nd_sad_div:flow'],
              'DR during treatment': ['pm_sad_div:flow','px_sad_div:flow','nm_sad_div:flow','nx_sad_div:flow']
              }], pop_aggregation='sum')
     for pop in d.pops:
