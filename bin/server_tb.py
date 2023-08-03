@@ -2,6 +2,10 @@
 
 import sys
 
+# Temporary fix until scirisweb is updated
+import werkzeug.serving
+werkzeug.serving.run_with_reloader = None
+
 print('')
 print('#########################################')
 print('Starting the Optima TB server...')
