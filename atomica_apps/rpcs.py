@@ -16,9 +16,13 @@ import pylab as pl
 import pandas as pd
 import mpld3
 import re
-import io
 import sciris as sc
+
+# Temporary fix until scirisweb is updated
+import werkzeug.serving
+werkzeug.serving.run_with_reloader = None
 import scirisweb as sw
+
 import atomica as at
 from matplotlib.legend import Legend
 from . import version as appv
