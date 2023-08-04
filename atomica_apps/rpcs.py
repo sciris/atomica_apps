@@ -20,7 +20,8 @@ import sciris as sc
 
 # Temporary fix until scirisweb is updated
 import werkzeug.serving
-werkzeug.serving.run_with_reloader = None
+import werkzeug._reloader
+werkzeug.serving.run_with_reloader = werkzeug._reloader.run_with_reloader
 import scirisweb as sw
 
 import atomica as at
